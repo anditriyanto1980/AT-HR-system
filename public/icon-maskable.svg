@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="mBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="mAccentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <linearGradient id="mCardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full-bleed background for maskable canvas -->
+  <rect width="512" height="512" fill="url(#mBgGrad)" />
+
+  <!-- Inner Safe Zone (80% circle safe container) -->
+  <g transform="translate(51, 51) scale(0.8)">
+    <!-- Decorative Panel -->
+    <rect x="48" y="48" width="416" height="416" rx="80" fill="url(#mCardGrad)" stroke="rgba(255,255,255,0.12)" stroke-width="3" />
+
+    <!-- Accent Pin -->
+    <circle cx="410" cy="102" r="26" fill="url(#mAccentGrad)" />
+    <circle cx="410" cy="102" r="12" fill="#ffffff" />
+
+    <!-- Monogram Logo "AT" -->
+    <g transform="translate(112, 148)">
+      <path d="M 72 216 L 144 24 L 216 216 L 168 216 L 144 148 L 96 148 L 72 216 Z M 110 110 L 144 48 L 178 110 Z" fill="#ffffff" />
+      <path d="M 216 24 L 288 24 L 288 64 L 268 64 L 268 216 L 236 216 L 236 64 L 216 64 Z" fill="url(#mAccentGrad)" />
+    </g>
+
+    <!-- Subtitle Tag -->
+    <rect x="180" y="380" width="152" height="34" rx="17" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="2" />
+    <text x="256" y="403" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="18" fill="#10b981" letter-spacing="4">ENTERPRISE</text>
+  </g>
+</svg>

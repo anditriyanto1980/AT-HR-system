@@ -1,0 +1,598 @@
+import React, { useState } from 'react';
+import {
+  Building2,
+  MapPin,
+  Layers,
+  Plus,
+  Edit2,
+  Trash2,
+  Check,
+  Shield,
+  Save,
+  Compass,
+} from 'lucide-react';
+import { dataService } from '../../services/dataService';
+import { Branch, Department, LocationPolicy, Position } from '../../types';
+
+export const OrganizationView: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'branches' | 'departments' | 'company'>('branches');
+
+  const company = dataService.getCompany();
+  const [branches, setBranches] = useState<Branch[]>(dataService.getBranches());
+  const [departments, setDepartments] = useState<Department[]>(dataService.getDepartments());
+  const [positions, setPositions] = useState<Position[]>(dataService.getPositions());
+
+  // Branch Modal State
+  const [branchModalOpen, setBranchModalOpen] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [branchForm, setBranchForm] = useState({
+    name: '',
+    code: '',
+    city: '',
+    address: '',
+    latitude: -6.2,
+    longitude: 106.8,
+    radius_meters: 100,
+    policy: 'BLOCK_OUTSIDE_RADIUS' as LocationPolicy,
+  });
+
+  // Department Modal State
+  const [deptModalOpen, setDeptModalOpen] = useState(false);
+  const [deptForm, setDeptForm] = useState({ name: '', code: '', description: '' });
+
+  // Company Edit State
+  const [companyForm, setCompanyForm] = useState(company);
+  const [companySaved, setCompanySaved] = useState(false);
+
+  // Refresh
+  const refreshData = () => {
+    setBranches(dataService.getBranches());
+    setDepartments(dataService.getDepartments());
+    setPositions(dataService.getPositions());
+  };
+
+  // Branch handlers
+  const handleOpenAddBranch = () => {
+    setEditingBranch(null);
+    setBranchForm({
+      name: '',
+      code: `BR-${branches.length + 1}`,
+      city: 'Jakarta',
+      address: '',
+      latitude: -6.21462,
+      longitude: 106.82155,
+      radius_meters: 150,
+      policy: 'BLOCK_OUTSIDE_RADIUS',
+    });
+    setBranchModalOpen(true);
+  };
+
+  const handleOpenEditBranch = (b: Branch) => {
+    setEditingBranch(b);
+    setBranchForm({
+      name: b.name,
+      code: b.code,
+      city: b.city,
+      address: b.address,
+      latitude: b.latitude,
+      longitude: b.longitude,
+      radius_meters: b.radius_meters,
+      policy: b.policy,
+    });
+    setBranchModalOpen(true);
+  };
+
+  const handleSaveBranch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const branchData: Branch = {
+      id: editingBranch ? editingBranch.id : `branch-${Date.now()}`,
+      company_id: company.id,
+      code: branchForm.code,
+      name: branchForm.name,
+      city: branchForm.city,
+      address: branchForm.address,
+      latitude: Number(branchForm.latitude),
+      longitude: Number(branchForm.longitude),
+      radius_meters: Number(branchForm.radius_meters),
+      policy: branchForm.policy,
+      is_active: true,
+    };
+    dataService.saveBranch(branchData);
+    refreshData();
+    setBranchModalOpen(false);
+  };
+
+  const handleDeleteBranch = (id: string, name: string) => {
+    if (confirm(`Delete branch ${name}?`)) {
+      dataService.deleteBranch(id);
+      refreshData();
+    }
+  };
+
+  // Dept handlers
+  const handleSaveDept = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deptForm.name) return;
+    const newDept: Department = {
+      id: `dept-${Date.now()}`,
+      company_id: company.id,
+      code: deptForm.code || `D-${departments.length + 1}`,
+      name: deptForm.name,
+      description: deptForm.description,
+    };
+    dataService.saveDepartment(newDept);
+    refreshData();
+    setDeptModalOpen(false);
+    setDeptForm({ name: '', code: '', description: '' });
+  };
+
+  const handleDeleteDept = (id: string, name: string) => {
+    if (confirm(`Delete department ${name}?`)) {
+      dataService.deleteDepartment(id);
+      refreshData();
+    }
+  };
+
+  // Save Company Profile
+  const handleSaveCompany = (e: React.FormEvent) => {
+    e.preventDefault();
+    dataService.updateCompany(companyForm);
+    setCompanySaved(true);
+    setTimeout(() => setCompanySaved(false), 2000);
+  };
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Top Tabs */}
+      <div className="bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-1">
+        <button
+          onClick={() => setActiveTab('branches')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'branches'
+              ? 'bg-[#1D63FF] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <MapPin className="w-4 h-4" />
+          <span>Branches & Geofences ({branches.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('departments')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'departments'
+              ? 'bg-[#1D63FF] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Departments & Roles ({departments.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('company')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'company'
+              ? 'bg-[#1D63FF] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          <span>Company Profile</span>
+        </button>
+      </div>
+
+      {/* TAB 1: Branches & GPS Geofences */}
+      {activeTab === 'branches' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Branch Office Locations & GPS Geofencing</h3>
+              <p className="text-xs text-slate-500">
+                Define office coordinates, radius boundary, and outside-area attendance rules
+              </p>
+            </div>
+            <button
+              onClick={handleOpenAddBranch}
+              className="px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Branch Location</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {branches.map((b) => (
+              <div
+                key={b.id}
+                className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono font-bold text-slate-400">
+                        {b.code}
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-900">{b.name}</h4>
+                      <span className="text-xs text-slate-500">{b.city}</span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                        b.policy === 'BLOCK_OUTSIDE_RADIUS'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}
+                    >
+                      {b.policy === 'BLOCK_OUTSIDE_RADIUS' ? 'Strict Geofence' : 'Approval Allowed'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-600 line-clamp-2">{b.address}</p>
+
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/80 space-y-1.5 text-xs font-mono">
+                    <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                      <span>Latitude / Longitude</span>
+                      <span className="text-slate-900 font-semibold">
+                        {b.latitude.toFixed(5)}, {b.longitude.toFixed(5)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                      <span>Geofence Radius</span>
+                      <span className="text-emerald-700 font-bold">{b.radius_meters} meters</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => handleOpenEditBranch(b)}
+                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded"
+                    title="Edit Branch"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBranch(b.id, b.name)}
+                    className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded"
+                    title="Delete Branch"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: Departments & Positions */}
+      {activeTab === 'departments' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Departments & Business Units</h3>
+              <p className="text-xs text-slate-500">Corporate departments and job position titles</p>
+            </div>
+            <button
+              onClick={() => setDeptModalOpen(true)}
+              className="px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Department</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {departments.map((dept) => {
+              const deptPositions = positions.filter((p) => p.department_id === dept.id);
+              return (
+                <div
+                  key={dept.id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono font-bold text-slate-400">
+                        {dept.code}
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-900">{dept.name}</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">{dept.description}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteDept(dept.id, dept.name)}
+                      className="text-slate-400 hover:text-rose-600 p-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-1.5 uppercase tracking-wider">
+                      Positions in Department ({deptPositions.length})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {deptPositions.map((pos) => (
+                        <span
+                          key={pos.id}
+                          className="px-2 py-1 rounded bg-slate-100 text-slate-700 text-xs font-medium"
+                        >
+                          {pos.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: Company Profile */}
+      {activeTab === 'company' && (
+        <div className="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-5">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Corporate Legal Entity Details</h3>
+            <p className="text-xs text-slate-500">Master organization information for payroll and attendance</p>
+          </div>
+
+          {companySaved && (
+            <div className="p-3 bg-emerald-50 text-emerald-900 text-xs font-semibold rounded-lg border border-emerald-200">
+              Company details successfully updated!
+            </div>
+          )}
+
+          <form onSubmit={handleSaveCompany} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Company Code</label>
+                <input
+                  type="text"
+                  value={companyForm.code}
+                  onChange={(e) => setCompanyForm({ ...companyForm, code: e.target.value })}
+                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Legal Name</label>
+                <input
+                  type="text"
+                  value={companyForm.name}
+                  onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
+                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Headquarters Address</label>
+              <textarea
+                rows={2}
+                value={companyForm.address}
+                onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })}
+                className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Phone</label>
+                <input
+                  type="text"
+                  value={companyForm.phone}
+                  onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
+                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Official Email</label>
+                <input
+                  type="email"
+                  value={companyForm.email}
+                  onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
+                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              <span>Save Company Information</span>
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Branch Modal */}
+      {branchModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4">
+            <h3 className="text-base font-bold text-slate-900">
+              {editingBranch ? 'Edit Branch Location' : 'Add New Branch Location'}
+            </h3>
+            <form onSubmit={handleSaveBranch} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Branch Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={branchForm.name}
+                    onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })}
+                    placeholder="e.g. Jakarta Head Office"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Branch Code</label>
+                  <input
+                    type="text"
+                    required
+                    value={branchForm.code}
+                    onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })}
+                    placeholder="JKT-HQ"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">City</label>
+                <input
+                  type="text"
+                  required
+                  value={branchForm.city}
+                  onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })}
+                  placeholder="Jakarta"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Address</label>
+                <input
+                  type="text"
+                  required
+                  value={branchForm.address}
+                  onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })}
+                  placeholder="Jl. Sudirman Kav 86"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={branchForm.latitude}
+                    onChange={(e) => setBranchForm({ ...branchForm, latitude: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={branchForm.longitude}
+                    onChange={(e) => setBranchForm({ ...branchForm, longitude: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Geofence Radius (meters)</label>
+                  <input
+                    type="number"
+                    min="10"
+                    max="1000"
+                    required
+                    value={branchForm.radius_meters}
+                    onChange={(e) => setBranchForm({ ...branchForm, radius_meters: parseInt(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Outside Geofence Policy</label>
+                  <select
+                    value={branchForm.policy}
+                    onChange={(e) => setBranchForm({ ...branchForm, policy: e.target.value as any })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium"
+                  >
+                    <option value="BLOCK_OUTSIDE_RADIUS">BLOCK (Reject Clock In)</option>
+                    <option value="ALLOW_WITH_APPROVAL">ALLOW WITH APPROVAL</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setBranchModalOpen(false)}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg"
+                >
+                  Save Branch
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Dept Modal */}
+      {deptModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
+            <h3 className="text-base font-bold text-slate-900">Add New Department</h3>
+            <form onSubmit={handleSaveDept} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Department Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={deptForm.name}
+                  onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })}
+                  placeholder="e.g. Legal & Compliance"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Code</label>
+                <input
+                  type="text"
+                  value={deptForm.code}
+                  onChange={(e) => setDeptForm({ ...deptForm, code: e.target.value })}
+                  placeholder="LGL"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+                <textarea
+                  rows={2}
+                  value={deptForm.description}
+                  onChange={(e) => setDeptForm({ ...deptForm, description: e.target.value })}
+                  placeholder="Department scope and responsibilities"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setDeptModalOpen(false)}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg"
+                >
+                  Save Department
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

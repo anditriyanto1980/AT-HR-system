@@ -1,0 +1,9 @@
+{
+  "name": "AT-HR - Smart Attendance & Employee Management System",
+  "description": "Enterprise HRIS & Smart Attendance System with GPS Geofencing, Shifts, Organization Hierarchy, and Employee Management.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
