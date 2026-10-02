@@ -29,6 +29,7 @@ import {
   Radio,
   Power,
   Sparkles,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
@@ -137,10 +138,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
     {
-      title: 'SYSTEM',
+      title: 'SYSTEM & HELP',
       items: [
+        { id: 'user-guide', label: 'User Guideline', icon: BookOpen, badge: 'SOP' },
         ...(isSuperOrHr ? [{ id: 'audit-logs', label: 'Audit Trail', icon: ShieldCheck }] : []),
-        { id: 'database-setup', label: 'Database & SQL', icon: Database, isAction: true },
+        { id: 'database-setup', label: 'Cloud Firestore', icon: Database, isAction: true },
       ],
     },
   ];

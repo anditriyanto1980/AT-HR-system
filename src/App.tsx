@@ -27,6 +27,7 @@ import { PayrollView } from './features/payroll/PayrollView';
 import { ReimbursementView } from './features/reimbursement/ReimbursementView';
 import { PerformanceView } from './features/performance/PerformanceView';
 import { CompanyHubView } from './features/companyHub/CompanyHubView';
+import { UserGuideView } from './features/guide/UserGuideView';
 import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 
 function MainApp() {
@@ -87,6 +88,8 @@ function MainApp() {
         return <ScheduleView />;
       case 'audit-logs':
         return <AuditLogView />;
+      case 'user-guide':
+        return <UserGuideView onNavigateTab={setCurrentTab} />;
       default:
         return <HRDashboard onNavigateTab={setCurrentTab} />;
     }

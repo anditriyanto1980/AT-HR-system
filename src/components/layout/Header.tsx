@@ -23,6 +23,7 @@ import {
   Gem,
   LogOut,
   ExternalLink,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
@@ -126,6 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Work Schedule Calendar', tab: 'schedule', category: 'People' },
     { label: 'Attendance Reports', tab: 'reports', category: 'Reports' },
     { label: 'Approvals Hub', tab: 'approvals-hub', category: 'Approvals' },
+    { label: 'Buku Panduan & User Guideline', tab: 'user-guide', category: 'Documentation' },
   ];
 
   const filteredQuickNav = searchQuery.trim()
@@ -378,6 +380,15 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
+        {/* User Guideline (Panduan Pengguna) Icon */}
+        <button
+          onClick={() => onNavigateTab && onNavigateTab('user-guide')}
+          className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors"
+          title="Buku Panduan Pengguna & SOP Sistem (User Guideline)"
+        >
+          <BookOpen className="w-4 h-4 text-amber-300" />
+        </button>
+
         {/* Settings Gear Icon (Database & Configuration) */}
         <button
           onClick={onOpenDbModal}
@@ -435,6 +446,19 @@ export const Header: React.FC<HeaderProps> = ({
                       @{currentUser?.username || 'user'}
                     </div>
                   </div>
+                </div>
+
+                <div className="px-3 py-2 border-b border-slate-100">
+                  <button
+                    onClick={() => {
+                      setRoleMenuOpen(false);
+                      if (onNavigateTab) onNavigateTab('user-guide');
+                    }}
+                    className="w-full text-left px-2.5 py-2 rounded-xl flex items-center gap-2 text-xs text-blue-700 bg-blue-50/70 hover:bg-blue-100 font-bold transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>Buku Panduan Pengguna (SOP)</span>
+                  </button>
                 </div>
 
                 <div className="px-3 py-2 border-b border-slate-100">

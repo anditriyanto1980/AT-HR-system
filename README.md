@@ -59,8 +59,32 @@ Proyek ini telah dilengkapi dengan konfigurasi `vercel.json` bawaan sehingga sia
 - **Firebase Firestore & Auth**: Terintegrasi langsung dengan database Cloud Firestore dan login Google.
 - **PWA Ready**: Mendukung instalasi aplikasi di desktop & Android/iOS via Service Worker.
 - **Multi-Role & RBAC**: Akses bertingkat untuk Super Admin, HR Admin, Manager, dan Karyawan.
+- **Kustomisasi Branding & Whitelabeling**: Nama aplikasi, slogan, logo/brand icon, serta profil legal perusahaan dapat diedit langsung oleh Admin dan tersinkronisasi instan ke seluruh antarmuka dan slip gaji.
+- **Buku Panduan Pengguna (User Guideline & SOP)**: Dokumentasi interaktif 13 bab mencakup seluruh modul dengan fitur pencarian real-time, filter peran, dan tombol ekspor/cetak PDF resmi.
 - **Manajemen Operasional**: Cuti (Leave), Izin, Lembur (Overtime), Koreksi Absensi, dan SPPD (Business Trip).
 - **Payroll & Reimbursement**: Perhitungan gaji lengkap (BPJS, PPh 21, slip gaji) dan pengajuan klaim biaya.
+
+---
+
+## 🏢 Panduan Kustomisasi Nama Aplikasi (Whitelabeling)
+
+Untuk menyesuaikan nama aplikasi dengan entitas perusahaan Anda:
+1. Login sebagai **Super Admin** atau **HR Admin**.
+2. Masuk ke menu **Branch & Units** (Organisasi) di bilah navigasi kiri.
+3. Buka tab ke-3 **"Company Profile & Branding"**.
+4. Ubah kolom **"Nama Aplikasi / Sistem HR"**, **"Tagline / Slogan"**, dan pilih **"Ikon Brand"**.
+5. Isi data profil resmi perusahaan (Nama PT/CV, Alamat, Kontak, Website).
+6. Klik **"Simpan & Terapkan Perubahan"**. Seluruh Header, Layar Login, Kop Slip Gaji, dan Judul Tab Browser akan berubah secara instan dan tersinkronisasi ke Firebase Firestore.
+
+---
+
+## 📖 Buku Panduan Pengguna (User Guideline & SOP)
+
+Sistem telah dilengkapi modul **User Guideline** komprehensif yang dapat diakses langsung di dalam aplikasi melalui:
+- Menu sidebar **"User Guideline"** di bawah kategori **SYSTEM & HELP**.
+- Ikon buku panduan (**BookOpen**) di sebelah kanan Header navigasi atas.
+- Menu profil akun -> **"Buku Panduan Pengguna (SOP)"**.
+- Mendukung fitur **"Cetak / Ekspor PDF"** untuk dibagikan sebagai Standard Operating Procedure (SOP) karyawan cetak.
 
 ---
 
