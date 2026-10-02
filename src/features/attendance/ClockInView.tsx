@@ -18,6 +18,9 @@ import {
   Sparkles,
   Upload,
   SwitchCamera,
+  ChevronDown,
+  ChevronUp,
+  Building,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
@@ -44,7 +47,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 export const ClockInView: React.FC = () => {
   const { currentUser } = useAuth();
 
-  // Current live time
+  // Current live time ticker
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Data
@@ -61,21 +64,28 @@ export const ClockInView: React.FC = () => {
   const [distanceMeters, setDistanceMeters] = useState<number | null>(null);
   const [isInsideGeofence, setIsInsideGeofence] = useState<boolean>(true);
 
-  // Camera & Selfie state
+  // Camera & Talenta Shutter state
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
-  const [clockInPhoto, setClockInPhoto] = useState<string | null>(null);
-  const [clockOutPhoto, setClockOutPhoto] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [photoErrorHighlight, setPhotoErrorHighlight] = useState(false);
+  const [shutterFlash, setShutterFlash] = useState(false);
+  const [showLocationSettings, setShowLocationSettings] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Action status feedback
   const [submitting, setSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successResult, setSuccessResult] = useState<{
+    type: 'CLOCK_IN' | 'CLOCK_OUT';
+    timeStr: string;
+    photoUrl: string;
+    statusText: string;
+    lateMinutes?: number;
+    durationMinutes?: number;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Update clock every second
@@ -89,7 +99,13 @@ export const ClockInView: React.FC = () => {
     loadData();
     requestGeolocation();
 
+    // TALENTA BEHAVIOR: Auto-start live camera as soon as screen mounts!
+    const autoCamTimer = setTimeout(() => {
+      startCamera('user');
+    }, 250);
+
     return () => {
+      clearTimeout(autoCamTimer);
       stopCamera();
     };
   }, [currentUser]);
@@ -111,13 +127,6 @@ export const ClockInView: React.FC = () => {
     const todayStr = new Date().toISOString().split('T')[0];
     const existing = dataService.getTodayAttendance(currentUser.id, todayStr);
     setTodayAttendance(existing || null);
-
-    if (existing?.clock_in_selfie_url) {
-      setClockInPhoto(existing.clock_in_selfie_url);
-    }
-    if (existing?.clock_out_selfie_url) {
-      setClockOutPhoto(existing.clock_out_selfie_url);
-    }
   };
 
   const isClockedIn = Boolean(todayAttendance?.clock_in_time);
@@ -129,7 +138,7 @@ export const ClockInView: React.FC = () => {
     setGpsError(null);
 
     if (!navigator.geolocation) {
-      setGpsError('Geolocation tidak didukung oleh browser Anda.');
+      setGpsError('Geolocation tidak didukung oleh peramban Anda.');
       setGpsLoading(false);
       return;
     }
@@ -203,10 +212,11 @@ export const ClockInView: React.FC = () => {
     setGpsError(null);
   };
 
-  // Camera handling with mobile constraint fallbacks
+  // ==========================================
+  // CAMERA ENGINE (TALENTA STYLE INSTANT WEBRTC)
+  // ==========================================
   const startCamera = async (mode: 'user' | 'environment' = facingMode) => {
     setCameraError(null);
-    setPhotoErrorHighlight(false);
     setCameraLoading(true);
 
     try {
@@ -217,13 +227,13 @@ export const ClockInView: React.FC = () => {
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setCameraError(
-          'Browser HP Anda tidak mendukung kamera live WebRTC. Silakan gunakan tombol "Buka Kamera HP (Bawaan)" di bawah.'
+          'Browser HP tidak mendukung WebRTC. Silakan gunakan tombol "Kamera Bawaan HP" di bawah.'
         );
         setCameraLoading(false);
         return;
       }
 
-      // Try multiple constraint sets progressively to avoid mobile black screen / driver negotiation freeze
+      // Progressive constraint fallback to avoid mobile black screen
       const constraintCandidates = [
         {
           video: {
@@ -266,7 +276,7 @@ export const ClockInView: React.FC = () => {
       if (!activeStream) {
         console.warn('Could not acquire camera stream with any constraint:', lastErr);
         setCameraError(
-          'Kamera langsung diblokir atau gagal merender di browser HP Anda. Silakan klik tombol "Buka Kamera HP (Bawaan)" di bawah untuk mengambil foto langsung.'
+          'Kamera langsung diblokir atau gagal merender di browser HP. Silakan klik tombol "Buka Kamera HP (Bawaan)" di bawah.'
         );
         setCameraActive(false);
         setCameraLoading(false);
@@ -276,7 +286,7 @@ export const ClockInView: React.FC = () => {
       streamRef.current = activeStream;
       setCameraActive(true);
 
-      // Immediately connect to video element if ready
+      // Immediately connect to video element
       if (videoRef.current) {
         const video = videoRef.current;
         video.srcObject = activeStream;
@@ -295,7 +305,7 @@ export const ClockInView: React.FC = () => {
     } catch (err: any) {
       console.warn('Camera access denied or unavailable:', err);
       setCameraError(
-        'Akses kamera ditolak atau tidak dapat diaktifkan. Silakan gunakan tombol "Buka Kamera HP (Bawaan)" di bawah untuk langsung membuka kamera bawaan ponsel.'
+        'Akses kamera ditolak atau tidak dapat diaktifkan. Silakan gunakan tombol "Buka Kamera HP (Bawaan)" di bawah.'
       );
       setCameraActive(false);
     } finally {
@@ -320,7 +330,7 @@ export const ClockInView: React.FC = () => {
     startCamera(nextMode);
   };
 
-  // Ensure stream is attached whenever cameraActive becomes true
+  // Sync stream when cameraActive becomes true
   useEffect(() => {
     if (cameraActive && streamRef.current && videoRef.current) {
       const video = videoRef.current;
@@ -337,55 +347,70 @@ export const ClockInView: React.FC = () => {
     }
   }, [cameraActive, facingMode]);
 
-  // Capture snapshot from webcam video stream
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
-    const video = videoRef.current;
+  // ==========================================
+  // TALENTA 1-TAP SHUTTER & DIRECT SUBMIT
+  // ==========================================
+  const handleShutterClick = async () => {
+    if (submitting) return;
 
-    const width = video.videoWidth || 640;
-    const height = video.videoHeight || 480;
+    // Trigger visual flash animation
+    setShutterFlash(true);
+    setTimeout(() => setShutterFlash(false), 200);
 
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      if (facingMode === 'user') {
-        // Mirror image horizontally for selfie view
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-      } else {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // 1. Capture frame from video or fallback
+    let photoDataUrl: string | null = null;
+
+    if (videoRef.current && cameraActive) {
+      const video = videoRef.current;
+      const width = video.videoWidth || 640;
+      const height = video.videoHeight || 480;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        if (facingMode === 'user') {
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+        } else {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        }
+
+        // Add Official HR Verification Watermark
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+        ctx.fillRect(0, canvas.height - 46, canvas.width, 46);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px sans-serif';
+        const now = new Date();
+        const modeLabel = !isClockedIn ? 'CLOCK IN (LIVE SELFIE)' : 'CLOCK OUT (LIVE SELFIE)';
+        const timeStr = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')} WIB | ${modeLabel}`;
+        ctx.fillText(timeStr, 14, canvas.height - 24);
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#6EE7B7';
+        const locStr = `📍 ${selectedLocation?.name || 'Office'} | GPS: ±${userCoords?.accuracy || 10}m`;
+        ctx.fillText(locStr, 14, canvas.height - 8);
+
+        photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
       }
-
-      // Add watermark overlay
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 13px sans-serif';
-      const timeStr = `${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')} | ${
-        !isClockedIn ? 'CLOCK IN' : 'CLOCK OUT'
-      } | ${selectedLocation?.name || 'GPS OK'}`;
-      ctx.fillText(timeStr, 12, canvas.height - 15);
-
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-      if (!isClockedIn) {
-        setClockInPhoto(dataUrl);
-      } else {
-        setClockOutPhoto(dataUrl);
-      }
-
-      stopCamera();
-      setPhotoErrorHighlight(false);
-      setErrorMessage(null);
     }
+
+    // If video frame could not be grabbed, open native camera or simulate
+    if (!photoDataUrl) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    // Stop camera and immediately submit attendance
+    stopCamera();
+    await executeAttendanceSubmit(photoDataUrl);
   };
 
-  // Fallback direct device camera input (Mobile native camera with GPS watermark)
+  // Process native mobile camera snapshot
   const handleDeviceCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -400,29 +425,23 @@ export const ClockInView: React.FC = () => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          // Add watermark overlay
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-          ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+          // Watermark
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+          ctx.fillRect(0, canvas.height - 46, canvas.width, 46);
           ctx.fillStyle = '#ffffff';
           ctx.font = 'bold 14px sans-serif';
-          const timeStr = `${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')} | ${
-            !isClockedIn ? 'CLOCK IN (HP CAMERA)' : 'CLOCK OUT (HP CAMERA)'
-          } | ${selectedLocation?.name || 'GPS OK'}`;
-          ctx.fillText(timeStr, 14, canvas.height - 15);
+          const now = new Date();
+          const modeLabel = !isClockedIn ? 'CLOCK IN (HP CAMERA)' : 'CLOCK OUT (HP CAMERA)';
+          const timeStr = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')} WIB | ${modeLabel}`;
+          ctx.fillText(timeStr, 14, canvas.height - 24);
+          ctx.font = '11px sans-serif';
+          ctx.fillStyle = '#6EE7B7';
+          const locStr = `📍 ${selectedLocation?.name || 'Office'} | GPS: ±${userCoords?.accuracy || 10}m`;
+          ctx.fillText(locStr, 14, canvas.height - 8);
           const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          if (!isClockedIn) {
-            setClockInPhoto(dataUrl);
-          } else {
-            setClockOutPhoto(dataUrl);
-          }
-        } else {
-          const rawUrl = reader.result as string;
-          if (!isClockedIn) setClockInPhoto(rawUrl);
-          else setClockOutPhoto(rawUrl);
+          stopCamera();
+          executeAttendanceSubmit(dataUrl);
         }
-        stopCamera();
-        setPhotoErrorHighlight(false);
-        setErrorMessage(null);
       };
       img.src = reader.result as string;
     };
@@ -430,22 +449,120 @@ export const ClockInView: React.FC = () => {
     e.target.value = '';
   };
 
-  // Simulation generator for development environments without a physical camera
-  const handleSimulateSelfie = () => {
+  // Direct Attendance Submission (Clock In or Out)
+  const executeAttendanceSubmit = async (photoUrl: string) => {
+    if (!currentUser) return;
+    setSubmitting(true);
+    setErrorMessage(null);
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    if (!isClockedIn) {
+      // Execute CLOCK IN
+      const shift = activeShift || shifts[0];
+      const { status, lateMinutes } = evaluateClockInStatus(now, shift);
+
+      const record: AttendanceRecord = {
+        id: `att-${Date.now()}`,
+        employee_id: currentUser.id,
+        shift_id: shift?.id || 'shift-01',
+        attendance_date: todayStr,
+        clock_in_time: now.toISOString(),
+        clock_in_lat: userCoords?.latitude,
+        clock_in_lng: userCoords?.longitude,
+        clock_in_accuracy: userCoords?.accuracy,
+        clock_in_distance_meters: distanceMeters ?? 0,
+        clock_in_location_name: selectedLocation?.name || 'Office',
+        clock_in_device: getDeviceInfo(),
+        clock_in_selfie_url: photoUrl,
+        clock_in_status: status,
+        late_minutes: lateMinutes,
+        early_checkout_minutes: 0,
+        work_duration_minutes: 0,
+        overtime_minutes: 0,
+        is_outside_geofence: !isInsideGeofence,
+        approval_status: !isInsideGeofence ? 'PENDING' : 'APPROVED',
+        notes: lateMinutes > 0 ? `Terlambat ${lateMinutes} menit` : 'Clock In Tepat Waktu',
+      };
+
+      dataService.saveAttendance(record);
+      dataService.logAudit({
+        user_name: currentUser.full_name,
+        action: 'CLOCK_IN',
+        module: 'ATTENDANCE',
+        record_id: record.id,
+        after_data: { status, lateMinutes, distance: distanceMeters, hasPhoto: true },
+      });
+
+      setTodayAttendance(record);
+      setSubmitting(false);
+      setSuccessResult({
+        type: 'CLOCK_IN',
+        timeStr: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        photoUrl,
+        statusText: status === 'present' ? 'Tepat Waktu' : `Terlambat ${lateMinutes}m`,
+        lateMinutes,
+      });
+    } else {
+      // Execute CLOCK OUT
+      const clockInTime = new Date(todayAttendance!.clock_in_time!);
+      const { workDurationMinutes, earlyCheckoutMinutes, overtimeMinutes } = evaluateClockOut(
+        clockInTime,
+        now,
+        activeShift || undefined
+      );
+
+      const updated: AttendanceRecord = {
+        ...todayAttendance!,
+        clock_out_time: now.toISOString(),
+        clock_out_lat: userCoords?.latitude,
+        clock_out_lng: userCoords?.longitude,
+        clock_out_accuracy: userCoords?.accuracy,
+        clock_out_distance_meters: distanceMeters ?? 0,
+        clock_out_location_name: selectedLocation?.name || 'Office',
+        clock_out_device: getDeviceInfo(),
+        clock_out_selfie_url: photoUrl,
+        work_duration_minutes: workDurationMinutes,
+        early_checkout_minutes: earlyCheckoutMinutes,
+        overtime_minutes: overtimeMinutes,
+      };
+
+      dataService.saveAttendance(updated);
+      dataService.logAudit({
+        user_name: currentUser.full_name,
+        action: 'CLOCK_OUT',
+        module: 'ATTENDANCE',
+        record_id: updated.id,
+        after_data: { durationMinutes: workDurationMinutes, overtimeMinutes, hasPhoto: true },
+      });
+
+      setTodayAttendance(updated);
+      setSubmitting(false);
+      setSuccessResult({
+        type: 'CLOCK_OUT',
+        timeStr: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        photoUrl,
+        statusText: `Total Jam Kerja: ${formatMinutes(workDurationMinutes)}`,
+        durationMinutes: workDurationMinutes,
+      });
+    }
+  };
+
+  // Sandbox simulation test
+  const handleSimulateShutter = () => {
     const canvas = document.createElement('canvas');
     canvas.width = 480;
     canvas.height = 360;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Background gradient
     const grad = ctx.createLinearGradient(0, 0, 480, 360);
     grad.addColorStop(0, '#0F172A');
     grad.addColorStop(1, '#1E293B');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 480, 360);
 
-    // Silhouette head & body
     ctx.fillStyle = '#38BDF8';
     ctx.beginPath();
     ctx.arc(240, 140, 55, 0, Math.PI * 2);
@@ -455,850 +572,432 @@ export const ClockInView: React.FC = () => {
     ctx.ellipse(240, 260, 90, 60, 0, 0, Math.PI);
     ctx.fill();
 
-    // Badge
-    ctx.fillStyle = !isClockedIn ? '#10B981' : '#F43F5E';
-    ctx.fillRect(20, 20, 160, 32);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(!isClockedIn ? '● CLOCK IN VERIFIED' : '● CLOCK OUT VERIFIED', 32, 40);
-
-    // Timestamp
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 320, 480, 40);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 12px monospace';
-    const stamp = `${currentUser?.full_name || 'Staff'} | ${new Date().toLocaleString('id-ID')}`;
-    ctx.fillText(stamp, 16, 345);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fillRect(0, 310, 480, 50);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`${currentUser?.full_name || 'Staff'} | ${new Date().toLocaleString('id-ID')}`, 16, 335);
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-    if (!isClockedIn) {
-      setClockInPhoto(dataUrl);
-    } else {
-      setClockOutPhoto(dataUrl);
-    }
     stopCamera();
-    setPhotoErrorHighlight(false);
-    setErrorMessage(null);
+    executeAttendanceSubmit(dataUrl);
   };
 
   // ==========================================
-  // CLOCK IN SUBMIT (STRICT CAMERA ENFORCED)
+  // VIEW: IF ALREADY COMPLETED FOR TODAY
   // ==========================================
-  const handleClockIn = async () => {
-    if (!currentUser) return;
-    if (!activeShift) {
-      setErrorMessage('Belum ada shift aktif yang ditugaskan kepada Anda.');
-      return;
-    }
+  if (isClockedOut && !successResult) {
+    return (
+      <div className="max-w-md mx-auto space-y-4 p-2 sm:p-4">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xl text-center space-y-5">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
+            <CheckCircle2 className="w-9 h-9" />
+          </div>
 
-    setErrorMessage(null);
-    setSuccessMessage(null);
+          <div>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+              Hari Ini Selesai
+            </span>
+            <h2 className="text-xl font-black text-slate-900 mt-2">
+              Presensi Telah Lengkap!
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Anda telah melakukan absen masuk dan absen pulang hari ini.
+            </p>
+          </div>
 
-    // 1. STRICT CAMERA VALIDATION: Clock in MUST have a camera selfie photo
-    if (!clockInPhoto) {
-      setPhotoErrorHighlight(true);
-      setErrorMessage(
-        '⚠️ Wajib Mengambil Foto Selfie Kamera! Sistem mewajibkan verifikasi wajah langsung dari kamera sebelum melakukan Clock In.'
-      );
-      if (!cameraActive) {
-        startCamera();
-      }
-      return;
-    }
+          {/* Side-by-side verification photos */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 text-left space-y-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Foto Masuk (In)
+              </span>
+              <div className="aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300">
+                {todayAttendance?.clock_in_selfie_url ? (
+                  <img
+                    src={todayAttendance.clock_in_selfie_url}
+                    alt="Foto Masuk"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <User className="w-6 h-6" />
+                  </div>
+                )}
+              </div>
+              <div className="text-xs font-bold text-slate-800 font-mono">
+                {formatTime(todayAttendance?.clock_in_time)} WIB
+              </div>
+            </div>
 
-    // 2. Validate Geofence policy
-    if (!isInsideGeofence && selectedLocation?.policy === 'BLOCK_OUTSIDE_RADIUS') {
-      setErrorMessage(
-        `Presensi Ditolak: Anda berada ${formatDistance(
-          distanceMeters || 0
-        )} dari ${selectedLocation.name}. Kebijakan mewajibkan Anda berada di dalam radius ${
-          selectedLocation.radius_meters
-        } meter.`
-      );
-      return;
-    }
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 text-left space-y-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Foto Pulang (Out)
+              </span>
+              <div className="aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300">
+                {todayAttendance?.clock_out_selfie_url ? (
+                  <img
+                    src={todayAttendance.clock_out_selfie_url}
+                    alt="Foto Pulang"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <User className="w-6 h-6" />
+                  </div>
+                )}
+              </div>
+              <div className="text-xs font-bold text-slate-800 font-mono">
+                {formatTime(todayAttendance?.clock_out_time)} WIB
+              </div>
+            </div>
+          </div>
 
-    setSubmitting(true);
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+            <span>Total Waktu Kerja:</span>
+            <span className="font-bold text-slate-900 font-mono">
+              {formatMinutes(todayAttendance?.work_duration_minutes || 0)}
+            </span>
+          </div>
 
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
-    const { status, lateMinutes } = evaluateClockInStatus(now, activeShift);
-
-    const record: AttendanceRecord = {
-      id: `att-${Date.now()}`,
-      employee_id: currentUser.id,
-      shift_id: activeShift.id,
-      attendance_date: todayStr,
-      clock_in_time: now.toISOString(),
-      clock_in_lat: userCoords?.latitude,
-      clock_in_lng: userCoords?.longitude,
-      clock_in_accuracy: userCoords?.accuracy,
-      clock_in_distance_meters: distanceMeters ?? 0,
-      clock_in_location_name: selectedLocation?.name || 'Office',
-      clock_in_device: getDeviceInfo(),
-      clock_in_selfie_url: clockInPhoto,
-      clock_in_status: status,
-      late_minutes: lateMinutes,
-      early_checkout_minutes: 0,
-      work_duration_minutes: 0,
-      overtime_minutes: 0,
-      is_outside_geofence: !isInsideGeofence,
-      approval_status: !isInsideGeofence ? 'PENDING' : 'APPROVED',
-      notes: lateMinutes > 0 ? `Terlambat ${lateMinutes} menit` : 'Clock In Tepat Waktu',
-    };
-
-    dataService.saveAttendance(record);
-    dataService.logAudit({
-      user_name: currentUser.full_name,
-      action: 'CLOCK_IN',
-      module: 'ATTENDANCE',
-      record_id: record.id,
-      after_data: { status, lateMinutes, distance: distanceMeters, hasPhoto: true },
-    });
-
-    setTodayAttendance(record);
-    setSubmitting(false);
-    setSuccessMessage(
-      `🎉 Clock In Berhasil! Status: ${status.toUpperCase()}${
-        lateMinutes > 0 ? ` (Terlambat ${lateMinutes}m)` : ' (Tepat Waktu)'
-      }. Foto kamera telah diverifikasi dan tersimpan.`
+          <button
+            type="button"
+            onClick={() => {
+              // Allow retake clock out if needed
+              startCamera('user');
+            }}
+            className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition-colors cursor-pointer"
+          >
+            Ambil Foto Ulang Clock Out
+          </button>
+        </div>
+      </div>
     );
-  };
+  }
 
   // ==========================================
-  // CLOCK OUT SUBMIT (STRICT CAMERA ENFORCED)
+  // VIEW: SUCCESS DIALOG (POPUP LIKE TALENTA)
   // ==========================================
-  const handleClockOut = async () => {
-    if (!currentUser || !todayAttendance) return;
+  if (successResult) {
+    return (
+      <div className="max-w-md mx-auto p-4 space-y-4 animate-in zoom-in-95 duration-200">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl text-center space-y-5">
+          <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30 animate-bounce">
+            <Check className="w-9 h-9 stroke-[3]" />
+          </div>
 
-    setErrorMessage(null);
-    setSuccessMessage(null);
+          <div>
+            <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+              {successResult.type === 'CLOCK_IN' ? 'Clock In Berhasil' : 'Clock Out Berhasil'}
+            </span>
+            <h2 className="text-2xl font-black text-slate-900 mt-2">
+              Presensi Berhasil Direkam!
+            </h2>
+            <p className="text-xs font-semibold text-slate-500 mt-1 font-mono">
+              Pukul {successResult.timeStr} WIB • {successResult.statusText}
+            </p>
+          </div>
 
-    // 1. STRICT CAMERA VALIDATION: Clock out MUST have a NEW camera selfie photo
-    if (!clockOutPhoto) {
-      setPhotoErrorHighlight(true);
-      setErrorMessage(
-        '⚠️ Wajib Mengambil Foto Selfie Kamera untuk Pulang! Sistem mewajibkan foto verifikasi wajah terkini dari kamera sebelum Clock Out.'
-      );
-      if (!cameraActive) {
-        startCamera();
-      }
-      return;
-    }
+          {/* Captured selfie verification preview */}
+          <div className="relative aspect-4/3 rounded-2xl overflow-hidden shadow-md border-2 border-emerald-500 max-w-xs mx-auto">
+            <img
+              src={successResult.photoUrl}
+              alt="Verifikasi Presensi"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute top-2 left-2 bg-emerald-950/85 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <span>LIVE PHOTO VERIFIED</span>
+            </div>
+          </div>
 
-    setSubmitting(true);
+          <div className="text-xs text-slate-500">
+            Data kehadiran dan koordinat lokasi GPS telah tersimpan aman di sistem HR.
+          </div>
 
-    const now = new Date();
-    const clockInTime = new Date(todayAttendance.clock_in_time!);
-
-    const { workDurationMinutes, earlyCheckoutMinutes, overtimeMinutes } = evaluateClockOut(
-      clockInTime,
-      now,
-      activeShift || undefined
+          <button
+            type="button"
+            onClick={() => setSuccessResult(null)}
+            className="w-full py-3.5 bg-[#1D63FF] hover:bg-blue-600 text-white text-xs font-bold rounded-2xl shadow-lg shadow-blue-500/30 transition-all cursor-pointer"
+          >
+            Selesai & Tutup Layar
+          </button>
+        </div>
+      </div>
     );
+  }
 
-    const updated: AttendanceRecord = {
-      ...todayAttendance,
-      clock_out_time: now.toISOString(),
-      clock_out_lat: userCoords?.latitude,
-      clock_out_lng: userCoords?.longitude,
-      clock_out_accuracy: userCoords?.accuracy,
-      clock_out_distance_meters: distanceMeters ?? 0,
-      clock_out_location_name: selectedLocation?.name || 'Office',
-      clock_out_device: getDeviceInfo(),
-      clock_out_selfie_url: clockOutPhoto,
-      work_duration_minutes: workDurationMinutes,
-      early_checkout_minutes: earlyCheckoutMinutes,
-      overtime_minutes: overtimeMinutes,
-    };
-
-    dataService.saveAttendance(updated);
-    dataService.logAudit({
-      user_name: currentUser.full_name,
-      action: 'CLOCK_OUT',
-      module: 'ATTENDANCE',
-      record_id: updated.id,
-      after_data: { durationMinutes: workDurationMinutes, overtimeMinutes, hasPhoto: true },
-    });
-
-    setTodayAttendance(updated);
-    setSubmitting(false);
-    setSuccessMessage(
-      `🎉 Clock Out Berhasil! Total durasi kerja: ${formatMinutes(
-        workDurationMinutes
-      )}. Foto kamera pulang telah diverifikasi dan tersimpan.`
-    );
-  };
-
-  // Current active photo for camera card display
-  const currentActivePhoto = !isClockedIn ? clockInPhoto : clockOutPhoto;
+  // ==========================================
+  // TALENTA LIVE CAMERA ATTENDANCE VIEWPORT
+  // ==========================================
+  const attendanceMode = !isClockedIn ? 'CLOCK_IN' : 'CLOCK_OUT';
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Top Banner Notice: Mandatory Camera Policy */}
-      <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-[#0B1528] text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-md flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 shrink-0">
+    <div className="max-w-md mx-auto space-y-3.5 pb-6">
+      {/* TALENTA HEADER: Clock In / Clock Out Mode Banner */}
+      <div className="bg-[#0B1528] rounded-2xl p-3.5 text-white flex items-center justify-between shadow-lg border border-slate-800">
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-md ${
+              attendanceMode === 'CLOCK_IN' ? 'bg-[#1D63FF]' : 'bg-rose-600'
+            }`}
+          >
             <Camera className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-white tracking-wide">
-                KEBIJAKAN PRESENSI KAMERA WAJIB
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-2xs">
-                Clock In & Clock Out Wajib Foto
-              </span>
+            <div className="text-xs font-black tracking-tight flex items-center gap-1.5">
+              <span>{attendanceMode === 'CLOCK_IN' ? 'Clock In (Masuk)' : 'Clock Out (Pulang)'}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Setiap kali melakukan <strong>Clock In (Masuk)</strong> maupun{' '}
-              <strong>Clock Out (Pulang)</strong>, Anda diwajibkan mengambil foto selfie wajah langsung
-              dari kamera untuk verifikasi anti-fraud.
-            </p>
+            <div className="text-[10px] text-slate-300 font-mono">
+              {currentTime.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })} •{' '}
+              <b className="text-white">{currentTime.toLocaleTimeString('id-ID')} WIB</b>
+            </div>
+          </div>
+        </div>
+
+        {/* GPS Distance Badge */}
+        <div className="text-right">
+          <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+            isInsideGeofence ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+          }`}>
+            <MapPin className="w-3 h-3" />
+            <span>{isInsideGeofence ? 'Radius OK' : 'Luar Radius'}</span>
+          </div>
+          <div className="text-[9px] text-slate-400 font-mono mt-0.5">
+            {distanceMeters !== null ? formatDistance(distanceMeters) : 'GPS...'}
           </div>
         </div>
       </div>
 
-      {/* Top Notification Alerts */}
-      {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-between shadow-xs animate-in fade-in duration-200">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span className="text-sm font-semibold">{successMessage}</span>
-          </div>
-          <button
-            onClick={() => setSuccessMessage(null)}
-            className="text-xs text-emerald-700 hover:underline font-bold"
-          >
-            Tutup
-          </button>
-        </div>
-      )}
-
+      {/* ERROR BANNER IF ANY */}
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-950 flex items-start justify-between shadow-xs animate-in fade-in duration-200">
-          <div className="flex items-start gap-2.5">
-            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-            <span className="text-sm font-bold leading-relaxed">{errorMessage}</span>
+        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold rounded-xl flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <span>{errorMessage}</span>
           </div>
           <button
             onClick={() => setErrorMessage(null)}
-            className="text-xs text-rose-700 hover:underline font-bold shrink-0 ml-3"
+            className="text-[11px] text-rose-600 hover:underline font-bold"
           >
             Tutup
           </button>
         </div>
       )}
 
-      {/* Grid: Clock In Terminal on Left, Mandatory Camera on Right */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Main Terminal Card (7 cols) */}
-        <div className="md:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-          {/* Header & Live Clock */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+      {/* ========================================================================= */}
+      {/* TALENTA VIEWFINDER CONTAINER: LIVE CAMERA STREAM WITH FACIAL GUIDELINE    */}
+      {/* ========================================================================= */}
+      <div className="relative aspect-[3/4] max-w-sm mx-auto bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-800">
+        {/* Flash Effect on shutter capture */}
+        {shutterFlash && (
+          <div className="absolute inset-0 bg-white z-40 animate-out fade-out duration-200" />
+        )}
+
+        {/* ALWAYS-MOUNTED VIDEO ELEMENT */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`w-full h-full object-cover ${
+            facingMode === 'user' ? 'transform -scale-x-100' : ''
+          }`}
+        />
+
+        {/* TALENTA FACIAL ALIGNMENT OVAL OVERLAY */}
+        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6 z-10">
+          <div className="w-56 h-72 border-2 border-dashed border-white/60 rounded-[90px] shadow-[0_0_0_9999px_rgba(0,0,0,0.35)] flex items-center justify-center">
+            <span className="text-[11px] font-semibold text-white/90 bg-slate-950/60 px-3 py-1 rounded-full backdrop-blur-xs tracking-wide">
+              Posisikan Wajah di Sini
+            </span>
+          </div>
+        </div>
+
+        {/* CAMERA LOADING SPINNER */}
+        {cameraLoading && (
+          <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-center text-white text-xs gap-2 z-20">
+            <RefreshCw className="w-8 h-8 animate-spin text-blue-400" />
+            <span className="font-bold">Membuka Kamera Live...</span>
+          </div>
+        )}
+
+        {/* TOP CONTROLS INSIDE CAMERA: Switch Camera Button & Geofence Pin */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20">
+          <div className="bg-slate-950/75 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-white font-medium border border-white/10 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="truncate max-w-[150px]">{selectedLocation?.name.split(' - ')[0] || 'Office'}</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={toggleFacingMode}
+            className="w-10 h-10 rounded-full bg-slate-950/75 hover:bg-slate-900 backdrop-blur-md text-white border border-white/15 flex items-center justify-center shadow-lg active:scale-90 transition-transform cursor-pointer"
+            title="Ganti Kamera Depan / Belakang"
+          >
+            <SwitchCamera className="w-5 h-5 text-amber-300" />
+          </button>
+        </div>
+
+        {/* BOTTOM METADATA WATERMARK OVERLAY */}
+        <div className="absolute bottom-3 left-3 right-3 bg-slate-950/80 backdrop-blur-md p-2.5 rounded-xl border border-white/10 text-white text-[10px] font-mono z-20 flex items-center justify-between">
+          <div className="truncate min-w-0 pr-2">
+            <div className="font-bold text-amber-400 truncate">
+              {currentUser?.full_name} • {currentUser?.employee_code || 'EMP'}
+            </div>
+            <div className="text-[9px] text-slate-300">
+              Shift: {activeShift?.name || 'Reguler'} ({activeShift?.start_time} - {activeShift?.end_time})
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <span className="text-emerald-400 font-bold">
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* TALENTA BIG SHUTTER BUTTON: 1-CLICK AMBIL FOTO & SELESAI ABSEN             */}
+      {/* ========================================================================= */}
+      <div className="text-center space-y-3 pt-1">
+        <button
+          type="button"
+          onClick={handleShutterClick}
+          disabled={submitting}
+          className={`w-full py-4 px-6 rounded-2xl text-sm font-black tracking-wide text-white shadow-xl transition-all flex items-center justify-center gap-3 cursor-pointer active:scale-95 ${
+            attendanceMode === 'CLOCK_IN'
+              ? 'bg-gradient-to-r from-[#1D63FF] to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-blue-500/35'
+              : 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 shadow-rose-500/35'
+          }`}
+        >
+          {/* Circular shutter camera icon */}
+          <div className="w-7 h-7 rounded-full bg-white/20 border-2 border-white flex items-center justify-center">
+            <div className="w-3.5 h-3.5 rounded-full bg-white animate-pulse" />
+          </div>
+          <span>
+            {submitting
+              ? 'MEREKAM ABSENSI...'
+              : attendanceMode === 'CLOCK_IN'
+              ? 'AMBIL FOTO & CLOCK IN'
+              : 'AMBIL FOTO & CLOCK OUT'}
+          </span>
+        </button>
+
+        {/* FALLBACK BUTTON: NATIVE DEVICE CAMERA */}
+        <div className="flex items-center justify-center gap-3 text-xs">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-slate-600 hover:text-slate-900 font-semibold inline-flex items-center gap-1.5 py-1 px-3 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-blue-600" />
+            <span>Buka Kamera Bawaan HP</span>
+          </button>
+
+          <span className="text-slate-300">•</span>
+
+          <button
+            type="button"
+            onClick={handleSimulateShutter}
+            className="text-slate-500 hover:text-slate-800 text-[11px] underline cursor-pointer"
+          >
+            Simulasi Foto (Testing)
+          </button>
+        </div>
+
+        {/* Hidden file input for native device camera */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="user"
+          onChange={handleDeviceCameraCapture}
+          className="hidden"
+        />
+      </div>
+
+      {/* ========================================================================= */}
+      {/* COLLAPSIBLE SHIFT & LOCATION ADJUSTMENT (For Testing / Special Shifts)    */}
+      {/* ========================================================================= */}
+      <div className="pt-2 border-t border-slate-200">
+        <button
+          type="button"
+          onClick={() => setShowLocationSettings(!showLocationSettings)}
+          className="w-full flex items-center justify-between text-xs text-slate-500 hover:text-slate-800 py-1 font-medium cursor-pointer"
+        >
+          <span className="flex items-center gap-1.5">
+            <Building className="w-3.5 h-3.5 text-slate-400" />
+            <span>Pengaturan Lokasi Cabang & Shift</span>
+          </span>
+          {showLocationSettings ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {showLocationSettings && (
+          <div className="mt-2.5 p-3.5 bg-white rounded-2xl border border-slate-200 space-y-3 text-xs animate-in fade-in duration-150">
             <div>
-              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Live Attendance Terminal
-              </div>
-              <div className="text-sm font-medium text-slate-700">{formatDate(currentTime)}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold font-mono tracking-tight text-slate-900 tabular-nums">
-                {currentTime.toLocaleTimeString([], { hour12: false })}
-              </div>
-              <div className="text-[11px] text-slate-400 font-mono">WIB (GMT+7)</div>
-            </div>
-          </div>
-
-          {/* Today's Status Banner */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div className="space-y-0.5">
-              <span className="text-xs text-slate-500 font-medium">Status Hari Ini:</span>
-              <div className="flex items-center gap-2">
-                {isClockedOut ? (
-                  <StatusBadge status="Completed for Today" type="generic" />
-                ) : isClockedIn ? (
-                  <StatusBadge status={todayAttendance?.clock_in_status || 'present'} />
-                ) : (
-                  <span className="text-xs font-semibold text-slate-600">Belum Clock In</span>
-                )}
-                {todayAttendance?.late_minutes ? (
-                  <span className="text-xs text-amber-700 font-mono font-medium">
-                    (Terlambat {todayAttendance.late_minutes}m)
-                  </span>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="text-right">
-              <div className="text-xs text-slate-500">Jam Masuk / Pulang</div>
-              <div className="text-xs font-mono font-semibold text-slate-800 tabular-nums">
-                {formatTime(todayAttendance?.clock_in_time)} —{' '}
-                {formatTime(todayAttendance?.clock_out_time)}
-              </div>
-            </div>
-          </div>
-
-          {/* Shift Selection */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-              <span>Shift Kerja Ditugaskan</span>
-              <span className="text-[11px] text-slate-500">
-                Toleransi: {activeShift?.tolerance_minutes} menit
-              </span>
-            </label>
-            <select
-              value={activeShift?.id || ''}
-              onChange={(e) => {
-                const found = shifts.find((s) => s.id === e.target.value);
-                if (found) setActiveShift(found);
-              }}
-              disabled={isClockedIn}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:opacity-70 font-medium text-slate-900"
-            >
-              {shifts.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.start_time} - {s.end_time})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Location / Geofence Selector */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700">Lokasi Presensi (Cabang)</label>
-              <button
-                type="button"
-                onClick={requestGeolocation}
-                className="text-[11px] text-slate-600 hover:text-slate-900 flex items-center gap-1 font-medium cursor-pointer"
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                Lokasi Kantor (Cabang)
+              </label>
+              <select
+                value={selectedLocation?.id || ''}
+                onChange={(e) => {
+                  const found = locations.find((l) => l.id === e.target.value);
+                  if (found) handleLocationChange(found);
+                }}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
               >
-                <RefreshCw className={`w-3 h-3 ${gpsLoading ? 'animate-spin' : ''}`} />
-                <span>Refresh GPS</span>
-              </button>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name} (Radius: {loc.radius_meters}m)
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <select
-              value={selectedLocation?.id || ''}
-              onChange={(e) => {
-                const found = locations.find((l) => l.id === e.target.value);
-                if (found) handleLocationChange(found);
-              }}
-              disabled={isClockedIn}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
-            >
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name} (Radius: {loc.radius_meters}m)
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                Shift Kerja
+              </label>
+              <select
+                value={activeShift?.id || ''}
+                onChange={(e) => {
+                  const found = shifts.find((s) => s.id === e.target.value);
+                  if (found) setActiveShift(found);
+                }}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+              >
+                {shifts.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.start_time} - {s.end_time})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {/* Geofence Status Box */}
-            <div
-              className={`p-3.5 rounded-xl border flex items-center justify-between transition-colors ${
-                isInsideGeofence
-                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-                  : 'bg-amber-50/80 border-amber-200 text-amber-950'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-3 h-3 rounded-full shrink-0 ${
-                    isInsideGeofence
-                      ? 'bg-emerald-500 ring-4 ring-emerald-200/60'
-                      : 'bg-amber-500 ring-4 ring-amber-200/60'
-                  }`}
-                />
-                <div>
-                  <div className="text-xs font-semibold">
-                    {isInsideGeofence
-                      ? 'Lokasi Terverifikasi: Di Dalam Radius Kantor'
-                      : 'Di Luar Radius Kantor Yang Diizinkan'}
-                  </div>
-                  <div className="text-[11px] text-slate-600 font-mono">
-                    Jarak: {distanceMeters !== null ? formatDistance(distanceMeters) : '--'} (Batas:{' '}
-                    {selectedLocation?.radius_meters}m) · Akurasi: ±{userCoords?.accuracy || 10}m
-                  </div>
-                </div>
-              </div>
-
-              {/* Simulation buttons */}
-              <div className="flex items-center gap-1.5 shrink-0">
+            {/* Simulation buttons */}
+            <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">
+              <span className="text-slate-400">Simulasi Radius:</span>
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => simulateCoordinates(true)}
-                  className="px-2 py-1 text-[11px] font-medium bg-white hover:bg-slate-100 rounded border border-slate-300 shadow-2xs cursor-pointer"
-                  title="Simulasikan posisi di dalam kantor"
+                  className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 cursor-pointer"
                 >
-                  Inside
+                  Di Dalam
                 </button>
                 <button
                   type="button"
                   onClick={() => simulateCoordinates(false)}
-                  className="px-2 py-1 text-[11px] font-medium bg-white hover:bg-slate-100 rounded border border-slate-300 shadow-2xs cursor-pointer"
-                  title="Simulasikan posisi di luar kantor"
+                  className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold border border-amber-200 cursor-pointer"
                 >
-                  Outside
+                  Di Luar
                 </button>
               </div>
             </div>
           </div>
-
-          {/* Photo Readiness Status Pill */}
-          <div className="pt-1">
-            {!isClockedIn ? (
-              <div
-                className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
-                  clockInPhoto
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold'
-                    : 'bg-rose-50 border-rose-200 text-rose-900 font-semibold'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {clockInPhoto ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <Camera className="w-4 h-4 text-rose-600 shrink-0 animate-pulse" />
-                  )}
-                  <span>
-                    {clockInPhoto
-                      ? 'Foto Selfie Masuk Terverifikasi'
-                      : 'Foto Selfie Masuk Belum Diambil (Wajib)'}
-                  </span>
-                </div>
-                {!clockInPhoto && (
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => startCamera()}
-                      className="text-[11px] px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 cursor-pointer"
-                    >
-                      Buka Live
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-[11px] px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 cursor-pointer"
-                    >
-                      Kamera HP
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : !isClockedOut ? (
-              <div
-                className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
-                  clockOutPhoto
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold'
-                    : 'bg-amber-50 border-amber-300 text-amber-950 font-semibold'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {clockOutPhoto ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <Camera className="w-4 h-4 text-amber-600 shrink-0 animate-pulse" />
-                  )}
-                  <span>
-                    {clockOutPhoto
-                      ? 'Foto Selfie Pulang Terverifikasi'
-                      : 'Wajib Ambil Foto Kamera Baru untuk Clock Out (Pulang)'}
-                  </span>
-                </div>
-                {!clockOutPhoto && (
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => startCamera()}
-                      className="text-[11px] px-2.5 py-1 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 cursor-pointer"
-                    >
-                      Buka Live
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-[11px] px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 cursor-pointer"
-                    >
-                      Kamera HP
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : null}
-          </div>
-
-          {/* Primary Action Buttons */}
-          <div className="pt-2">
-            {!isClockedIn ? (
-              <button
-                type="button"
-                onClick={handleClockIn}
-                disabled={submitting}
-                className={`w-full py-4 rounded-2xl text-base font-bold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  clockInPhoto
-                    ? 'bg-[#1D63FF] hover:bg-blue-600 text-white shadow-blue-500/25 active:scale-[0.99]'
-                    : 'bg-slate-800 hover:bg-slate-900 text-white'
-                }`}
-              >
-                {clockInPhoto ? (
-                  <>
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span>{submitting ? 'Menyimpan Presensi...' : 'KONFIRMASI CLOCK IN SEKARANG'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-5 h-5 text-amber-300" />
-                    <span>CLOCK IN (WAJIB FOTO KAMERA)</span>
-                  </>
-                )}
-              </button>
-            ) : !isClockedOut ? (
-              <button
-                type="button"
-                onClick={handleClockOut}
-                disabled={submitting}
-                className={`w-full py-4 rounded-2xl text-base font-bold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  clockOutPhoto
-                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-500/25 active:scale-[0.99]'
-                    : 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/25'
-                }`}
-              >
-                {clockOutPhoto ? (
-                  <>
-                    <CheckCircle2 className="w-5 h-5 text-white" />
-                    <span>{submitting ? 'Merekam Clock Out...' : 'KONFIRMASI CLOCK OUT SEKARANG'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-5 h-5 text-white" />
-                    <span>CLOCK OUT (WAJIB FOTO KAMERA)</span>
-                  </>
-                )}
-              </button>
-            ) : (
-              <div className="w-full py-4 bg-emerald-50 text-emerald-900 text-center font-bold rounded-2xl text-sm border border-emerald-200 flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <span>Presensi Hari Ini Telah Lengkap (Clock In & Clock Out Berhasil)</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Mandatory Camera Card (5 cols) */}
-        <div className="md:col-span-5 space-y-6">
-          {/* Camera Card */}
-          <div
-            className={`bg-white rounded-2xl border shadow-sm p-5 space-y-4 transition-all ${
-              photoErrorHighlight
-                ? 'border-rose-400 ring-4 ring-rose-100 bg-rose-50/20'
-                : 'border-slate-200'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                <Camera className="w-4 h-4 text-blue-600" />
-                <span>
-                  {!isClockedIn
-                    ? 'Foto Kamera Wajib: Clock In'
-                    : !isClockedOut
-                    ? 'Foto Kamera Wajib: Clock Out'
-                    : 'Foto Verifikasi Hari Ini'}
-                </span>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
-                Wajib (Mandatory)
-              </span>
-            </div>
-
-            {/* Video Viewport / Snapshot Container */}
-            <div className="relative aspect-4/3 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800 shadow-inner">
-              {/* Always mounted video element so videoRef.current is never null */}
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className={`w-full h-full object-cover ${
-                  facingMode === 'user' ? 'transform -scale-x-100' : ''
-                } ${cameraActive && !currentActivePhoto ? 'block' : 'hidden'}`}
-              />
-
-              {currentActivePhoto && (
-                <div className="relative w-full h-full">
-                  <img
-                    src={currentActivePhoto}
-                    alt="Selfie verification"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2 left-2 bg-emerald-950/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-1 rounded-md border border-emerald-400/40 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    <span>FOTO TERAMBIL & TERVERIFIKASI</span>
-                  </div>
-                </div>
-              )}
-
-              {!cameraActive && !currentActivePhoto && (
-                <div className="text-center p-4 space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
-                    <Camera className="w-6 h-6" />
-                  </div>
-                  <p className="text-xs text-slate-300 font-medium max-w-[220px] mx-auto">
-                    Kamera siap. Tekan tombol di bawah untuk mengambil foto selfie verifikasi.
-                  </p>
-                </div>
-              )}
-
-              {cameraLoading && (
-                <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center text-white text-xs gap-2 z-10">
-                  <RefreshCw className="w-6 h-6 animate-spin text-blue-400" />
-                  <span className="font-semibold">Mengaktifkan kamera perangkat...</span>
-                </div>
-              )}
-
-              {/* Geofence Overlay Pill on camera view */}
-              <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-xs text-white p-2 rounded-lg text-[10px] font-mono flex items-center justify-between border border-white/10 z-10">
-                <span className="truncate max-w-[140px]">
-                  {selectedLocation?.name.split(' - ')[0] || 'Office'}
-                </span>
-                <span className={isInsideGeofence ? 'text-emerald-400 font-bold' : 'text-amber-400'}>
-                  {isInsideGeofence ? '● GPS OK' : '▲ DILUAR RADIUS'}
-                </span>
-              </div>
-            </div>
-
-            {/* Helper alert when camera is active */}
-            {cameraActive && (
-              <div className="flex items-center justify-between text-[11px] text-slate-600 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200">
-                <span>Layar kamera hitam di HP Anda?</span>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-blue-700 font-bold hover:underline flex items-center gap-1 cursor-pointer shrink-0"
-                >
-                  <Smartphone className="w-3.5 h-3.5" />
-                  <span>Buka Kamera HP Langsung</span>
-                </button>
-              </div>
-            )}
-
-            {cameraError && (
-              <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 p-3 rounded-xl leading-relaxed font-medium space-y-1.5">
-                <div className="flex items-center gap-1.5 font-bold">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>Kamera Live WebRTC Tidak Dapat Dirender</span>
-                </div>
-                <p>{cameraError}</p>
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 text-xs shadow-xs"
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    <span>Ambil Foto via Kamera HP Bawaan Sekarang</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Camera Action Buttons */}
-            <div className="space-y-2.5">
-              {!cameraActive && !currentActivePhoto ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startCamera()}
-                      className="py-3 px-3 bg-[#1D63FF] hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 cursor-pointer active:scale-95"
-                    >
-                      <Camera className="w-4 h-4" />
-                      <span>Buka Kamera Live</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="py-3 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 cursor-pointer active:scale-95"
-                    >
-                      <Smartphone className="w-4 h-4" />
-                      <span>Buka Kamera HP (Bawaan)</span>
-                    </button>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 leading-normal flex items-start gap-2">
-                    <span className="shrink-0 text-amber-500 font-bold">💡</span>
-                    <span>
-                      <b>Rekomendasi di Ponsel:</b> Gunakan tombol <b>"Buka Kamera HP (Bawaan)"</b> jika browser HP Anda mengalami layar hitam (*black screen*). Aplikasi kamera ponsel akan otomatis terbuka.
-                    </span>
-                  </div>
-                </div>
-              ) : cameraActive ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={capturePhoto}
-                      className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 active:scale-95"
-                    >
-                      <Camera className="w-4 h-4" />
-                      <span>AMBIL FOTO SEKARANG</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={toggleFacingMode}
-                      className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl cursor-pointer"
-                      title="Ganti Kamera Depan / Belakang"
-                    >
-                      <SwitchCamera className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={stopCamera}
-                      className="px-3.5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl cursor-pointer"
-                    >
-                      Batal
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!isClockedIn) setClockInPhoto(null);
-                      else setClockOutPhoto(null);
-                      startCamera();
-                    }}
-                    className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Foto Ulang (Retake)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Ganti Foto via HP</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Hidden file input for native mobile camera capture */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="user"
-                onChange={handleDeviceCameraCapture}
-                className="hidden"
-              />
-
-              {/* Test Sandbox Simulation Option */}
-              <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400">
-                <span>Uji Coba Sandbox:</span>
-                <button
-                  type="button"
-                  onClick={handleSimulateSelfie}
-                  className="text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
-                >
-                  Simulasikan Foto Kamera
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Today's Completed Selfies Card (Show both In & Out if available) */}
-          {(todayAttendance?.clock_in_selfie_url || todayAttendance?.clock_out_selfie_url) && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
-              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Rekap Bukti Foto Presensi Hari Ini</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {/* Clock In Photo */}
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                    1. Clock In (Masuk)
-                  </span>
-                  {todayAttendance.clock_in_selfie_url ? (
-                    <div className="aspect-4/3 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 relative">
-                      <img
-                        src={todayAttendance.clock_in_selfie_url}
-                        alt="Clock In Selfie"
-                        className="w-full h-full object-cover"
-                      />
-                      <span className="absolute bottom-1 right-1 text-[9px] font-mono bg-black/70 text-white px-1 rounded">
-                        {formatTime(todayAttendance.clock_in_time)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="aspect-4/3 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">
-                      Belum Ada
-                    </div>
-                  )}
-                </div>
-
-                {/* Clock Out Photo */}
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                    2. Clock Out (Pulang)
-                  </span>
-                  {todayAttendance.clock_out_selfie_url ? (
-                    <div className="aspect-4/3 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 relative">
-                      <img
-                        src={todayAttendance.clock_out_selfie_url}
-                        alt="Clock Out Selfie"
-                        className="w-full h-full object-cover"
-                      />
-                      <span className="absolute bottom-1 right-1 text-[9px] font-mono bg-black/70 text-white px-1 rounded">
-                        {formatTime(todayAttendance.clock_out_time)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="aspect-4/3 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">
-                      Belum Ada
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Policy Specs */}
-          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-              <ShieldAlert className="w-4 h-4 text-blue-600" />
-              <span>Standar Keamanan Anti-Fraud</span>
-            </div>
-            <ul className="text-xs text-slate-600 space-y-1.5 leading-relaxed">
-              <li className="flex items-start gap-2">
-                <span className="text-rose-500 font-bold">•</span>
-                <span>
-                  <strong>Clock In Wajib Kamera:</strong> Memastikan karyawan yang hadir adalah
-                  pemilik akun asli di lokasi kerja.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-rose-500 font-bold">•</span>
-                <span>
-                  <strong>Clock Out Wajib Kamera:</strong> Mencegah titip absen pulang dan
-                  memastikan kehadiran fisik hingga akhir shift.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-500 font-bold">•</span>
-                <span>
-                  <strong>Geofencing Radius:</strong> Radius kantor {selectedLocation?.radius_meters || 100}m
-                  tervalidasi GPS real-time.
-                </span>
-              </li>
-            </ul>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
