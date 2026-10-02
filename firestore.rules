@@ -1,0 +1,173 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'password');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'triyantoandi80@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Test connection endpoint
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // Companies
+    match /companies/{companyId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(companyId);
+    }
+
+    // Branches & Geofence
+    match /branches/{branchId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(branchId);
+    }
+
+    // Departments
+    match /departments/{departmentId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(departmentId);
+    }
+
+    // Positions
+    match /positions/{positionId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(positionId);
+    }
+
+    // Shifts
+    match /shifts/{shiftId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(shiftId);
+    }
+
+    // Employees
+    match /employees/{employeeId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin() && isValidId(employeeId);
+      allow update: if (isAdmin() || (isSignedIn() && incoming().id == existing().id)) && isValidId(employeeId);
+    }
+
+    // Attendance Records
+    match /attendance_records/{attendanceId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(attendanceId);
+      allow update: if isSignedIn() && isValidId(attendanceId) && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow delete: if isAdmin() && isValidId(attendanceId);
+    }
+
+    // Leave Requests
+    match /leave_requests/{leaveId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(leaveId);
+      allow update: if isSignedIn() && isValidId(leaveId) && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow delete: if isAdmin() && isValidId(leaveId);
+    }
+
+    // Permission Requests
+    match /permission_requests/{permId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(permId);
+      allow update: if isSignedIn() && isValidId(permId) && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow delete: if isAdmin() && isValidId(permId);
+    }
+
+    // Overtime Requests
+    match /overtime_requests/{otId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(otId);
+      allow update: if isSignedIn() && isValidId(otId) && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow delete: if isAdmin() && isValidId(otId);
+    }
+
+    // Attendance Corrections
+    match /corrections/{corrId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(corrId);
+      allow update: if isSignedIn() && isValidId(corrId) && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow delete: if isAdmin() && isValidId(corrId);
+    }
+
+    // Business Trips (SPPD)
+    match /business_trips/{tripId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(tripId);
+      allow update: if isSignedIn() && isValidId(tripId) && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow delete: if isAdmin() && isValidId(tripId);
+    }
+
+    // Reimbursements
+    match /reimbursements/{claimId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(claimId);
+      allow update: if isSignedIn() && isValidId(claimId) && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow delete: if isAdmin() && isValidId(claimId);
+    }
+
+    // Announcements
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(announcementId);
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.user_id == request.auth.uid || resource.data.user_id == 'ALL');
+      allow list: if isSignedIn() && (isAdmin() || resource.data.user_id == request.auth.uid || resource.data.user_id == 'ALL');
+      allow write: if isSignedIn() && isValidId(notificationId);
+    }
+
+    // Audit Logs
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && isValidId(logId);
+      allow update, delete: if false; // Immutable audit trail
+    }
+  }
+}

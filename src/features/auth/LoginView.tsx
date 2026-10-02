@@ -15,12 +15,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 
 export const LoginView: React.FC = () => {
-  const { login, switchRole } = useAuth();
+  const { login, loginWithGoogle, switchRole, isFirebaseConnected } = useAuth();
   const [identifier, setIdentifier] = useState('triyanto.andi');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +32,21 @@ export const LoginView: React.FC = () => {
     setLoading(false);
     if (!res.success) {
       setError(res.error || 'Username atau password tidak valid.');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const res = await loginWithGoogle();
+      if (!res.success) {
+        setError(res.error || 'Login Google gagal.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Gagal login dengan akun Google.');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -124,7 +140,53 @@ export const LoginView: React.FC = () => {
               <span>{loading ? 'Memverifikasi Kredensial...' : 'Masuk ke Portal HRIS'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+
+            <div className="relative flex items-center justify-center my-3">
+              <div className="border-t border-slate-200 w-full"></div>
+              <span className="bg-white px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider relative">
+                atau
+              </span>
+            </div>
+
+            {/* Google Firebase Sign In */}
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={googleLoading}
+              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-bold shadow-xs hover:border-slate-300 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.66-5.17 3.66-9.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.1C3.27 21.43 7.36 24 12 24z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.28 14.32c-.25-.72-.38-1.49-.38-2.32s.13-1.6.38-2.32V6.58H1.25C.45 8.17 0 9.99 0 12s.45 3.83 1.25 5.42l4.03-3.1z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.27 2.57 1.25 6.58l4.03 3.1c.95-2.83 3.6-4.93 6.72-4.93z"
+                />
+              </svg>
+              <span>{googleLoading ? 'Menghubungkan ke Google...' : 'Masuk dengan Akun Google (Firebase)'}</span>
+            </button>
           </form>
+
+          {/* Firebase Connection Status Banner */}
+          <div className="flex items-center justify-between px-3.5 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px]">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${isFirebaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
+              <span className="font-semibold text-slate-700">Firebase Cloud Firestore</span>
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFirebaseConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              {isFirebaseConnected ? 'Tersambung (Online)' : 'Standby'}
+            </span>
+          </div>
 
           {/* Quick Demo Role Logins */}
           <div className="pt-4 border-t border-slate-100 space-y-3">

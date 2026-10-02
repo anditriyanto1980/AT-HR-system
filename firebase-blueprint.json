@@ -1,0 +1,352 @@
+{
+  "entities": {
+    "Company": {
+      "title": "Company",
+      "description": "Company profile and system settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 256 },
+        "address": { "type": "string", "maxLength": 512 },
+        "phone": { "type": "string", "maxLength": 64 },
+        "email": { "type": "string", "maxLength": 128 },
+        "logo_url": { "type": "string", "maxLength": 1024 },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "code", "name", "phone", "email"]
+    },
+    "Branch": {
+      "title": "Branch",
+      "description": "Office or branch location with GPS geofence",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 256 },
+        "address": { "type": "string", "maxLength": 512 },
+        "city": { "type": "string", "maxLength": 128 },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "radius_meters": { "type": "number" },
+        "policy": { "type": "string", "maxLength": 64 },
+        "is_active": { "type": "boolean" },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "company_id", "code", "name", "latitude", "longitude", "radius_meters"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Company department entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 256 },
+        "code": { "type": "string", "maxLength": 64 },
+        "description": { "type": "string", "maxLength": 512 },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "company_id", "name", "code"]
+    },
+    "Position": {
+      "title": "Position",
+      "description": "Job position hierarchy in department",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "department_id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 256 },
+        "code": { "type": "string", "maxLength": 64 },
+        "level": { "type": "number" },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "department_id", "name", "code", "level"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee profile and credentials",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "employee_code": { "type": "string", "maxLength": 64 },
+        "nik": { "type": "string", "maxLength": 64 },
+        "full_name": { "type": "string", "maxLength": 256 },
+        "avatar_url": { "type": "string", "maxLength": 1024 },
+        "gender": { "type": "string", "maxLength": 32 },
+        "phone": { "type": "string", "maxLength": 64 },
+        "email": { "type": "string", "maxLength": 128 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "branch_id": { "type": "string", "maxLength": 128 },
+        "department_id": { "type": "string", "maxLength": 128 },
+        "position_id": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["SUPER_ADMIN", "HR_ADMIN", "MANAGER", "EMPLOYEE"] },
+        "employment_type": { "type": "string", "maxLength": 64 },
+        "employment_status": { "type": "string", "maxLength": 64 },
+        "join_date": { "type": "string", "maxLength": 64 },
+        "username": { "type": "string", "maxLength": 128 },
+        "login_access_enabled": { "type": "boolean" },
+        "auth_user_id": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "employee_code", "nik", "full_name", "role", "email"]
+    },
+    "Shift": {
+      "title": "Shift",
+      "description": "Work schedule shift definition",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "shift_type": { "type": "string", "maxLength": 64 },
+        "start_time": { "type": "string", "maxLength": 32 },
+        "end_time": { "type": "string", "maxLength": 32 },
+        "tolerance_minutes": { "type": "number" },
+        "is_cross_day": { "type": "boolean" },
+        "is_active": { "type": "boolean" }
+      },
+      "required": ["id", "company_id", "name", "start_time", "end_time"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Daily employee clock in and clock out log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "employee_id": { "type": "string", "maxLength": 128 },
+        "attendance_date": { "type": "string", "maxLength": 32 },
+        "clock_in_time": { "type": "string", "maxLength": 64 },
+        "clock_in_status": { "type": "string", "maxLength": 64 },
+        "clock_out_time": { "type": "string", "maxLength": 64 },
+        "late_minutes": { "type": "number" },
+        "early_checkout_minutes": { "type": "number" },
+        "work_duration_minutes": { "type": "number" },
+        "overtime_minutes": { "type": "number" },
+        "is_outside_geofence": { "type": "boolean" },
+        "approval_status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"] }
+      },
+      "required": ["id", "employee_id", "attendance_date", "clock_in_status"]
+    },
+    "LeaveRequest": {
+      "title": "LeaveRequest",
+      "description": "Time-off and paid leave submission",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "employee_id": { "type": "string", "maxLength": 128 },
+        "leave_type_id": { "type": "string", "maxLength": 128 },
+        "start_date": { "type": "string", "maxLength": 32 },
+        "end_date": { "type": "string", "maxLength": 32 },
+        "total_days": { "type": "number" },
+        "reason": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "employee_id", "leave_type_id", "start_date", "end_date", "total_days", "reason", "status"]
+    },
+    "PermissionRequest": {
+      "title": "PermissionRequest",
+      "description": "Hourly or short-leave permission request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "employee_id": { "type": "string", "maxLength": 128 },
+        "permission_date": { "type": "string", "maxLength": 32 },
+        "start_time": { "type": "string", "maxLength": 32 },
+        "end_time": { "type": "string", "maxLength": 32 },
+        "permission_type": { "type": "string", "maxLength": 64 },
+        "reason": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "employee_id", "permission_date", "start_time", "end_time", "permission_type", "reason", "status"]
+    },
+    "OvertimeRequest": {
+      "title": "OvertimeRequest",
+      "description": "Overtime pre-approval request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "employee_id": { "type": "string", "maxLength": 128 },
+        "overtime_date": { "type": "string", "maxLength": 32 },
+        "start_time": { "type": "string", "maxLength": 32 },
+        "end_time": { "type": "string", "maxLength": 32 },
+        "duration_hours": { "type": "number" },
+        "reason": { "type": "string", "maxLength": 1000 },
+        "project_name": { "type": "string", "maxLength": 256 },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "employee_id", "overtime_date", "start_time", "end_time", "duration_hours", "reason", "status"]
+    },
+    "AttendanceCorrection": {
+      "title": "AttendanceCorrection",
+      "description": "Attendance log manual correction request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "employee_id": { "type": "string", "maxLength": 128 },
+        "attendance_date": { "type": "string", "maxLength": 32 },
+        "correction_type": { "type": "string", "maxLength": 64 },
+        "requested_clock_in": { "type": "string", "maxLength": 64 },
+        "requested_clock_out": { "type": "string", "maxLength": 64 },
+        "reason": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "employee_id", "attendance_date", "correction_type", "reason", "status"]
+    },
+    "BusinessTripRequest": {
+      "title": "BusinessTripRequest",
+      "description": "Official business travel (SPPD) request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "employee_id": { "type": "string", "maxLength": 128 },
+        "destination_city": { "type": "string", "maxLength": 128 },
+        "purpose": { "type": "string", "maxLength": 1000 },
+        "start_date": { "type": "string", "maxLength": 32 },
+        "end_date": { "type": "string", "maxLength": 32 },
+        "total_days": { "type": "number" },
+        "transportation": { "type": "string", "maxLength": 64 },
+        "estimated_cost": { "type": "number" },
+        "cash_advance_requested": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "employee_id", "destination_city", "purpose", "start_date", "end_date", "total_days", "status"]
+    },
+    "ReimbursementClaim": {
+      "title": "ReimbursementClaim",
+      "description": "Employee expense reimbursement claim",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "employee_id": { "type": "string", "maxLength": 128 },
+        "claim_number": { "type": "string", "maxLength": 64 },
+        "category": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 256 },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "maxLength": 32 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED", "DISBURSED"] },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "employee_id", "claim_number", "category", "title", "amount", "date", "status"]
+    },
+    "CompanyAnnouncement": {
+      "title": "CompanyAnnouncement",
+      "description": "Internal broadcast or notice published to employees",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "category": { "type": "string", "maxLength": 64 },
+        "priority": { "type": "string", "maxLength": 64 },
+        "content": { "type": "string", "maxLength": 5000 },
+        "published_date": { "type": "string", "maxLength": 32 },
+        "author_name": { "type": "string", "maxLength": 128 },
+        "target_audience": { "type": "string", "maxLength": 64 },
+        "pinned": { "type": "boolean" },
+        "views_count": { "type": "number" }
+      },
+      "required": ["id", "title", "category", "content", "published_date", "author_name"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "User notification item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "user_id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "type": { "type": "string", "maxLength": 64 },
+        "read": { "type": "boolean" },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "user_id", "title", "message", "type", "read"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable audit record for compliance",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "user_name": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "maxLength": 128 },
+        "module": { "type": "string", "maxLength": 128 },
+        "record_id": { "type": "string", "maxLength": 128 },
+        "created_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "user_name", "action", "module", "created_at"]
+    }
+  },
+  "firestore": {
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Stores company records and details"
+    },
+    "/branches/{branchId}": {
+      "schema": "Branch",
+      "description": "Stores branches with GPS geofencing radius"
+    },
+    "/departments/{departmentId}": {
+      "schema": "Department",
+      "description": "Stores organizational departments"
+    },
+    "/positions/{positionId}": {
+      "schema": "Position",
+      "description": "Stores organizational positions"
+    },
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Stores all employee profiles and role mappings"
+    },
+    "/shifts/{shiftId}": {
+      "schema": "Shift",
+      "description": "Stores company shift schedules"
+    },
+    "/attendance_records/{attendanceId}": {
+      "schema": "AttendanceRecord",
+      "description": "Stores daily attendance punch in and punch out logs"
+    },
+    "/leave_requests/{leaveId}": {
+      "schema": "LeaveRequest",
+      "description": "Stores employee leave requests"
+    },
+    "/permission_requests/{permissionId}": {
+      "schema": "PermissionRequest",
+      "description": "Stores employee permission requests"
+    },
+    "/overtime_requests/{overtimeId}": {
+      "schema": "OvertimeRequest",
+      "description": "Stores employee overtime approval requests"
+    },
+    "/corrections/{correctionId}": {
+      "schema": "AttendanceCorrection",
+      "description": "Stores attendance correction submissions"
+    },
+    "/business_trips/{tripId}": {
+      "schema": "BusinessTripRequest",
+      "description": "Stores SPPD business trip requests"
+    },
+    "/reimbursements/{reimbursementId}": {
+      "schema": "ReimbursementClaim",
+      "description": "Stores reimbursement expense claims"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "CompanyAnnouncement",
+      "description": "Stores company broadcast announcements"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "AppNotification",
+      "description": "Stores user system notifications"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Stores security and operational audit logs"
+    }
+  }
+}

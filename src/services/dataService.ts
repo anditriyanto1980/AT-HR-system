@@ -1,4 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
+import { db, auth, OperationType, handleFirestoreError, testConnection } from './firebase';
+import firebaseConfig from '../../firebase-applet-config.json';
 import {
   ApprovalLog,
   ApprovalStatus,
@@ -103,10 +106,98 @@ export interface SupabaseConfig {
 class DataService {
   private supabase: SupabaseClient | null = null;
   private isLiveSupabase: boolean = false;
+  private isFirebaseConnected: boolean = false;
+  private lastFirebaseSyncTime: string | null = null;
 
   constructor() {
     this.initSupabase();
+    this.initFirebase();
     this.seedLocalStorageIfEmpty();
+  }
+
+  private initFirebase() {
+    testConnection()
+      .then((res) => {
+        this.isFirebaseConnected = res.connected;
+        if (res.connected) {
+          console.log('[Firebase] Connected to project:', firebaseConfig.projectId);
+        }
+      })
+      .catch((err) => {
+        console.warn('[Firebase] Connection check failed:', err);
+      });
+  }
+
+  public getFirebaseStatus() {
+    return {
+      isConnected: this.isFirebaseConnected,
+      projectId: firebaseConfig.projectId,
+      databaseId: firebaseConfig.firestoreDatabaseId,
+      lastSyncedAt: this.lastFirebaseSyncTime,
+    };
+  }
+
+  public async syncDocToFirestore(collectionName: string, id: string, data: any) {
+    try {
+      await setDoc(doc(db, collectionName, id), data);
+      this.isFirebaseConnected = true;
+      this.lastFirebaseSyncTime = new Date().toISOString();
+    } catch (err) {
+      console.debug(`[Firebase] sync error for ${collectionName}/${id}:`, err);
+    }
+  }
+
+  public async deleteDocFromFirestore(collectionName: string, id: string) {
+    try {
+      await deleteDoc(doc(db, collectionName, id));
+    } catch (err) {
+      console.debug(`[Firebase] delete error for ${collectionName}/${id}:`, err);
+    }
+  }
+
+  public async syncAllToFirebase(): Promise<{ success: boolean; syncedCount: number; error?: string }> {
+    try {
+      let count = 0;
+      await setDoc(doc(db, 'companies', 'comp-01'), this.getCompany());
+      count++;
+
+      for (const emp of this.getEmployees()) {
+        await setDoc(doc(db, 'employees', emp.id), emp);
+        count++;
+      }
+
+      for (const br of this.getBranches()) {
+        await setDoc(doc(db, 'branches', br.id), br);
+        count++;
+      }
+
+      for (const dept of this.getDepartments()) {
+        await setDoc(doc(db, 'departments', dept.id), dept);
+        count++;
+      }
+
+      for (const sh of this.getShifts()) {
+        await setDoc(doc(db, 'shifts', sh.id), sh);
+        count++;
+      }
+
+      for (const att of this.getAttendanceRecords()) {
+        await setDoc(doc(db, 'attendance_records', att.id), att);
+        count++;
+      }
+
+      for (const ann of this.getAnnouncements()) {
+        await setDoc(doc(db, 'announcements', ann.id), ann);
+        count++;
+      }
+
+      this.isFirebaseConnected = true;
+      this.lastFirebaseSyncTime = new Date().toISOString();
+      return { success: true, syncedCount: count };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'sync_all');
+      return { success: false, syncedCount: 0, error: String(error) };
+    }
   }
 
   private initSupabase() {
@@ -339,6 +430,7 @@ class DataService {
       branches.push(branch);
     }
     localStorage.setItem(STORAGE_KEYS.BRANCHES, JSON.stringify(branches));
+    this.syncDocToFirestore('branches', branch.id, branch);
     this.logAudit({
       user_name: 'Admin',
       action: index >= 0 ? 'UPDATE_BRANCH' : 'CREATE_BRANCH',
@@ -351,6 +443,7 @@ class DataService {
   public deleteBranch(id: string): void {
     const branches = this.getBranches().filter((b) => b.id !== id);
     localStorage.setItem(STORAGE_KEYS.BRANCHES, JSON.stringify(branches));
+    this.deleteDocFromFirestore('branches', id);
     this.logAudit({
       user_name: 'Admin',
       action: 'DELETE_BRANCH',
@@ -373,6 +466,7 @@ class DataService {
       departments.push(department);
     }
     localStorage.setItem(STORAGE_KEYS.DEPARTMENTS, JSON.stringify(departments));
+    this.syncDocToFirestore('departments', department.id, department);
     this.logAudit({
       user_name: 'Admin',
       action: index >= 0 ? 'UPDATE_DEPARTMENT' : 'CREATE_DEPARTMENT',
@@ -385,6 +479,7 @@ class DataService {
   public deleteDepartment(id: string): void {
     const departments = this.getDepartments().filter((d) => d.id !== id);
     localStorage.setItem(STORAGE_KEYS.DEPARTMENTS, JSON.stringify(departments));
+    this.deleteDocFromFirestore('departments', id);
     this.logAudit({
       user_name: 'Admin',
       action: 'DELETE_DEPARTMENT',
@@ -407,11 +502,13 @@ class DataService {
       positions.push(position);
     }
     localStorage.setItem(STORAGE_KEYS.POSITIONS, JSON.stringify(positions));
+    this.syncDocToFirestore('positions', position.id, position);
   }
 
   public deletePosition(id: string): void {
     const positions = this.getPositions().filter((p) => p.id !== id);
     localStorage.setItem(STORAGE_KEYS.POSITIONS, JSON.stringify(positions));
+    this.deleteDocFromFirestore('positions', id);
   }
 
   // SHIFTS
@@ -428,6 +525,7 @@ class DataService {
       shifts.push(shift);
     }
     localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shifts));
+    this.syncDocToFirestore('shifts', shift.id, shift);
     this.logAudit({
       user_name: 'Admin',
       action: index >= 0 ? 'UPDATE_SHIFT' : 'CREATE_SHIFT',
@@ -440,6 +538,7 @@ class DataService {
   public deleteShift(id: string): void {
     const shifts = this.getShifts().filter((s) => s.id !== id);
     localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shifts));
+    this.deleteDocFromFirestore('shifts', id);
     this.logAudit({
       user_name: 'Admin',
       action: 'DELETE_SHIFT',
@@ -656,6 +755,7 @@ class DataService {
       employees.unshift(enriched);
     }
     localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(employees));
+    this.syncDocToFirestore('employees', enriched.id, enriched);
     this.logAudit({
       user_name: 'Admin',
       action: index >= 0 ? 'UPDATE_EMPLOYEE' : 'CREATE_EMPLOYEE',
@@ -668,6 +768,7 @@ class DataService {
   public deleteEmployee(id: string): void {
     const employees = this.getEmployees().filter((e) => e.id !== id);
     localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(employees));
+    this.deleteDocFromFirestore('employees', id);
     this.logAudit({
       user_name: 'Admin',
       action: 'DELETE_EMPLOYEE',
@@ -715,6 +816,7 @@ class DataService {
       records.unshift(enriched);
     }
     localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(records));
+    this.syncDocToFirestore('attendance_records', enriched.id, enriched);
   }
 
   // ==========================================
@@ -776,6 +878,7 @@ class DataService {
       }
     }
     localStorage.setItem(STORAGE_KEYS.LEAVE_REQUESTS, JSON.stringify(list));
+    this.syncDocToFirestore('leave_requests', enriched.id, enriched);
 
     this.logAudit({
       user_name: enriched.employee_name || 'Employee',
@@ -820,6 +923,7 @@ class DataService {
     }
 
     localStorage.setItem(STORAGE_KEYS.LEAVE_REQUESTS, JSON.stringify(list));
+    this.syncDocToFirestore('leave_requests', target.id, target);
 
     // Log to Approval Log
     this.addApprovalLog({
@@ -865,6 +969,7 @@ class DataService {
       list.unshift(enriched);
     }
     localStorage.setItem(STORAGE_KEYS.PERMISSION_REQUESTS, JSON.stringify(list));
+    this.syncDocToFirestore('permission_requests', enriched.id, enriched);
 
     this.logAudit({
       user_name: enriched.employee_name || 'Employee',
@@ -891,6 +996,7 @@ class DataService {
     target.approver_comment = comment;
 
     localStorage.setItem(STORAGE_KEYS.PERMISSION_REQUESTS, JSON.stringify(list));
+    this.syncDocToFirestore('permission_requests', target.id, target);
 
     this.addApprovalLog({
       request_type: 'PERMISSION',
@@ -935,6 +1041,7 @@ class DataService {
       list.unshift(enriched);
     }
     localStorage.setItem(STORAGE_KEYS.OVERTIME_REQUESTS, JSON.stringify(list));
+    this.syncDocToFirestore('overtime_requests', enriched.id, enriched);
 
     this.logAudit({
       user_name: enriched.employee_name || 'Employee',
@@ -961,6 +1068,7 @@ class DataService {
     target.approver_comment = comment;
 
     localStorage.setItem(STORAGE_KEYS.OVERTIME_REQUESTS, JSON.stringify(list));
+    this.syncDocToFirestore('overtime_requests', target.id, target);
 
     this.addApprovalLog({
       request_type: 'OVERTIME',
