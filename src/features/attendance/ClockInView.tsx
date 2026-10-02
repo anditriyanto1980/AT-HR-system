@@ -6,19 +6,23 @@ import {
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
-  Sliders,
   Compass,
   ArrowRight,
   ShieldAlert,
   User,
   Info,
+  Check,
+  Smartphone,
+  Eye,
+  Lock,
+  Sparkles,
+  Upload,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
 import {
   AttendanceLocation,
   AttendanceRecord,
-  Branch,
   Coordinates,
   Shift,
 } from '../../types';
@@ -58,10 +62,13 @@ export const ClockInView: React.FC = () => {
 
   // Camera & Selfie state
   const [cameraActive, setCameraActive] = useState(false);
-  const [selfiePhoto, setSelfiePhoto] = useState<string | null>(null);
+  const [clockInPhoto, setClockInPhoto] = useState<string | null>(null);
+  const [clockOutPhoto, setClockOutPhoto] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [photoErrorHighlight, setPhotoErrorHighlight] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Action status feedback
   const [submitting, setSubmitting] = useState(false);
@@ -77,7 +84,6 @@ export const ClockInView: React.FC = () => {
   // Load locations, shift, and existing today attendance
   useEffect(() => {
     loadData();
-    // Start GPS request
     requestGeolocation();
 
     return () => {
@@ -90,21 +96,29 @@ export const ClockInView: React.FC = () => {
     const locs = dataService.getLocations();
     setLocations(locs);
 
-    // Pick branch location matching employee branch, or fallback to first
     const matchedLoc =
       locs.find((l) => l.branch_id === currentUser.branch_id) || locs[0] || null;
     setSelectedLocation(matchedLoc);
 
     const sList = dataService.getShifts();
     setShifts(sList);
-    // Default to Normal shift
     const defaultShift = sList.find((s) => s.is_active) || sList[0] || null;
     setActiveShift(defaultShift);
 
     const todayStr = new Date().toISOString().split('T')[0];
     const existing = dataService.getTodayAttendance(currentUser.id, todayStr);
     setTodayAttendance(existing || null);
+
+    if (existing?.clock_in_selfie_url) {
+      setClockInPhoto(existing.clock_in_selfie_url);
+    }
+    if (existing?.clock_out_selfie_url) {
+      setClockOutPhoto(existing.clock_out_selfie_url);
+    }
   };
+
+  const isClockedIn = Boolean(todayAttendance?.clock_in_time);
+  const isClockedOut = Boolean(todayAttendance?.clock_out_time);
 
   // Geolocation handling
   const requestGeolocation = () => {
@@ -112,7 +126,7 @@ export const ClockInView: React.FC = () => {
     setGpsError(null);
 
     if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
+      setGpsError('Geolocation tidak didukung oleh browser Anda.');
       setGpsLoading(false);
       return;
     }
@@ -131,10 +145,9 @@ export const ClockInView: React.FC = () => {
       (err) => {
         console.warn('GPS position error:', err.message);
         setGpsError(
-          'Could not retrieve GPS coordinates. You can click "Simulate Location" below to test geofencing.'
+          'Tidak dapat membaca titik GPS akurat. Anda dapat mengklik tombol "Simulasi Lokasi" di bawah untuk pengujian.'
         );
         setGpsLoading(false);
-        // Fallback default coordinates close to Jakarta office for seamless previewing
         if (selectedLocation) {
           const fallbackCoords: Coordinates = {
             latitude: selectedLocation.latitude + 0.0001,
@@ -159,7 +172,6 @@ export const ClockInView: React.FC = () => {
     setIsInsideGeofence(dist <= loc.radius_meters);
   };
 
-  // Recalculate distance when location selection changes
   const handleLocationChange = (loc: AttendanceLocation) => {
     setSelectedLocation(loc);
     if (userCoords) {
@@ -167,19 +179,16 @@ export const ClockInView: React.FC = () => {
     }
   };
 
-  // Simulate GPS coordinates (Inside vs Outside) for testing
   const simulateCoordinates = (isInside: boolean) => {
     if (!selectedLocation) return;
     let newCoords: Coordinates;
     if (isInside) {
-      // 25 meters from office
       newCoords = {
         latitude: selectedLocation.latitude + 0.00015,
         longitude: selectedLocation.longitude + 0.00015,
         accuracy: 10,
       };
     } else {
-      // 1.5 km away from office
       newCoords = {
         latitude: selectedLocation.latitude + 0.015,
         longitude: selectedLocation.longitude + 0.015,
@@ -194,7 +203,12 @@ export const ClockInView: React.FC = () => {
   // Camera handling
   const startCamera = async () => {
     setCameraError(null);
+    setPhotoErrorHighlight(false);
     try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
@@ -206,8 +220,10 @@ export const ClockInView: React.FC = () => {
       }
       setCameraActive(true);
     } catch (err: any) {
-      console.warn('Camera access denied:', err);
-      setCameraError('Camera access unavailable or blocked. You can still proceed without photo.');
+      console.warn('Camera access denied or unavailable:', err);
+      setCameraError(
+        'Kamera browser diblokir atau tidak tersedia. Anda dapat menggunakan tombol "Kamera Perangkat" di bawah atau izinkan akses kamera di pengaturan browser.'
+      );
       setCameraActive(false);
     }
   };
@@ -220,49 +236,157 @@ export const ClockInView: React.FC = () => {
     setCameraActive(false);
   };
 
+  // Capture snapshot from webcam video stream
   const capturePhoto = () => {
     if (!videoRef.current) return;
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth || 320;
-    canvas.height = videoRef.current.videoHeight || 240;
+    canvas.width = videoRef.current.videoWidth || 640;
+    canvas.height = videoRef.current.videoHeight || 480;
     const ctx = canvas.getContext('2d');
     if (ctx) {
+      // Mirror image horizontally for selfie view
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      setSelfiePhoto(dataUrl);
+
+      // Add watermark overlay
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, canvas.height - 36, canvas.width, 36);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px sans-serif';
+      const timeStr = `${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')} | ${
+        !isClockedIn ? 'CLOCK IN' : 'CLOCK OUT'
+      }`;
+      ctx.fillText(timeStr, 12, canvas.height - 14);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      if (!isClockedIn) {
+        setClockInPhoto(dataUrl);
+      } else {
+        setClockOutPhoto(dataUrl);
+      }
+
       stopCamera();
+      setPhotoErrorHighlight(false);
+      setErrorMessage(null);
     }
   };
 
-  // CLOCK IN SUBMIT
+  // Fallback direct device camera input (Mobile / PWA file input)
+  const handleDeviceCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      if (!isClockedIn) {
+        setClockInPhoto(dataUrl);
+      } else {
+        setClockOutPhoto(dataUrl);
+      }
+      stopCamera();
+      setPhotoErrorHighlight(false);
+      setErrorMessage(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Simulation generator for development environments without a physical camera
+  const handleSimulateSelfie = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 480;
+    canvas.height = 360;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Background gradient
+    const grad = ctx.createLinearGradient(0, 0, 480, 360);
+    grad.addColorStop(0, '#0F172A');
+    grad.addColorStop(1, '#1E293B');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 480, 360);
+
+    // Silhouette head & body
+    ctx.fillStyle = '#38BDF8';
+    ctx.beginPath();
+    ctx.arc(240, 140, 55, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(240, 260, 90, 60, 0, 0, Math.PI);
+    ctx.fill();
+
+    // Badge
+    ctx.fillStyle = !isClockedIn ? '#10B981' : '#F43F5E';
+    ctx.fillRect(20, 20, 160, 32);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(!isClockedIn ? '● CLOCK IN VERIFIED' : '● CLOCK OUT VERIFIED', 32, 40);
+
+    // Timestamp
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 320, 480, 40);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 12px monospace';
+    const stamp = `${currentUser?.full_name || 'Staff'} | ${new Date().toLocaleString('id-ID')}`;
+    ctx.fillText(stamp, 16, 345);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    if (!isClockedIn) {
+      setClockInPhoto(dataUrl);
+    } else {
+      setClockOutPhoto(dataUrl);
+    }
+    stopCamera();
+    setPhotoErrorHighlight(false);
+    setErrorMessage(null);
+  };
+
+  // ==========================================
+  // CLOCK IN SUBMIT (STRICT CAMERA ENFORCED)
+  // ==========================================
   const handleClockIn = async () => {
     if (!currentUser) return;
     if (!activeShift) {
-      setErrorMessage('No active shift assigned.');
+      setErrorMessage('Belum ada shift aktif yang ditugaskan kepada Anda.');
+      return;
+    }
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    // 1. STRICT CAMERA VALIDATION: Clock in MUST have a camera selfie photo
+    if (!clockInPhoto) {
+      setPhotoErrorHighlight(true);
+      setErrorMessage(
+        '⚠️ Wajib Mengambil Foto Selfie Kamera! Sistem mewajibkan verifikasi wajah langsung dari kamera sebelum melakukan Clock In.'
+      );
+      if (!cameraActive) {
+        startCamera();
+      }
+      return;
+    }
+
+    // 2. Validate Geofence policy
+    if (!isInsideGeofence && selectedLocation?.policy === 'BLOCK_OUTSIDE_RADIUS') {
+      setErrorMessage(
+        `Presensi Ditolak: Anda berada ${formatDistance(
+          distanceMeters || 0
+        )} dari ${selectedLocation.name}. Kebijakan mewajibkan Anda berada di dalam radius ${
+          selectedLocation.radius_meters
+        } meter.`
+      );
       return;
     }
 
     setSubmitting(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    // Validate Geofence policy
-    if (!isInsideGeofence && selectedLocation?.policy === 'BLOCK_OUTSIDE_RADIUS') {
-      setErrorMessage(
-        `Attendance rejected: You are ${formatDistance(
-          distanceMeters || 0
-        )} away from ${selectedLocation.name}. Policy strictly enforces presence inside the ${
-          selectedLocation.radius_meters
-        }m radius.`
-      );
-      setSubmitting(false);
-      return;
-    }
 
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
-
-    // Evaluate tolerance & late status
     const { status, lateMinutes } = evaluateClockInStatus(now, activeShift);
 
     const record: AttendanceRecord = {
@@ -277,7 +401,7 @@ export const ClockInView: React.FC = () => {
       clock_in_distance_meters: distanceMeters ?? 0,
       clock_in_location_name: selectedLocation?.name || 'Office',
       clock_in_device: getDeviceInfo(),
-      clock_in_selfie_url: selfiePhoto || undefined,
+      clock_in_selfie_url: clockInPhoto,
       clock_in_status: status,
       late_minutes: lateMinutes,
       early_checkout_minutes: 0,
@@ -285,7 +409,7 @@ export const ClockInView: React.FC = () => {
       overtime_minutes: 0,
       is_outside_geofence: !isInsideGeofence,
       approval_status: !isInsideGeofence ? 'PENDING' : 'APPROVED',
-      notes: lateMinutes > 0 ? `Late by ${lateMinutes} minutes` : 'On-time Clock In',
+      notes: lateMinutes > 0 ? `Terlambat ${lateMinutes} menit` : 'Clock In Tepat Waktu',
     };
 
     dataService.saveAttendance(record);
@@ -294,25 +418,40 @@ export const ClockInView: React.FC = () => {
       action: 'CLOCK_IN',
       module: 'ATTENDANCE',
       record_id: record.id,
-      after_data: { status, lateMinutes, distance: distanceMeters },
+      after_data: { status, lateMinutes, distance: distanceMeters, hasPhoto: true },
     });
 
     setTodayAttendance(record);
     setSubmitting(false);
     setSuccessMessage(
-      `Clock In Successful! Status: ${status.toUpperCase()}${
-        lateMinutes > 0 ? ` (${lateMinutes}m late)` : ' (On Time)'
-      }`
+      `🎉 Clock In Berhasil! Status: ${status.toUpperCase()}${
+        lateMinutes > 0 ? ` (Terlambat ${lateMinutes}m)` : ' (Tepat Waktu)'
+      }. Foto kamera telah diverifikasi dan tersimpan.`
     );
   };
 
-  // CLOCK OUT SUBMIT
+  // ==========================================
+  // CLOCK OUT SUBMIT (STRICT CAMERA ENFORCED)
+  // ==========================================
   const handleClockOut = async () => {
     if (!currentUser || !todayAttendance) return;
 
-    setSubmitting(true);
     setErrorMessage(null);
     setSuccessMessage(null);
+
+    // 1. STRICT CAMERA VALIDATION: Clock out MUST have a NEW camera selfie photo
+    if (!clockOutPhoto) {
+      setPhotoErrorHighlight(true);
+      setErrorMessage(
+        '⚠️ Wajib Mengambil Foto Selfie Kamera untuk Pulang! Sistem mewajibkan foto verifikasi wajah terkini dari kamera sebelum Clock Out.'
+      );
+      if (!cameraActive) {
+        startCamera();
+      }
+      return;
+    }
+
+    setSubmitting(true);
 
     const now = new Date();
     const clockInTime = new Date(todayAttendance.clock_in_time!);
@@ -332,7 +471,7 @@ export const ClockInView: React.FC = () => {
       clock_out_distance_meters: distanceMeters ?? 0,
       clock_out_location_name: selectedLocation?.name || 'Office',
       clock_out_device: getDeviceInfo(),
-      clock_out_selfie_url: selfiePhoto || todayAttendance.clock_out_selfie_url,
+      clock_out_selfie_url: clockOutPhoto,
       work_duration_minutes: workDurationMinutes,
       early_checkout_minutes: earlyCheckoutMinutes,
       overtime_minutes: overtimeMinutes,
@@ -344,55 +483,81 @@ export const ClockInView: React.FC = () => {
       action: 'CLOCK_OUT',
       module: 'ATTENDANCE',
       record_id: updated.id,
-      after_data: { durationMinutes: workDurationMinutes, overtimeMinutes },
+      after_data: { durationMinutes: workDurationMinutes, overtimeMinutes, hasPhoto: true },
     });
 
     setTodayAttendance(updated);
     setSubmitting(false);
     setSuccessMessage(
-      `Clock Out Successful! Total working duration: ${formatMinutes(workDurationMinutes)}.`
+      `🎉 Clock Out Berhasil! Total durasi kerja: ${formatMinutes(
+        workDurationMinutes
+      )}. Foto kamera pulang telah diverifikasi dan tersimpan.`
     );
   };
 
-  const isClockedIn = Boolean(todayAttendance?.clock_in_time);
-  const isClockedOut = Boolean(todayAttendance?.clock_out_time);
+  // Current active photo for camera card display
+  const currentActivePhoto = !isClockedIn ? clockInPhoto : clockOutPhoto;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top Banner Notice: Mandatory Camera Policy */}
+      <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-[#0B1528] text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-md flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 shrink-0">
+            <Camera className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-white tracking-wide">
+                KEBIJAKAN PRESENSI KAMERA WAJIB
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-2xs">
+                Clock In & Clock Out Wajib Foto
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Setiap kali melakukan <strong>Clock In (Masuk)</strong> maupun{' '}
+              <strong>Clock Out (Pulang)</strong>, Anda diwajibkan mengambil foto selfie wajah langsung
+              dari kamera untuk verifikasi anti-fraud.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Top Notification Alerts */}
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-between shadow-xs">
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-between shadow-xs animate-in fade-in duration-200">
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <span className="text-sm font-semibold">{successMessage}</span>
           </div>
           <button
             onClick={() => setSuccessMessage(null)}
-            className="text-xs text-emerald-700 hover:underline"
+            className="text-xs text-emerald-700 hover:underline font-bold"
           >
-            Dismiss
+            Tutup
           </button>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
-            <span className="text-sm font-semibold">{errorMessage}</span>
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-950 flex items-start justify-between shadow-xs animate-in fade-in duration-200">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <span className="text-sm font-bold leading-relaxed">{errorMessage}</span>
           </div>
           <button
             onClick={() => setErrorMessage(null)}
-            className="text-xs text-rose-700 hover:underline"
+            className="text-xs text-rose-700 hover:underline font-bold shrink-0 ml-3"
           >
-            Dismiss
+            Tutup
           </button>
         </div>
       )}
 
-      {/* Grid: Clock In Terminal on Left, Live Context on Right */}
+      {/* Grid: Clock In Terminal on Left, Mandatory Camera on Right */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Main Terminal Card */}
+        {/* Main Terminal Card (7 cols) */}
         <div className="md:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
           {/* Header & Live Clock */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -400,7 +565,7 @@ export const ClockInView: React.FC = () => {
               <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Live Attendance Terminal
               </div>
-              <div className="text-sm font-medium text-slate-600">{formatDate(currentTime)}</div>
+              <div className="text-sm font-medium text-slate-700">{formatDate(currentTime)}</div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold font-mono tracking-tight text-slate-900 tabular-nums">
@@ -413,25 +578,25 @@ export const ClockInView: React.FC = () => {
           {/* Today's Status Banner */}
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-xs text-slate-500 font-medium">Today's State:</span>
+              <span className="text-xs text-slate-500 font-medium">Status Hari Ini:</span>
               <div className="flex items-center gap-2">
                 {isClockedOut ? (
                   <StatusBadge status="Completed for Today" type="generic" />
                 ) : isClockedIn ? (
                   <StatusBadge status={todayAttendance?.clock_in_status || 'present'} />
                 ) : (
-                  <span className="text-xs font-semibold text-slate-600">Not Clocked In Yet</span>
+                  <span className="text-xs font-semibold text-slate-600">Belum Clock In</span>
                 )}
                 {todayAttendance?.late_minutes ? (
                   <span className="text-xs text-amber-700 font-mono font-medium">
-                    ({todayAttendance.late_minutes}m late)
+                    (Terlambat {todayAttendance.late_minutes}m)
                   </span>
                 ) : null}
               </div>
             </div>
 
             <div className="text-right">
-              <div className="text-xs text-slate-500">In / Out Time</div>
+              <div className="text-xs text-slate-500">Jam Masuk / Pulang</div>
               <div className="text-xs font-mono font-semibold text-slate-800 tabular-nums">
                 {formatTime(todayAttendance?.clock_in_time)} —{' '}
                 {formatTime(todayAttendance?.clock_out_time)}
@@ -442,9 +607,9 @@ export const ClockInView: React.FC = () => {
           {/* Shift Selection */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-              <span>Assigned Shift</span>
+              <span>Shift Kerja Ditugaskan</span>
               <span className="text-[11px] text-slate-500">
-                Tolerance: {activeShift?.tolerance_minutes} mins
+                Toleransi: {activeShift?.tolerance_minutes} menit
               </span>
             </label>
             <select
@@ -467,11 +632,11 @@ export const ClockInView: React.FC = () => {
           {/* Location / Geofence Selector */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700">Attendance Location</label>
+              <label className="text-xs font-semibold text-slate-700">Lokasi Presensi (Cabang)</label>
               <button
                 type="button"
                 onClick={requestGeolocation}
-                className="text-[11px] text-slate-600 hover:text-slate-900 flex items-center gap-1 font-medium"
+                className="text-[11px] text-slate-600 hover:text-slate-900 flex items-center gap-1 font-medium cursor-pointer"
               >
                 <RefreshCw className={`w-3 h-3 ${gpsLoading ? 'animate-spin' : ''}`} />
                 <span>Refresh GPS</span>
@@ -505,38 +670,39 @@ export const ClockInView: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div
                   className={`w-3 h-3 rounded-full shrink-0 ${
-                    isInsideGeofence ? 'bg-emerald-500 ring-4 ring-emerald-200/60' : 'bg-amber-500 ring-4 ring-amber-200/60'
+                    isInsideGeofence
+                      ? 'bg-emerald-500 ring-4 ring-emerald-200/60'
+                      : 'bg-amber-500 ring-4 ring-amber-200/60'
                   }`}
                 />
                 <div>
                   <div className="text-xs font-semibold">
                     {isInsideGeofence
-                      ? 'Location Verified: Inside Office Radius'
-                      : 'Outside Allowed Attendance Area'}
+                      ? 'Lokasi Terverifikasi: Di Dalam Radius Kantor'
+                      : 'Di Luar Radius Kantor Yang Diizinkan'}
                   </div>
                   <div className="text-[11px] text-slate-600 font-mono">
-                    Distance: {distanceMeters !== null ? formatDistance(distanceMeters) : '--'}{' '}
-                    (Allowed: {selectedLocation?.radius_meters}m) · Accuracy: ±
-                    {userCoords?.accuracy || 10}m
+                    Jarak: {distanceMeters !== null ? formatDistance(distanceMeters) : '--'} (Batas:{' '}
+                    {selectedLocation?.radius_meters}m) · Akurasi: ±{userCoords?.accuracy || 10}m
                   </div>
                 </div>
               </div>
 
-              {/* Quick simulation toggle for testing */}
+              {/* Simulation buttons */}
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => simulateCoordinates(true)}
-                  className="px-2 py-1 text-[11px] font-medium bg-white hover:bg-slate-100 rounded border border-slate-300 shadow-2xs"
-                  title="Simulate user standing inside office"
+                  className="px-2 py-1 text-[11px] font-medium bg-white hover:bg-slate-100 rounded border border-slate-300 shadow-2xs cursor-pointer"
+                  title="Simulasikan posisi di dalam kantor"
                 >
                   Inside
                 </button>
                 <button
                   type="button"
                   onClick={() => simulateCoordinates(false)}
-                  className="px-2 py-1 text-[11px] font-medium bg-white hover:bg-slate-100 rounded border border-slate-300 shadow-2xs"
-                  title="Simulate user standing outside office radius"
+                  className="px-2 py-1 text-[11px] font-medium bg-white hover:bg-slate-100 rounded border border-slate-300 shadow-2xs cursor-pointer"
+                  title="Simulasikan posisi di luar kantor"
                 >
                   Outside
                 </button>
@@ -544,56 +710,168 @@ export const ClockInView: React.FC = () => {
             </div>
           </div>
 
-          {/* Primary Action Button */}
+          {/* Photo Readiness Status Pill */}
+          <div className="pt-1">
+            {!isClockedIn ? (
+              <div
+                className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                  clockInPhoto
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold'
+                    : 'bg-rose-50 border-rose-200 text-rose-900 font-semibold'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {clockInPhoto ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <Camera className="w-4 h-4 text-rose-600 shrink-0 animate-pulse" />
+                  )}
+                  <span>
+                    {clockInPhoto
+                      ? 'Foto Selfie Masuk Terverifikasi'
+                      : 'Foto Selfie Masuk Belum Diambil (Wajib)'}
+                  </span>
+                </div>
+                {!clockInPhoto && (
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    className="text-[11px] px-2.5 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 cursor-pointer"
+                  >
+                    Buka Kamera
+                  </button>
+                )}
+              </div>
+            ) : !isClockedOut ? (
+              <div
+                className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                  clockOutPhoto
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold'
+                    : 'bg-amber-50 border-amber-300 text-amber-950 font-semibold'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {clockOutPhoto ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <Camera className="w-4 h-4 text-amber-600 shrink-0 animate-pulse" />
+                  )}
+                  <span>
+                    {clockOutPhoto
+                      ? 'Foto Selfie Pulang Terverifikasi'
+                      : 'Wajib Ambil Foto Kamera Baru untuk Clock Out (Pulang)'}
+                  </span>
+                </div>
+                {!clockOutPhoto && (
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    className="text-[11px] px-2.5 py-1 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 cursor-pointer"
+                  >
+                    Buka Kamera Pulang
+                  </button>
+                )}
+              </div>
+            ) : null}
+          </div>
+
+          {/* Primary Action Buttons */}
           <div className="pt-2">
             {!isClockedIn ? (
               <button
                 type="button"
                 onClick={handleClockIn}
                 disabled={submitting}
-                className="w-full py-4 bg-[#1D63FF] hover:bg-blue-600 active:scale-[0.99] text-white rounded-2xl text-base font-bold shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className={`w-full py-4 rounded-2xl text-base font-bold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  clockInPhoto
+                    ? 'bg-[#1D63FF] hover:bg-blue-600 text-white shadow-blue-500/25 active:scale-[0.99]'
+                    : 'bg-slate-800 hover:bg-slate-900 text-white'
+                }`}
               >
-                <Clock className="w-5 h-5 text-amber-300" />
-                <span>{submitting ? 'Verifying & Clocking In...' : 'CLOCK IN NOW'}</span>
+                {clockInPhoto ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <span>{submitting ? 'Menyimpan Presensi...' : 'KONFIRMASI CLOCK IN SEKARANG'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-5 h-5 text-amber-300" />
+                    <span>CLOCK IN (WAJIB FOTO KAMERA)</span>
+                  </>
+                )}
               </button>
             ) : !isClockedOut ? (
               <button
                 type="button"
                 onClick={handleClockOut}
                 disabled={submitting}
-                className="w-full py-4 bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white rounded-xl text-base font-bold shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className={`w-full py-4 rounded-2xl text-base font-bold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  clockOutPhoto
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-500/25 active:scale-[0.99]'
+                    : 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/25'
+                }`}
               >
-                <Clock className="w-5 h-5 text-white" />
-                <span>{submitting ? 'Recording Clock Out...' : 'CLOCK OUT NOW'}</span>
+                {clockOutPhoto ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 text-white" />
+                    <span>{submitting ? 'Merekam Clock Out...' : 'KONFIRMASI CLOCK OUT SEKARANG'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-5 h-5 text-white" />
+                    <span>CLOCK OUT (WAJIB FOTO KAMERA)</span>
+                  </>
+                )}
               </button>
             ) : (
-              <div className="w-full py-3.5 bg-slate-100 text-slate-600 text-center font-semibold rounded-xl text-sm border border-slate-200">
-                Attendance Completed for Today
+              <div className="w-full py-4 bg-emerald-50 text-emerald-900 text-center font-bold rounded-2xl text-sm border border-emerald-200 flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span>Presensi Hari Ini Telah Lengkap (Clock In & Clock Out Berhasil)</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Column: Selfie Camera & Verification Sidebar */}
+        {/* Right Column: Mandatory Camera Card (5 cols) */}
         <div className="md:col-span-5 space-y-6">
           {/* Camera Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div
+            className={`bg-white rounded-2xl border shadow-sm p-5 space-y-4 transition-all ${
+              photoErrorHighlight
+                ? 'border-rose-400 ring-4 ring-rose-100 bg-rose-50/20'
+                : 'border-slate-200'
+            }`}
+          >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
-                <Camera className="w-4 h-4 text-slate-700" />
-                <span>Selfie Photo Verification</span>
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                <Camera className="w-4 h-4 text-blue-600" />
+                <span>
+                  {!isClockedIn
+                    ? 'Foto Kamera Wajib: Clock In'
+                    : !isClockedOut
+                    ? 'Foto Kamera Wajib: Clock Out'
+                    : 'Foto Verifikasi Hari Ini'}
+                </span>
               </div>
-              <span className="text-[11px] text-slate-400">Optional</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                Wajib (Mandatory)
+              </span>
             </div>
 
             {/* Video Viewport / Snapshot Container */}
-            <div className="relative aspect-4/3 bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800">
-              {selfiePhoto ? (
-                <img
-                  src={selfiePhoto}
-                  alt="Selfie verification"
-                  className="w-full h-full object-cover"
-                />
+            <div className="relative aspect-4/3 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800 shadow-inner">
+              {currentActivePhoto ? (
+                <div className="relative w-full h-full">
+                  <img
+                    src={currentActivePhoto}
+                    alt="Selfie verification"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 left-2 bg-emerald-950/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-1 rounded-md border border-emerald-400/40 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>FOTO TERAMBIL</span>
+                  </div>
+                </div>
               ) : cameraActive ? (
                 <video
                   ref={videoRef}
@@ -604,95 +882,206 @@ export const ClockInView: React.FC = () => {
                 />
               ) : (
                 <div className="text-center p-4 space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
                     <Camera className="w-6 h-6" />
                   </div>
-                  <p className="text-xs text-slate-400 max-w-[200px]">
-                    Live camera capture for face verification
+                  <p className="text-xs text-slate-300 font-medium max-w-[200px] mx-auto">
+                    Kamera belum aktif. Klik tombol di bawah untuk mengambil foto selfie verifikasi.
                   </p>
                 </div>
               )}
 
               {/* Geofence Overlay Pill on camera view */}
-              <div className="absolute bottom-2 left-2 right-2 bg-slate-950/70 backdrop-blur-xs text-white p-2 rounded-lg text-[10px] font-mono flex items-center justify-between">
-                <span>{selectedLocation?.name.split(' - ')[0] || 'Office'}</span>
-                <span>{isInsideGeofence ? '● GPS VERIFIED' : '▲ OUTSIDE'}</span>
+              <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-xs text-white p-2 rounded-lg text-[10px] font-mono flex items-center justify-between border border-white/10">
+                <span className="truncate max-w-[140px]">
+                  {selectedLocation?.name.split(' - ')[0] || 'Office'}
+                </span>
+                <span className={isInsideGeofence ? 'text-emerald-400 font-bold' : 'text-amber-400'}>
+                  {isInsideGeofence ? '● GPS OK' : '▲ DILUAR RADIUS'}
+                </span>
               </div>
             </div>
 
             {cameraError && (
-              <p className="text-xs text-rose-600 bg-rose-50 p-2 rounded">{cameraError}</p>
+              <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-lg leading-relaxed font-medium">
+                {cameraError}
+              </p>
             )}
 
-            {/* Camera Controls */}
-            <div className="flex items-center gap-2">
-              {!cameraActive && !selfiePhoto ? (
-                <button
-                  type="button"
-                  onClick={startCamera}
-                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Open Camera</span>
-                </button>
+            {/* Camera Action Buttons */}
+            <div className="space-y-2">
+              {!cameraActive && !currentActivePhoto ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    className="py-2.5 px-3 bg-[#1D63FF] hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Buka Kamera</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Kamera HP (Native)</span>
+                  </button>
+                </div>
               ) : cameraActive ? (
-                <>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={capturePhoto}
-                    className="flex-1 py-2 bg-[#1D63FF] hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
                   >
-                    <span>Capture Snapshot</span>
+                    <Camera className="w-4 h-4" />
+                    <span>AMBIL FOTO SEKARANG</span>
                   </button>
                   <button
                     type="button"
                     onClick={stopCamera}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-lg"
+                    className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl"
                   >
-                    Cancel
+                    Batal
                   </button>
-                </>
+                </div>
               ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isClockedIn) setClockInPhoto(null);
+                      else setClockOutPhoto(null);
+                      startCamera();
+                    }}
+                    className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Foto Ulang (Retake)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Ganti Foto</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Hidden file input for native mobile front camera capture */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                onChange={handleDeviceCameraCapture}
+                className="hidden"
+              />
+
+              {/* Test Sandbox Simulation Option */}
+              <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Uji Coba Sandbox:</span>
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelfiePhoto(null);
-                    startCamera();
-                  }}
-                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                  onClick={handleSimulateSelfie}
+                  className="text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Retake Photo</span>
+                  Simulasikan Foto Kamera
                 </button>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* Quick Policy Specs Info */}
-          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
-              <Info className="w-4 h-4 text-slate-500" />
-              <span>Attendance Policy Specs</span>
+          {/* Today's Completed Selfies Card (Show both In & Out if available) */}
+          {(todayAttendance?.clock_in_selfie_url || todayAttendance?.clock_out_selfie_url) && (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
+              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Rekap Bukti Foto Presensi Hari Ini</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {/* Clock In Photo */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    1. Clock In (Masuk)
+                  </span>
+                  {todayAttendance.clock_in_selfie_url ? (
+                    <div className="aspect-4/3 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 relative">
+                      <img
+                        src={todayAttendance.clock_in_selfie_url}
+                        alt="Clock In Selfie"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute bottom-1 right-1 text-[9px] font-mono bg-black/70 text-white px-1 rounded">
+                        {formatTime(todayAttendance.clock_in_time)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="aspect-4/3 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">
+                      Belum Ada
+                    </div>
+                  )}
+                </div>
+
+                {/* Clock Out Photo */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    2. Clock Out (Pulang)
+                  </span>
+                  {todayAttendance.clock_out_selfie_url ? (
+                    <div className="aspect-4/3 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 relative">
+                      <img
+                        src={todayAttendance.clock_out_selfie_url}
+                        alt="Clock Out Selfie"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute bottom-1 right-1 text-[9px] font-mono bg-black/70 text-white px-1 rounded">
+                        {formatTime(todayAttendance.clock_out_time)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="aspect-4/3 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">
+                      Belum Ada
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <ul className="text-xs text-slate-600 space-y-2">
+          )}
+
+          {/* Policy Specs */}
+          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+              <ShieldAlert className="w-4 h-4 text-blue-600" />
+              <span>Standar Keamanan Anti-Fraud</span>
+            </div>
+            <ul className="text-xs text-slate-600 space-y-1.5 leading-relaxed">
               <li className="flex items-start gap-2">
-                <span className="text-slate-400">·</span>
+                <span className="text-rose-500 font-bold">•</span>
                 <span>
-                  <strong>Tolerance:</strong> Clock in up to {activeShift?.tolerance_minutes || 10}{' '}
-                  mins past {activeShift?.start_time || '08:00'} is treated as ON TIME.
+                  <strong>Clock In Wajib Kamera:</strong> Memastikan karyawan yang hadir adalah
+                  pemilik akun asli di lokasi kerja.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-slate-400">·</span>
+                <span className="text-rose-500 font-bold">•</span>
                 <span>
-                  <strong>Geofence:</strong> Must be within {selectedLocation?.radius_meters || 100}
-                  m radius of {selectedLocation?.name}.
+                  <strong>Clock Out Wajib Kamera:</strong> Mencegah titip absen pulang dan
+                  memastikan kehadiran fisik hingga akhir shift.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-slate-400">·</span>
+                <span className="text-blue-500 font-bold">•</span>
                 <span>
-                  <strong>Audit:</strong> GPS coordinates, accuracy, and browser user-agent are logged.
+                  <strong>Geofencing Radius:</strong> Radius kantor {selectedLocation?.radius_meters || 100}m
+                  tervalidasi GPS real-time.
                 </span>
               </li>
             </ul>

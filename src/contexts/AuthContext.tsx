@@ -30,11 +30,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshUser = () => {
     const employees = dataService.getEmployees();
     const storedId = localStorage.getItem(AUTH_STORAGE_KEY);
-    const target = employees.find((e) => e.id === storedId) || employees[0];
-    if (target) {
-      setCurrentUser(target);
-      localStorage.setItem(AUTH_STORAGE_KEY, target.id);
+    if (storedId) {
+      const target = employees.find((e) => e.id === storedId);
+      if (target) {
+        setCurrentUser(target);
+        return;
+      }
     }
+    // No stored active user: user must log in first!
+    setCurrentUser(null);
   };
 
   useEffect(() => {

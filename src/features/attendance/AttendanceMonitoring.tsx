@@ -36,7 +36,7 @@ export const AttendanceMonitoring: React.FC = () => {
   const [selectedBranch, setSelectedBranch] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [previewSelfie, setPreviewSelfie] = useState<string | null>(null);
+  const [previewSelfie, setPreviewSelfie] = useState<{ url: string; label: string; name?: string } | null>(null);
 
   // Modal State for Manual Add / Edit Attendance Record
   const [modalOpen, setModalOpen] = useState(false);
@@ -322,23 +322,59 @@ export const AttendanceMonitoring: React.FC = () => {
                       {rec.clock_in_device || 'Web Browser'}
                     </td>
 
-                    {/* Selfie Snapshot */}
+                    {/* Selfie Snapshot (In & Out) */}
                     <td className="py-3 px-4 text-center">
-                      {rec.clock_in_selfie_url ? (
-                        <button
-                          onClick={() => setPreviewSelfie(rec.clock_in_selfie_url!)}
-                          className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 inline-block hover:ring-2 hover:ring-slate-900 transition-all shadow-2xs"
-                          title="Click to view photo snapshot"
-                        >
-                          <img
-                            src={rec.clock_in_selfie_url}
-                            alt="Selfie"
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ) : (
-                        <span className="text-[10px] text-slate-400 italic">No Photo</span>
-                      )}
+                      <div className="flex items-center justify-center gap-1.5">
+                        {rec.clock_in_selfie_url ? (
+                          <button
+                            onClick={() =>
+                              setPreviewSelfie({
+                                url: rec.clock_in_selfie_url!,
+                                label: 'Foto Masuk (Clock In)',
+                                name: rec.employee_name,
+                              })
+                            }
+                            className="relative group cursor-pointer"
+                            title="Foto Masuk (Clock In)"
+                          >
+                            <img
+                              src={rec.clock_in_selfie_url}
+                              alt="In Selfie"
+                              className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 object-cover hover:ring-2 hover:ring-blue-500 transition-all shadow-2xs"
+                            />
+                            <span className="absolute -bottom-1 -right-1 text-[7px] font-bold bg-emerald-600 text-white px-0.5 rounded leading-none">
+                              IN
+                            </span>
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-300">-</span>
+                        )}
+
+                        {rec.clock_out_selfie_url ? (
+                          <button
+                            onClick={() =>
+                              setPreviewSelfie({
+                                url: rec.clock_out_selfie_url!,
+                                label: 'Foto Pulang (Clock Out)',
+                                name: rec.employee_name,
+                              })
+                            }
+                            className="relative group cursor-pointer"
+                            title="Foto Pulang (Clock Out)"
+                          >
+                            <img
+                              src={rec.clock_out_selfie_url}
+                              alt="Out Selfie"
+                              className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 object-cover hover:ring-2 hover:ring-rose-500 transition-all shadow-2xs"
+                            />
+                            <span className="absolute -bottom-1 -right-1 text-[7px] font-bold bg-rose-600 text-white px-0.5 rounded leading-none">
+                              OUT
+                            </span>
+                          </button>
+                        ) : rec.clock_out_time ? (
+                          <span className="text-[10px] text-slate-300">-</span>
+                        ) : null}
+                      </div>
                     </td>
 
                     {/* Actions (Admin CRUD) */}
@@ -532,27 +568,34 @@ export const AttendanceMonitoring: React.FC = () => {
 
       {/* Selfie Preview Lightbox */}
       {previewSelfie && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl p-4 max-w-sm w-full space-y-3 relative shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl p-4 max-w-sm w-full space-y-3 relative shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <Camera className="w-4 h-4 text-slate-700" />
-                <span>Attendance Selfie Verification</span>
-              </span>
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-blue-600" />
+                  <span>{previewSelfie.label}</span>
+                </span>
+                {previewSelfie.name && (
+                  <span className="text-[11px] text-slate-500 font-semibold block">
+                    Karyawan: {previewSelfie.name}
+                  </span>
+                )}
+              </div>
               <button
                 onClick={() => setPreviewSelfie(null)}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-500"
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <img
-              src={previewSelfie}
-              alt="Clock in snapshot"
-              className="w-full rounded-xl object-cover aspect-4/3 border border-slate-200"
+              src={previewSelfie.url}
+              alt={previewSelfie.label}
+              className="w-full rounded-xl object-cover aspect-4/3 border border-slate-200 shadow-xs"
             />
-            <p className="text-[11px] text-slate-500 text-center">
-              Timestamped snapshot captured at clock-in
+            <p className="text-[11px] text-slate-500 text-center font-mono">
+              Foto verifikasi kamera anti-fraud presensi
             </p>
           </div>
         </div>

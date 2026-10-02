@@ -36,6 +36,7 @@ interface HeaderProps {
   onOpenDbModal: () => void;
   onNavigateTab?: (tab: string) => void;
   onToggleSidebar?: () => void;
+  onOpenMobileDrawer?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenDbModal,
   onNavigateTab,
   onToggleSidebar,
+  onOpenMobileDrawer,
 }) => {
   const { currentUser, role, switchRole, logout } = useAuth();
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
@@ -170,11 +172,17 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Hamburger Sidebar Toggle */}
+        {/* Hamburger Sidebar / Mobile Drawer Toggle */}
         <button
-          onClick={onToggleSidebar}
-          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors ml-1 focus:outline-none"
-          title="Toggle Navigation Sidebar"
+          onClick={() => {
+            if (window.innerWidth < 1024 && onOpenMobileDrawer) {
+              onOpenMobileDrawer();
+            } else if (onToggleSidebar) {
+              onToggleSidebar();
+            }
+          }}
+          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors ml-1 focus:outline-none cursor-pointer"
+          title="Toggle Navigation Menu"
         >
           <Menu className="w-5 h-5" />
         </button>

@@ -18,7 +18,7 @@ import { BrandIcon } from '../../components/common/BrandIcon';
 
 export const LoginView: React.FC = () => {
   const { login, loginWithGoogle, switchRole, isFirebaseConnected } = useAuth();
-  const [identifier, setIdentifier] = useState('triyanto.andi');
+  const [identifier, setIdentifier] = useState('dewi.lestari');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -252,11 +252,14 @@ export const LoginView: React.FC = () => {
                 onClick={() =>
                   handleQuickLogin('EMPLOYEE', 'dewi.lestari')
                 }
-                className="p-2.5 text-left bg-amber-50/50 hover:bg-amber-50 rounded-xl border border-amber-100 text-xs transition-colors group cursor-pointer"
+                className="p-2.5 text-left bg-gradient-to-br from-amber-50 to-amber-100/70 hover:from-amber-100 hover:to-amber-200/60 rounded-xl border-2 border-amber-300 text-xs transition-colors group cursor-pointer shadow-xs"
               >
-                <div className="font-bold text-slate-900 group-hover:text-amber-600">Employee</div>
-                <div className="text-[10px] text-amber-600 font-mono font-medium">@dewi.lestari</div>
-                <div className="text-[9px] text-slate-400">Dewi Lestari</div>
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-amber-950 group-hover:text-amber-700">Karyawan (Mobile)</div>
+                  <span className="text-[8px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded-full">POPULER</span>
+                </div>
+                <div className="text-[10px] text-amber-700 font-mono font-bold">@dewi.lestari</div>
+                <div className="text-[9px] text-slate-500">Dewi Lestari (Staff)</div>
               </button>
             </div>
             <div className="text-center text-[10px] text-slate-400">

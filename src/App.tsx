@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { MobileNav } from './components/layout/MobileNav';
+import { MobileDrawer } from './components/layout/MobileDrawer';
 import { FirebaseSetupModal } from './components/modals/FirebaseSetupModal';
 import { ClockInView } from './features/attendance/ClockInView';
 import { AttendanceMonitoring } from './features/attendance/AttendanceMonitoring';
@@ -35,6 +36,7 @@ function MainApp() {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [dbModalOpen, setDbModalOpen] = useState<boolean>(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
 
   if (!isLoggedIn) {
     return <LoginView />;
@@ -103,6 +105,7 @@ function MainApp() {
         onOpenDbModal={() => setDbModalOpen(true)}
         onNavigateTab={setCurrentTab}
         onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -123,7 +126,20 @@ function MainApp() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <MobileNav currentTab={currentTab} setCurrentTab={setCurrentTab} />
+      <MobileNav
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        onOpenMenu={() => setMobileDrawerOpen(true)}
+      />
+
+      {/* Mobile Drawer (Full Navigation Sheet) */}
+      <MobileDrawer
+        isOpen={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        currentTab={currentTab}
+        onNavigateTab={setCurrentTab}
+        onOpenDbModal={() => setDbModalOpen(true)}
+      />
 
       {/* PWA Offline Connectivity Indicator */}
       <OfflineIndicator />
