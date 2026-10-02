@@ -79,11 +79,9 @@ export const ShiftView: React.FC = () => {
     setModalOpen(false);
   };
 
-  const handleDeleteShift = (id: string, name: string) => {
-    if (confirm(`Delete shift "${name}"?`)) {
-      dataService.deleteShift(id);
-      refreshShifts();
-    }
+  const handleDeleteShift = (id: string, _name?: string) => {
+    dataService.deleteShift(id);
+    refreshShifts();
   };
 
   return (

@@ -13,6 +13,8 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   Branch,
@@ -65,6 +67,9 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginAccessEnabled, setLoginAccessEnabled] = useState(true);
+
+  // In-modal delete confirmation
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -489,21 +494,60 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl text-xs font-semibold transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Check className="w-4 h-4" />
-              <span>{employeeToEdit ? 'Save Changes' : 'Register Employee'}</span>
-            </button>
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200">
+            {employeeToEdit && (
+              <div>
+                {!confirmDelete ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(true)}
+                    className="px-3 py-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Hapus Karyawan Ini</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 p-1.5 bg-rose-50 border border-rose-200 rounded-xl">
+                    <span className="text-[11px] font-bold text-rose-800 px-1">Yakin hapus?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        dataService.deleteEmployee(employeeToEdit.id);
+                        onSaved();
+                        onClose();
+                      }}
+                      className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+                    >
+                      Ya, Hapus
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="px-2 py-1 text-slate-600 hover:bg-slate-200/60 rounded-lg text-xs font-medium cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Check className="w-4 h-4" />
+                <span>{employeeToEdit ? 'Simpan Perubahan' : 'Daftarkan Karyawan'}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

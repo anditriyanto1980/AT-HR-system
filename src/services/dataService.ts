@@ -819,6 +819,18 @@ class DataService {
     this.syncDocToFirestore('attendance_records', enriched.id, enriched);
   }
 
+  public deleteAttendance(id: string): void {
+    const records = this.getAttendanceRecords().filter((r) => r.id !== id);
+    localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(records));
+    this.deleteDocFromFirestore('attendance_records', id);
+    this.logAudit({
+      user_name: 'Admin',
+      action: 'DELETE_ATTENDANCE_RECORD',
+      module: 'ATTENDANCE',
+      record_id: id,
+    });
+  }
+
   // ==========================================
   // PHASE 2 METHODS: LEAVE, PERMISSION, OVERTIME & APPROVALS
   // ==========================================

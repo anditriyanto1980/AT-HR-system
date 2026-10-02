@@ -19,10 +19,11 @@ import {
   Search,
   Receipt,
   ShieldCheck,
+  Edit2,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
-import { PayrollBatch, PayrollItem, PayrollStatus } from '../../types';
+import { Employee, EmployeeSalaryProfile, PayrollBatch, PayrollItem, PayrollStatus } from '../../types';
 import { PayslipModal } from './PayslipModal';
 
 export const PayrollView: React.FC = () => {
@@ -33,6 +34,27 @@ export const PayrollView: React.FC = () => {
   const [items, setItems] = useState<PayrollItem[]>([]);
   const [selectedBatchId, setSelectedBatchId] = useState<string>('');
   const [selectedSlip, setSelectedSlip] = useState<PayrollItem | null>(null);
+
+  // Salary Profiles CRUD State
+  const [salaryProfiles, setSalaryProfiles] = useState<EmployeeSalaryProfile[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [salaryModalOpen, setSalaryModalOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<EmployeeSalaryProfile | null>(null);
+  const [salaryForm, setSalaryForm] = useState<EmployeeSalaryProfile>({
+    employee_id: '',
+    base_salary: 10000000,
+    position_allowance: 1500000,
+    transport_allowance: 1000000,
+    meal_allowance: 1000000,
+    communication_allowance: 250000,
+    bank_name: 'BCA',
+    bank_account_number: '',
+    bank_account_holder: '',
+    npwp: '',
+    bpjs_tk_number: '',
+    bpjs_kes_number: '',
+    ptkp_status: 'TK/0',
+  });
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,6 +77,26 @@ export const PayrollView: React.FC = () => {
     }
     const loadedItems = dataService.getPayrollItems();
     setItems(loadedItems);
+    setEmployees(dataService.getEmployees().filter((e) => e.employment_status === 'Active'));
+    setSalaryProfiles(dataService.getSalaryProfiles());
+  };
+
+  const handleOpenEditSalary = (emp: Employee) => {
+    const profile = dataService.getSalaryProfile(emp.id);
+    setEditingProfile(profile);
+    setSalaryForm({
+      ...profile,
+      bank_account_holder: profile.bank_account_holder || emp.full_name,
+    });
+    setSalaryModalOpen(true);
+  };
+
+  const handleSaveSalaryProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    dataService.saveSalaryProfile(salaryForm);
+    reloadData();
+    setSalaryModalOpen(false);
+    setEditingProfile(null);
   };
 
   useEffect(() => {
@@ -219,16 +261,28 @@ export const PayrollView: React.FC = () => {
               {isEmployeeOnly ? 'Daftar Slip Gaji Saya' : 'Daftar Slip Gaji Karyawan'}
             </button>
             {isSuperOrHr && (
-              <button
-                onClick={() => setActiveTab('BATCHES')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'BATCHES'
-                    ? 'bg-[#1D63FF] text-white shadow-md shadow-blue-500/20'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                Batch Payroll ({batches.length})
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveTab('BATCHES')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === 'BATCHES'
+                      ? 'bg-[#1D63FF] text-white shadow-md shadow-blue-500/20'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Batch Payroll ({batches.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('SALARY_PROFILES')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === 'SALARY_PROFILES'
+                      ? 'bg-[#1D63FF] text-white shadow-md shadow-blue-500/20'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Profil Gaji & Kompensasi
+                </button>
+              </>
             )}
           </div>
 
@@ -468,7 +522,244 @@ export const PayrollView: React.FC = () => {
             </table>
           </div>
         )}
+
+        {/* Tab 3: Salary Profiles Management (CRUD) */}
+        {activeTab === 'SALARY_PROFILES' && isSuperOrHr && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider">
+                  <th className="py-3.5 px-4">Karyawan</th>
+                  <th className="py-3.5 px-4 text-right">Gaji Pokok</th>
+                  <th className="py-3.5 px-4 text-right">Total Tunjangan</th>
+                  <th className="py-3.5 px-4">Status PTKP & Pajak</th>
+                  <th className="py-3.5 px-4">Rekening Pembayaran Bank</th>
+                  <th className="py-3.5 px-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {employees.map((emp) => {
+                  const prof = dataService.getSalaryProfile(emp.id);
+                  const totalAllowances =
+                    (prof.position_allowance || 0) +
+                    (prof.transport_allowance || 0) +
+                    (prof.meal_allowance || 0) +
+                    (prof.communication_allowance || 0);
+
+                  return (
+                    <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900 text-sm">{emp.full_name}</div>
+                        <div className="text-[11px] text-slate-500 font-mono">
+                          {emp.employee_code} &bull; {emp.department_name}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
+                        {formatIDR(prof.base_salary)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-emerald-700">
+                        +{formatIDR(totalAllowances)}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200 font-mono">
+                          {prof.ptkp_status}
+                        </span>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          NPWP: {prof.npwp || '-'}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-700">
+                        <div className="font-medium text-xs">{prof.bank_name}</div>
+                        <div className="font-mono text-[11px] text-slate-500">{prof.bank_account_number}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <button
+                          onClick={() => handleOpenEditSalary(emp)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                          <span>Atur Gaji</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* Salary Profile Edit Modal */}
+      {salaryModalOpen && editingProfile && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Atur Struktur Gaji & Tunjangan</h3>
+                <p className="text-xs text-slate-500">
+                  Karyawan: <strong>{salaryForm.bank_account_holder}</strong>
+                </p>
+              </div>
+              <button
+                onClick={() => setSalaryModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSalaryProfile} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Gaji Pokok (IDR) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={salaryForm.base_salary}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, base_salary: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Tunjangan Jabatan</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={salaryForm.position_allowance}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, position_allowance: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Tunj. Makan</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={salaryForm.meal_allowance}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, meal_allowance: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Tunj. Transport</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={salaryForm.transport_allowance}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, transport_allowance: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Komunikasi</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={salaryForm.communication_allowance}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, communication_allowance: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Nama Bank Pembayaran</label>
+                  <input
+                    type="text"
+                    value={salaryForm.bank_name}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, bank_name: e.target.value })}
+                    placeholder="e.g. BCA, Mandiri"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Nomor Rekening</label>
+                  <input
+                    type="text"
+                    value={salaryForm.bank_account_number}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, bank_account_number: e.target.value })}
+                    placeholder="8001234567"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Status PTKP (PPh 21 TER)</label>
+                  <select
+                    value={salaryForm.ptkp_status}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, ptkp_status: e.target.value as any })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-medium"
+                  >
+                    <option value="TK/0">TK/0 (Tidak Kawin - 0 Tanggungan)</option>
+                    <option value="TK/1">TK/1 (Tidak Kawin - 1 Tanggungan)</option>
+                    <option value="TK/2">TK/2 (Tidak Kawin - 2 Tanggungan)</option>
+                    <option value="TK/3">TK/3 (Tidak Kawin - 3 Tanggungan)</option>
+                    <option value="K/0">K/0 (Kawin - 0 Tanggungan)</option>
+                    <option value="K/1">K/1 (Kawin - 1 Tanggungan)</option>
+                    <option value="K/2">K/2 (Kawin - 2 Tanggungan)</option>
+                    <option value="K/3">K/3 (Kawin - 3 Tanggungan)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Nomor Pokok Wajib Pajak (NPWP)</label>
+                  <input
+                    type="text"
+                    value={salaryForm.npwp}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, npwp: e.target.value })}
+                    placeholder="72.910.492.1-013.000"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">BPJS Ketenagakerjaan</label>
+                  <input
+                    type="text"
+                    value={salaryForm.bpjs_tk_number}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, bpjs_tk_number: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">BPJS Kesehatan</label>
+                  <input
+                    type="text"
+                    value={salaryForm.bpjs_kes_number}
+                    onChange={(e) => setSalaryForm({ ...salaryForm, bpjs_kes_number: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setSalaryModalOpen(false)}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-semibold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold shadow-xs"
+                >
+                  Simpan Profil Gaji
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Generate Payroll Modal */}
       {showGenerateModal && (

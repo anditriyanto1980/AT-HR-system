@@ -13,6 +13,9 @@ import {
   Key,
   ShieldCheck,
   ShieldAlert,
+  AlertTriangle,
+  X,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
@@ -41,6 +44,11 @@ export const EmployeeList: React.FC = () => {
   const [accessModalOpen, setAccessModalOpen] = useState(false);
   const [employeeForAccess, setEmployeeForAccess] = useState<Employee | null>(null);
 
+  // In-App Delete Confirmation Modal (solves browser iframe confirm() suppression)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
   const isSuperOrHr = role === 'SUPER_ADMIN' || role === 'HR_ADMIN';
 
   const refreshList = () => {
@@ -62,11 +70,35 @@ export const EmployeeList: React.FC = () => {
     setAccessModalOpen(true);
   };
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus data karyawan ${name}?`)) {
-      dataService.deleteEmployee(id);
-      refreshList();
+  const handleOpenDelete = (emp: Employee) => {
+    setEmployeeToDelete(emp);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!employeeToDelete) return;
+
+    // Safety guard: prevent deleting current active session user
+    if (currentUser?.id === employeeToDelete.id) {
+      setToast({
+        type: 'error',
+        message: 'Tidak dapat menghapus akun Anda sendiri yang sedang aktif digunakan.',
+      });
+      setDeleteModalOpen(false);
+      return;
     }
+
+    const deletedName = employeeToDelete.full_name;
+    dataService.deleteEmployee(employeeToDelete.id);
+    refreshList();
+    setDeleteModalOpen(false);
+    setEmployeeToDelete(null);
+
+    setToast({
+      type: 'success',
+      message: `Data karyawan "${deletedName}" berhasil dihapus dari sistem.`,
+    });
+    setTimeout(() => setToast(null), 4000);
   };
 
   // Filter logic
@@ -119,6 +151,32 @@ export const EmployeeList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Action Feedback Toast / Alert Banner */}
+      {toast && (
+        <div
+          className={`p-4 rounded-xl text-xs font-semibold flex items-center justify-between gap-3 shadow-xs border ${
+            toast.type === 'success'
+              ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+              : 'bg-rose-50 text-rose-900 border-rose-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {toast.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span>{toast.message}</span>
+          </div>
+          <button
+            onClick={() => setToast(null)}
+            className="p-1 hover:bg-black/5 rounded-lg text-slate-500"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -316,8 +374,8 @@ export const EmployeeList: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => handleDelete(emp.id, emp.full_name)}
-                            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            onClick={() => handleOpenDelete(emp)}
+                            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             title="Hapus Karyawan"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -348,6 +406,84 @@ export const EmployeeList: React.FC = () => {
         employee={employeeForAccess}
         onSaved={refreshList}
       />
+
+      {/* In-App Delete Confirmation Modal (Independent of browser dialogs) */}
+      {deleteModalOpen && employeeToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">Konfirmasi Hapus Karyawan</h3>
+                <p className="text-xs text-slate-500">
+                  Apakah Anda yakin ingin menghapus data karyawan berikut dari sistem?
+                </p>
+              </div>
+            </div>
+
+            {/* Employee Preview Summary Box */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-xs">
+                  {employeeToDelete.full_name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="font-bold text-sm text-slate-900">{employeeToDelete.full_name}</div>
+                  <div className="text-xs text-slate-500 font-mono">
+                    NIK: {employeeToDelete.nik} &bull; Kode: {employeeToDelete.employee_code}
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-600">
+                <span>{employeeToDelete.department_name || 'Departemen'} &bull; {employeeToDelete.branch_name}</span>
+                <span className="font-semibold text-slate-900 font-mono">{employeeToDelete.role}</span>
+              </div>
+            </div>
+
+            {/* Self-delete warning guard */}
+            {currentUser?.id === employeeToDelete.id ? (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Akun Sedang Digunakan</span>
+                </div>
+                <p className="text-amber-800">
+                  Anda tidak dapat menghapus akun ini karena saat ini sedang aktif digunakan untuk sesi login Anda.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-rose-600 bg-rose-50/80 border border-rose-200/80 p-3 rounded-xl leading-relaxed">
+                <strong>Perhatian:</strong> Tindakan ini tidak dapat dibatalkan. Seluruh riwayat presensi, hak akses username, dan profil kompensasi karyawan ini akan terhapus.
+              </p>
+            )}
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setEmployeeToDelete(null);
+                }}
+                className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              {currentUser?.id !== employeeToDelete.id && (
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white rounded-xl text-xs font-bold shadow-md shadow-rose-600/25 flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Ya, Hapus Karyawan</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

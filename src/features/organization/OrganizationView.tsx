@@ -38,7 +38,18 @@ export const OrganizationView: React.FC = () => {
 
   // Department Modal State
   const [deptModalOpen, setDeptModalOpen] = useState(false);
+  const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [deptForm, setDeptForm] = useState({ name: '', code: '', description: '' });
+
+  // Position Modal State (CRUD for Admin)
+  const [positionModalOpen, setPositionModalOpen] = useState(false);
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+  const [positionForm, setPositionForm] = useState({
+    name: '',
+    code: '',
+    department_id: '',
+    level: 1,
+  });
 
   // Company Edit State
   const [companyForm, setCompanyForm] = useState(company);
@@ -103,34 +114,97 @@ export const OrganizationView: React.FC = () => {
   };
 
   const handleDeleteBranch = (id: string, name: string) => {
-    if (confirm(`Delete branch ${name}?`)) {
-      dataService.deleteBranch(id);
-      refreshData();
-    }
+    dataService.deleteBranch(id);
+    refreshData();
   };
 
   // Dept handlers
+  const handleOpenAddDept = () => {
+    setEditingDept(null);
+    setDeptForm({
+      name: '',
+      code: `D-${departments.length + 1}`,
+      description: '',
+    });
+    setDeptModalOpen(true);
+  };
+
+  const handleOpenEditDept = (dept: Department) => {
+    setEditingDept(dept);
+    setDeptForm({
+      name: dept.name,
+      code: dept.code,
+      description: dept.description || '',
+    });
+    setDeptModalOpen(true);
+  };
+
   const handleSaveDept = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!deptForm.name) return;
-    const newDept: Department = {
-      id: `dept-${Date.now()}`,
+    if (!deptForm.name.trim()) return;
+    const deptData: Department = {
+      id: editingDept ? editingDept.id : `dept-${Date.now()}`,
       company_id: company.id,
-      code: deptForm.code || `D-${departments.length + 1}`,
-      name: deptForm.name,
-      description: deptForm.description,
+      code: deptForm.code.trim() || `D-${departments.length + 1}`,
+      name: deptForm.name.trim(),
+      description: deptForm.description.trim(),
     };
-    dataService.saveDepartment(newDept);
+    dataService.saveDepartment(deptData);
     refreshData();
     setDeptModalOpen(false);
+    setEditingDept(null);
     setDeptForm({ name: '', code: '', description: '' });
   };
 
   const handleDeleteDept = (id: string, name: string) => {
-    if (confirm(`Delete department ${name}?`)) {
-      dataService.deleteDepartment(id);
-      refreshData();
-    }
+    dataService.deleteDepartment(id);
+    refreshData();
+  };
+
+  // Position handlers (CRUD)
+  const handleOpenAddPosition = (departmentId?: string) => {
+    setEditingPosition(null);
+    const targetDeptId = departmentId || (departments.length > 0 ? departments[0].id : '');
+    setPositionForm({
+      name: '',
+      code: `POS-${positions.length + 1}`,
+      department_id: targetDeptId,
+      level: 1,
+    });
+    setPositionModalOpen(true);
+  };
+
+  const handleOpenEditPosition = (pos: Position) => {
+    setEditingPosition(pos);
+    setPositionForm({
+      name: pos.name,
+      code: pos.code || `POS-${pos.level}`,
+      department_id: pos.department_id,
+      level: pos.level || 1,
+    });
+    setPositionModalOpen(true);
+  };
+
+  const handleSavePosition = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!positionForm.name.trim()) return;
+    const posData: Position = {
+      id: editingPosition ? editingPosition.id : `pos-${Date.now()}`,
+      department_id: positionForm.department_id,
+      name: positionForm.name.trim(),
+      code: positionForm.code.trim() || `POS-${positionForm.level}`,
+      level: Number(positionForm.level),
+      created_at: editingPosition?.created_at || new Date().toISOString(),
+    };
+    dataService.savePosition(posData);
+    refreshData();
+    setPositionModalOpen(false);
+    setEditingPosition(null);
+  };
+
+  const handleDeletePosition = (id: string, name: string) => {
+    dataService.deletePosition(id);
+    refreshData();
   };
 
   // Save Company Profile
@@ -268,57 +342,121 @@ export const OrganizationView: React.FC = () => {
       {/* TAB 2: Departments & Positions */}
       {activeTab === 'departments' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Departments & Business Units</h3>
-              <p className="text-xs text-slate-500">Corporate departments and job position titles</p>
+              <h3 className="text-base font-bold text-slate-900">Departments & Job Positions (CRUD)</h3>
+              <p className="text-xs text-slate-500">Kelola departemen, struktur organisasi, dan jabatan karier karyawan</p>
             </div>
-            <button
-              onClick={() => setDeptModalOpen(true)}
-              className="px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Department</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleOpenAddPosition()}
+                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-slate-600" />
+                <span>Tambah Jabatan</span>
+              </button>
+              <button
+                onClick={handleOpenAddDept}
+                className="px-4 py-2 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Departemen</span>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {departments.map((dept) => {
               const deptPositions = positions.filter((p) => p.department_id === dept.id);
               return (
                 <div
                   key={dept.id}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3"
+                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4 flex flex-col justify-between"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[10px] font-mono font-bold text-slate-400">
-                        {dept.code}
-                      </span>
-                      <h4 className="text-sm font-bold text-slate-900">{dept.name}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{dept.description}</p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteDept(dept.id, dept.name)}
-                      className="text-slate-400 hover:text-rose-600 p-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100">
-                    <span className="text-[11px] font-semibold text-slate-500 block mb-1.5 uppercase tracking-wider">
-                      Positions in Department ({deptPositions.length})
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {deptPositions.map((pos) => (
-                        <span
-                          key={pos.id}
-                          className="px-2 py-1 rounded bg-slate-100 text-slate-700 text-xs font-medium"
-                        >
-                          {pos.name}
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-[10px] font-mono font-bold text-slate-400">
+                          {dept.code}
                         </span>
-                      ))}
+                        <h4 className="text-sm font-bold text-slate-900">{dept.name}</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">{dept.description || 'Tidak ada deskripsi'}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleOpenEditDept(dept)}
+                          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                          title="Edit Departemen"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDept(dept.id, dept.name)}
+                          className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Hapus Departemen"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                          Daftar Jabatan ({deptPositions.length})
+                        </span>
+                        <button
+                          onClick={() => handleOpenAddPosition(dept.id)}
+                          className="text-[11px] font-semibold text-[#1D63FF] hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Tambah ke {dept.name}</span>
+                        </button>
+                      </div>
+
+                      {deptPositions.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic py-2">
+                          Belum ada jabatan di departemen ini.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {deptPositions.map((pos) => (
+                            <div
+                              key={pos.id}
+                              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2 hover:border-slate-300 transition-colors"
+                            >
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-slate-900 truncate">
+                                  {pos.name}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
+                                  <span className="font-mono">{pos.code}</span>
+                                  <span>&bull;</span>
+                                  <span className="px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+                                    Lvl {pos.level}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={() => handleOpenEditPosition(pos)}
+                                  className="p-1 text-slate-400 hover:text-slate-800 rounded transition-colors"
+                                  title="Edit Jabatan"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePosition(pos.id, pos.name)}
+                                  className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                                  title="Hapus Jabatan"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -538,10 +676,12 @@ export const OrganizationView: React.FC = () => {
       {deptModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Add New Department</h3>
+            <h3 className="text-base font-bold text-slate-900">
+              {editingDept ? 'Edit Data Departemen' : 'Tambah Departemen Baru'}
+            </h3>
             <form onSubmit={handleSaveDept} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Department Name *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Departemen *</label>
                 <input
                   type="text"
                   required
@@ -553,7 +693,7 @@ export const OrganizationView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Code</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Kode Departemen</label>
                 <input
                   type="text"
                   value={deptForm.code}
@@ -564,12 +704,12 @@ export const OrganizationView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Deskripsi & Ruang Lingkup</label>
                 <textarea
                   rows={2}
                   value={deptForm.description}
                   onChange={(e) => setDeptForm({ ...deptForm, description: e.target.value })}
-                  placeholder="Department scope and responsibilities"
+                  placeholder="Ruang lingkup kerja departemen"
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
                 />
               </div>
@@ -577,16 +717,107 @@ export const OrganizationView: React.FC = () => {
               <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200">
                 <button
                   type="button"
-                  onClick={() => setDeptModalOpen(false)}
+                  onClick={() => {
+                    setDeptModalOpen(false);
+                    setEditingDept(null);
+                  }}
                   className="px-4 py-2 border border-slate-300 text-slate-700 text-xs rounded-lg"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg"
+                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xs"
                 >
-                  Save Department
+                  {editingDept ? 'Simpan Perubahan' : 'Buat Departemen'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Position Modal (CRUD) */}
+      {positionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
+            <h3 className="text-base font-bold text-slate-900">
+              {editingPosition ? 'Edit Data Jabatan' : 'Tambah Jabatan Baru'}
+            </h3>
+            <form onSubmit={handleSavePosition} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Jabatan *</label>
+                <input
+                  type="text"
+                  required
+                  value={positionForm.name}
+                  onChange={(e) => setPositionForm({ ...positionForm, name: e.target.value })}
+                  placeholder="e.g. Senior Frontend Engineer"
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kode Jabatan</label>
+                  <input
+                    type="text"
+                    value={positionForm.code}
+                    onChange={(e) => setPositionForm({ ...positionForm, code: e.target.value })}
+                    placeholder="FE-SR"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tingkat / Level</label>
+                  <select
+                    value={positionForm.level}
+                    onChange={(e) => setPositionForm({ ...positionForm, level: Number(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-800"
+                  >
+                    <option value={1}>Level 1 - Entry / Staff</option>
+                    <option value={2}>Level 2 - Officer / Associate</option>
+                    <option value={3}>Level 3 - Senior / Specialist</option>
+                    <option value={4}>Level 4 - Lead / Manager</option>
+                    <option value={5}>Level 5 - Head / Director</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Departemen *</label>
+                <select
+                  required
+                  value={positionForm.department_id}
+                  onChange={(e) => setPositionForm({ ...positionForm, department_id: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-800"
+                >
+                  <option value="" disabled>Pilih Departemen</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPositionModalOpen(false);
+                    setEditingPosition(null);
+                  }}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs rounded-lg"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xs"
+                >
+                  {editingPosition ? 'Simpan Perubahan' : 'Buat Jabatan'}
                 </button>
               </div>
             </form>

@@ -64,11 +64,9 @@ export const HolidayView: React.FC = () => {
     setModalOpen(false);
   };
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Delete holiday "${name}"?`)) {
-      dataService.deleteHoliday(id);
-      refreshHolidays();
-    }
+  const handleDelete = (id: string, _name?: string) => {
+    dataService.deleteHoliday(id);
+    refreshHolidays();
   };
 
   return (
