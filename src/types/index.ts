@@ -24,9 +24,14 @@ export interface Company {
   id: string;
   code: string;
   name: string;
+  app_name?: string;
+  tagline?: string;
+  app_short_name?: string;
+  brand_icon?: 'gem' | 'building' | 'sparkles' | 'shield' | 'briefcase' | 'rocket' | 'award';
   address: string;
   phone: string;
   email: string;
+  website?: string;
   logo_url?: string;
   created_at?: string;
 }

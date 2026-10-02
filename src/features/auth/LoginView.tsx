@@ -12,7 +12,9 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { UserRole } from '../../types';
+import { UserRole, Company } from '../../types';
+import { dataService } from '../../services/dataService';
+import { BrandIcon } from '../../components/common/BrandIcon';
 
 export const LoginView: React.FC = () => {
   const { login, loginWithGoogle, switchRole, isFirebaseConnected } = useAuth();
@@ -22,6 +24,21 @@ export const LoginView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [company, setCompany] = useState<Company>(() => dataService.getCompany());
+
+  React.useEffect(() => {
+    const handleCompanyUpdate = (e: any) => {
+      if (e.detail) {
+        setCompany(e.detail);
+      } else {
+        setCompany(dataService.getCompany());
+      }
+    };
+    window.addEventListener('company_updated', handleCompanyUpdate);
+    return () => {
+      window.removeEventListener('company_updated', handleCompanyUpdate);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,18 +80,18 @@ export const LoginView: React.FC = () => {
         {/* Brand Header */}
         <div className="text-center space-y-2.5">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 text-slate-950 font-black shadow-lg shadow-amber-500/25">
-            <Gem className="w-8 h-8 text-slate-950" />
+            <BrandIcon name={company.brand_icon} className="w-8 h-8 text-slate-950" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center justify-center gap-2">
-              <span>AT-HR Enterprise</span>
+              <span>{company.app_name || company.name || 'AT-HR Enterprise'}</span>
             </h1>
             <p className="text-xs font-semibold text-amber-600 tracking-wide mt-1">
-              Smart Solutions for Smart Business
+              {company.tagline || 'Smart Solutions for Smart Business'}
             </p>
           </div>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            Platform HRIS, Presensi Pintar & Manajemen Karyawan Terintegrasi
+            {company.name} — Platform HRIS, Presensi Pintar & Manajemen Karyawan
           </p>
         </div>
 

@@ -26,8 +26,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
-import { AppNotification, UserRole } from '../../types';
+import { AppNotification, Company, UserRole } from '../../types';
 import { PWAInstallButton } from '../pwa/PWAInstallButton';
+import { BrandIcon } from '../common/BrandIcon';
 
 interface HeaderProps {
   currentTab: string;
@@ -50,6 +51,21 @@ export const Header: React.FC<HeaderProps> = ({
   const [searchResultsOpen, setSearchResultsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [company, setCompany] = useState<Company>(() => dataService.getCompany());
+
+  useEffect(() => {
+    const handleCompanyUpdate = (e: any) => {
+      if (e.detail) {
+        setCompany(e.detail);
+      } else {
+        setCompany(dataService.getCompany());
+      }
+    };
+    window.addEventListener('company_updated', handleCompanyUpdate);
+    return () => {
+      window.removeEventListener('company_updated', handleCompanyUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
@@ -88,8 +104,6 @@ export const Header: React.FC<HeaderProps> = ({
       }
     }
   };
-
-  const supabaseStatus = dataService.getSupabaseStatus();
 
   const roleLabels: Record<UserRole, { title: string; subtitle: string }> = {
     SUPER_ADMIN: { title: 'Admin', subtitle: 'Main Branch' },
@@ -141,15 +155,15 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-3 shrink-0">
         {/* Brand Icon & Name */}
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-500/20">
-            <Gem className="w-5 h-5 text-slate-950" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-500/20 shrink-0">
+            <BrandIcon name={company.brand_icon} className="w-5 h-5 text-slate-950" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm sm:text-base font-bold text-white tracking-tight leading-none flex items-center gap-1.5">
-              <span>AT-HR Enterprise</span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm sm:text-base font-bold text-white tracking-tight leading-none flex items-center gap-1.5 truncate max-w-[180px] sm:max-w-xs md:max-w-sm">
+              <span className="truncate">{company.app_name || company.name || 'AT-HR Enterprise'}</span>
             </span>
-            <span className="text-[10px] text-amber-400 font-medium tracking-wide mt-0.5 hidden xs:inline">
-              Smart Solutions for Smart Business
+            <span className="text-[10px] text-amber-400 font-medium tracking-wide mt-0.5 hidden xs:inline truncate max-w-[200px] sm:max-w-xs">
+              {company.tagline || 'Smart Solutions for Smart Business'}
             </span>
           </div>
         </div>
@@ -368,7 +382,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenDbModal}
           className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors"
-          title="System Settings & Database Connection"
+          title="Status Database Firebase Cloud Firestore"
         >
           <Settings className="w-4 h-4" />
         </button>

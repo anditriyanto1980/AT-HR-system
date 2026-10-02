@@ -1,4 +1,3 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { doc, getDoc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
 import { db, auth, OperationType, handleFirestoreError, testConnection } from './firebase';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -76,7 +75,6 @@ const STORAGE_KEYS = {
   LOCATIONS: 'athr_locations',
   ATTENDANCE: 'athr_attendance',
   AUDIT_LOGS: 'athr_audit_logs',
-  SUPABASE_CONFIG: 'athr_supabase_config',
   LEAVE_TYPES: 'athr_leave_types',
   LEAVE_BALANCES: 'athr_leave_balances',
   LEAVE_REQUESTS: 'athr_leave_requests',
@@ -97,22 +95,18 @@ const STORAGE_KEYS = {
   CONTRACT_TRACKERS: 'athr_contract_trackers',
 };
 
-export interface SupabaseConfig {
-  url: string;
-  anonKey: string;
-  isConnected: boolean;
-}
-
 class DataService {
-  private supabase: SupabaseClient | null = null;
-  private isLiveSupabase: boolean = false;
   private isFirebaseConnected: boolean = false;
   private lastFirebaseSyncTime: string | null = null;
 
   constructor() {
-    this.initSupabase();
     this.initFirebase();
     this.seedLocalStorageIfEmpty();
+    if (typeof document !== 'undefined') {
+      const comp = this.getCompany();
+      const appName = comp.app_name || comp.name || 'AT-HR Enterprise';
+      document.title = `${appName} - Smart Attendance & HRIS System`;
+    }
   }
 
   private initFirebase() {
@@ -176,13 +170,53 @@ class DataService {
         count++;
       }
 
+      for (const pos of this.getPositions()) {
+        await setDoc(doc(db, 'positions', pos.id), pos);
+        count++;
+      }
+
       for (const sh of this.getShifts()) {
         await setDoc(doc(db, 'shifts', sh.id), sh);
         count++;
       }
 
+      for (const hol of this.getHolidays()) {
+        await setDoc(doc(db, 'holidays', hol.id), hol);
+        count++;
+      }
+
       for (const att of this.getAttendanceRecords()) {
         await setDoc(doc(db, 'attendance_records', att.id), att);
+        count++;
+      }
+
+      for (const sp of this.getSalaryProfiles()) {
+        await setDoc(doc(db, 'salary_profiles', sp.employee_id), sp);
+        count++;
+      }
+
+      for (const pb of this.getPayrollBatches()) {
+        await setDoc(doc(db, 'payroll_batches', pb.id), pb);
+        count++;
+      }
+
+      for (const lr of this.getLeaveRequests()) {
+        await setDoc(doc(db, 'leave_requests', lr.id), lr);
+        count++;
+      }
+
+      for (const pr of this.getPermissionRequests()) {
+        await setDoc(doc(db, 'permission_requests', pr.id), pr);
+        count++;
+      }
+
+      for (const ot of this.getOvertimeRequests()) {
+        await setDoc(doc(db, 'overtime_requests', ot.id), ot);
+        count++;
+      }
+
+      for (const rmb of this.getReimbursements()) {
+        await setDoc(doc(db, 'reimbursements', rmb.id), rmb);
         count++;
       }
 
@@ -198,95 +232,6 @@ class DataService {
       handleFirestoreError(error, OperationType.WRITE, 'sync_all');
       return { success: false, syncedCount: 0, error: String(error) };
     }
-  }
-
-  private initSupabase() {
-    const envUrl = import.meta.env.VITE_SUPABASE_URL;
-    const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    let config: SupabaseConfig | null = null;
-    const stored = localStorage.getItem(STORAGE_KEYS.SUPABASE_CONFIG);
-    if (stored) {
-      try {
-        config = JSON.parse(stored);
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    const url = config?.url || (envUrl && envUrl !== 'https://your-project.supabase.co' ? envUrl : '');
-    const key = config?.anonKey || (envKey && envKey !== 'your-anon-public-key' ? envKey : '');
-
-    if (url && key) {
-      try {
-        this.supabase = createClient(url, key);
-        this.isLiveSupabase = true;
-      } catch (err) {
-        console.warn('Failed to initialize Supabase client:', err);
-        this.supabase = null;
-        this.isLiveSupabase = false;
-      }
-    } else {
-      this.supabase = null;
-      this.isLiveSupabase = false;
-    }
-  }
-
-  public getSupabaseStatus(): { isConfigured: boolean; url: string; anonKey: string } {
-    const stored = localStorage.getItem(STORAGE_KEYS.SUPABASE_CONFIG);
-    let url = import.meta.env.VITE_SUPABASE_URL || '';
-    let anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.url) url = parsed.url;
-        if (parsed.anonKey) anonKey = parsed.anonKey;
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    const isValid = Boolean(
-      url &&
-        url !== 'https://your-project.supabase.co' &&
-        anonKey &&
-        anonKey !== 'your-anon-public-key'
-    );
-
-    return {
-      isConfigured: isValid && this.isLiveSupabase,
-      url,
-      anonKey,
-    };
-  }
-
-  public async setSupabaseConfig(url: string, anonKey: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const client = createClient(url, anonKey);
-      // Quick ping test
-      const { error } = await client.from('companies').select('id').limit(1);
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 is just row not found, other errors might be permissions or url issue
-        console.warn('Supabase test returned code:', error.code, error.message);
-      }
-
-      localStorage.setItem(
-        STORAGE_KEYS.SUPABASE_CONFIG,
-        JSON.stringify({ url, anonKey, isConnected: true })
-      );
-      this.supabase = client;
-      this.isLiveSupabase = true;
-      return { success: true };
-    } catch (e: any) {
-      return { success: false, error: e.message || 'Failed to connect to Supabase.' };
-    }
-  }
-
-  public resetToLocalDemo() {
-    localStorage.removeItem(STORAGE_KEYS.SUPABASE_CONFIG);
-    this.supabase = null;
-    this.isLiveSupabase = false;
   }
 
   private seedLocalStorageIfEmpty() {
@@ -402,18 +347,50 @@ class DataService {
 
   // COMPANY
   public getCompany(): Company {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPANY) || JSON.stringify(DEMO_COMPANY));
+    const raw = localStorage.getItem(STORAGE_KEYS.COMPANY);
+    if (!raw) return { ...DEMO_COMPANY };
+    try {
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEMO_COMPANY,
+        ...parsed,
+      };
+    } catch {
+      return { ...DEMO_COMPANY };
+    }
   }
 
-  public updateCompany(company: Company): void {
-    localStorage.setItem(STORAGE_KEYS.COMPANY, JSON.stringify(company));
+  public updateCompany(company: Partial<Company> & { id?: string }): Company {
+    const current = this.getCompany();
+    const updated: Company = {
+      ...current,
+      ...company,
+      id: current.id || 'comp-01',
+    };
+    localStorage.setItem(STORAGE_KEYS.COMPANY, JSON.stringify(updated));
+    this.syncDocToFirestore('companies', updated.id, updated);
     this.logAudit({
       user_name: 'Admin',
       action: 'UPDATE_COMPANY',
       module: 'ORGANIZATION',
-      record_id: company.id,
-      after_data: company,
+      record_id: updated.id,
+      after_data: {
+        app_name: updated.app_name,
+        company_name: updated.name,
+        tagline: updated.tagline,
+      },
     });
+
+    if (typeof document !== 'undefined') {
+      const appName = updated.app_name || updated.name || 'AT-HR Enterprise';
+      document.title = `${appName} - Smart Attendance & HRIS System`;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('company_updated', { detail: updated }));
+    }
+
+    return updated;
   }
 
   // BRANCHES
@@ -1186,6 +1163,7 @@ class DataService {
     // Sort chronologically
     list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     localStorage.setItem(STORAGE_KEYS.HOLIDAYS, JSON.stringify(list));
+    this.syncDocToFirestore('holidays', holiday.id, holiday);
     this.logAudit({
       user_name: 'Admin',
       action: index >= 0 ? 'UPDATE_HOLIDAY' : 'CREATE_HOLIDAY',
@@ -1198,6 +1176,7 @@ class DataService {
   public deleteHoliday(id: string): void {
     const list = this.getHolidays().filter((h) => h.id !== id);
     localStorage.setItem(STORAGE_KEYS.HOLIDAYS, JSON.stringify(list));
+    this.deleteDocFromFirestore('holidays', id);
   }
 
   // ATTENDANCE CORRECTIONS
@@ -1669,6 +1648,7 @@ class DataService {
       list.push(profile);
     }
     localStorage.setItem(STORAGE_KEYS.SALARY_PROFILES, JSON.stringify(list));
+    this.syncDocToFirestore('salary_profiles', profile.employee_id, profile);
   }
 
   public getPayrollBatches(): PayrollBatch[] {

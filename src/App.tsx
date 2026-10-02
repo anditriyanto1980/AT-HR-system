@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { MobileNav } from './components/layout/MobileNav';
-import { SupabaseSetupModal } from './components/modals/SupabaseSetupModal';
+import { FirebaseSetupModal } from './components/modals/FirebaseSetupModal';
 import { ClockInView } from './features/attendance/ClockInView';
 import { AttendanceMonitoring } from './features/attendance/AttendanceMonitoring';
 import { AttendanceHistory } from './features/attendance/AttendanceHistory';
@@ -125,8 +125,8 @@ function MainApp() {
       {/* PWA Offline Connectivity Indicator */}
       <OfflineIndicator />
 
-      {/* Supabase & SQL Migration Configuration Modal */}
-      <SupabaseSetupModal isOpen={dbModalOpen} onClose={() => setDbModalOpen(false)} />
+      {/* Firebase Cloud Firestore Configuration Modal */}
+      <FirebaseSetupModal isOpen={dbModalOpen} onClose={() => setDbModalOpen(false)} />
     </div>
   );
 }

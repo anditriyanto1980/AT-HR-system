@@ -31,9 +31,14 @@ export const DEMO_COMPANY: Company = {
   id: 'comp-01',
   code: 'NPD',
   name: 'PT Nusantara Prima Digital',
+  app_name: 'AT-HR Enterprise',
+  tagline: 'Smart Solutions for Smart Business',
+  app_short_name: 'AT-HR',
+  brand_icon: 'gem',
   address: 'Sahid Sudirman Center Lt. 28, Jl. Jend. Sudirman Kav. 86, Jakarta Pusat',
   phone: '+62 21 5790 8820',
   email: 'corporate@nusantaraprima.co.id',
+  website: 'https://nusantaraprima.co.id',
 };
 
 export const DEMO_BRANCHES: Branch[] = [

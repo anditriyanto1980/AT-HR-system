@@ -121,8 +121,8 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ item, onClose }) => 
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b-2 border-slate-900">
             <div className="space-y-1">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-base shadow">
-                  AT
+                <div className="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs sm:text-sm shadow tracking-wider">
+                  {company.app_short_name || (company.app_name ? company.app_name.substring(0, 2).toUpperCase() : 'AT')}
                 </div>
                 <div>
                   <h1 className="text-lg font-black text-slate-900 tracking-tight leading-none uppercase">
@@ -391,14 +391,14 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ item, onClose }) => 
                 <p className="font-bold text-slate-900 border-b border-slate-300 pb-1 mx-8">
                   Siti Rahmawati, S.Psi., CHRP
                 </p>
-                <p className="text-[10px] text-slate-400 mt-1">AT-HR Enterprise Automated Payroll</p>
+                <p className="text-[10px] text-slate-400 mt-1">{company.app_name || 'AT-HR Enterprise'} Automated Payroll</p>
               </div>
             </div>
           </div>
 
           {/* Footer Note */}
           <div className="text-[10px] text-center text-slate-400 pt-4 border-t border-slate-100">
-            Slip gaji ini adalah dokumen resmi yang diterbitkan secara elektronik oleh Sistem AT-HR. Informasi dalam slip ini bersifat rahasia (Strictly Confidential).
+            Slip gaji ini adalah dokumen resmi yang diterbitkan secara elektronik oleh Sistem {company.app_name || 'AT-HR'}. Informasi dalam slip ini bersifat rahasia (Strictly Confidential).
           </div>
         </div>
       </div>

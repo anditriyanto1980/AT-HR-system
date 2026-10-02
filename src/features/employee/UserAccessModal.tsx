@@ -79,7 +79,9 @@ export const UserAccessModal: React.FC<UserAccessModalProps> = ({
   const handleCopyCredentials = () => {
     const appUrl = window.location.origin;
     const passText = password || employee.password || 'password123';
-    const textToCopy = `*AKSES LOGIN AT-HR ENTERPRISE*\nHalo ${employee.full_name},\nBerikut kredensial akun portal absensi dan HRIS Anda:\n\n🌐 *Portal Aplikasi*: ${appUrl}\n👤 *Username*: ${username}\n🔑 *Password*: ${passText}\n👔 *Role Akses*: ${role}\n\nSilakan simpan informasi ini dan jangan bagikan ke pihak lain.`;
+    const comp = dataService.getCompany();
+    const appTitle = comp.app_name?.toUpperCase() || 'AT-HR ENTERPRISE';
+    const textToCopy = `*AKSES LOGIN ${appTitle}*\nHalo ${employee.full_name},\nBerikut kredensial akun portal absensi dan HRIS Anda:\n\n🌐 *Portal Aplikasi*: ${appUrl}\n👤 *Username*: ${username}\n🔑 *Password*: ${passText}\n👔 *Role Akses*: ${role}\n\nSilakan simpan informasi ini dan jangan bagikan ke pihak lain.`;
 
     navigator.clipboard.writeText(textToCopy).then(() => {
       setCopied(true);

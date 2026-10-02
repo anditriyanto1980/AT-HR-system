@@ -41,7 +41,7 @@ Proyek ini telah dilengkapi dengan konfigurasi `vercel.json` bawaan sehingga sia
    - **Framework Preset**: `Vite`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
-5. *(Opsional)* Pada bagian **Environment Variables**, Anda dapat menambahkan variabel dari `.env.example` jika ingin menyesuaikan kredensial Firebase / Supabase production:
+5. *(Opsional)* Pada bagian **Environment Variables**, Anda dapat menambahkan variabel dari `.env.example` jika ingin menyesuaikan kredensial Firebase production:
    - `VITE_FIREBASE_PROJECT_ID`
    - `VITE_FIREBASE_APP_ID`
    - `VITE_FIREBASE_API_KEY`

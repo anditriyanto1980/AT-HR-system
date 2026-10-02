@@ -150,6 +150,32 @@ service cloud.firestore {
       allow delete: if isAdmin() && isValidId(claimId);
     }
 
+    // Holidays (Kalender Libur)
+    match /holidays/{holidayId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(holidayId);
+    }
+
+    // Salary Profiles (Profil Gaji & Kompensasi)
+    match /salary_profiles/{profileId} {
+      allow get: if isSignedIn() && (isAdmin() || resource.data.employee_id == request.auth.uid);
+      allow list: if isAdmin();
+      allow write: if isAdmin() && isValidId(profileId);
+    }
+
+    // Payroll Batches
+    match /payroll_batches/{batchId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow write: if isAdmin() && isValidId(batchId);
+    }
+
+    // Work Schedules
+    match /work_schedules/{scheduleId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidId(scheduleId);
+    }
+
     // Announcements
     match /announcements/{announcementId} {
       allow read: if isSignedIn();
