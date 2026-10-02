@@ -17,6 +17,7 @@ import {
   Lock,
   Sparkles,
   Upload,
+  SwitchCamera,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
@@ -62,6 +63,8 @@ export const ClockInView: React.FC = () => {
 
   // Camera & Selfie state
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [clockInPhoto, setClockInPhoto] = useState<string | null>(null);
   const [clockOutPhoto, setClockOutPhoto] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -200,31 +203,103 @@ export const ClockInView: React.FC = () => {
     setGpsError(null);
   };
 
-  // Camera handling
-  const startCamera = async () => {
+  // Camera handling with mobile constraint fallbacks
+  const startCamera = async (mode: 'user' | 'environment' = facingMode) => {
     setCameraError(null);
     setPhotoErrorHighlight(false);
+    setCameraLoading(true);
+
     try {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraError(
+          'Browser HP Anda tidak mendukung kamera live WebRTC. Silakan gunakan tombol "Buka Kamera HP (Bawaan)" di bawah.'
+        );
+        setCameraLoading(false);
+        return;
       }
+
+      // Try multiple constraint sets progressively to avoid mobile black screen / driver negotiation freeze
+      const constraintCandidates = [
+        {
+          video: {
+            facingMode: { ideal: mode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        },
+        {
+          video: {
+            facingMode: mode,
+          },
+          audio: false,
+        },
+        {
+          video: {
+            facingMode: { ideal: mode },
+          },
+          audio: false,
+        },
+        {
+          video: true,
+          audio: false,
+        },
+      ];
+
+      let activeStream: MediaStream | null = null;
+      let lastErr: any = null;
+
+      for (const c of constraintCandidates) {
+        try {
+          activeStream = await navigator.mediaDevices.getUserMedia(c);
+          if (activeStream) break;
+        } catch (e: any) {
+          lastErr = e;
+        }
+      }
+
+      if (!activeStream) {
+        console.warn('Could not acquire camera stream with any constraint:', lastErr);
+        setCameraError(
+          'Kamera langsung diblokir atau gagal merender di browser HP Anda. Silakan klik tombol "Buka Kamera HP (Bawaan)" di bawah untuk mengambil foto langsung.'
+        );
+        setCameraActive(false);
+        setCameraLoading(false);
+        return;
+      }
+
+      streamRef.current = activeStream;
       setCameraActive(true);
+
+      // Immediately connect to video element if ready
+      if (videoRef.current) {
+        const video = videoRef.current;
+        video.srcObject = activeStream;
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
+        video.muted = true;
+        video.onloadedmetadata = () => {
+          video.play().catch((err) => console.warn('video.play() metadata wait:', err));
+        };
+        try {
+          await video.play();
+        } catch (e) {
+          console.warn('Direct video.play() waiting:', e);
+        }
+      }
     } catch (err: any) {
       console.warn('Camera access denied or unavailable:', err);
       setCameraError(
-        'Kamera browser diblokir atau tidak tersedia. Anda dapat menggunakan tombol "Kamera Perangkat" di bawah atau izinkan akses kamera di pengaturan browser.'
+        'Akses kamera ditolak atau tidak dapat diaktifkan. Silakan gunakan tombol "Buka Kamera HP (Bawaan)" di bawah untuk langsung membuka kamera bawaan ponsel.'
       );
       setCameraActive(false);
+    } finally {
+      setCameraLoading(false);
     }
   };
 
@@ -233,33 +308,68 @@ export const ClockInView: React.FC = () => {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setCameraActive(false);
   };
+
+  const toggleFacingMode = () => {
+    const nextMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(nextMode);
+    startCamera(nextMode);
+  };
+
+  // Ensure stream is attached whenever cameraActive becomes true
+  useEffect(() => {
+    if (cameraActive && streamRef.current && videoRef.current) {
+      const video = videoRef.current;
+      if (video.srcObject !== streamRef.current) {
+        video.srcObject = streamRef.current;
+      }
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.muted = true;
+      video.onloadedmetadata = () => {
+        video.play().catch((err) => console.warn('metadata play err:', err));
+      };
+      video.play().catch((err) => console.warn('playback err:', err));
+    }
+  }, [cameraActive, facingMode]);
 
   // Capture snapshot from webcam video stream
   const capturePhoto = () => {
     if (!videoRef.current) return;
+    const video = videoRef.current;
+
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 480;
+
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth || 640;
-    canvas.height = videoRef.current.videoHeight || 480;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      // Mirror image horizontally for selfie view
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      if (facingMode === 'user') {
+        // Mirror image horizontally for selfie view
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      } else {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
 
       // Add watermark overlay
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(0, canvas.height - 36, canvas.width, 36);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px sans-serif';
+      ctx.font = 'bold 13px sans-serif';
       const timeStr = `${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')} | ${
         !isClockedIn ? 'CLOCK IN' : 'CLOCK OUT'
-      }`;
-      ctx.fillText(timeStr, 12, canvas.height - 14);
+      } | ${selectedLocation?.name || 'GPS OK'}`;
+      ctx.fillText(timeStr, 12, canvas.height - 15);
 
       const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
@@ -275,24 +385,49 @@ export const ClockInView: React.FC = () => {
     }
   };
 
-  // Fallback direct device camera input (Mobile / PWA file input)
+  // Fallback direct device camera input (Mobile native camera with GPS watermark)
   const handleDeviceCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result as string;
-      if (!isClockedIn) {
-        setClockInPhoto(dataUrl);
-      } else {
-        setClockOutPhoto(dataUrl);
-      }
-      stopCamera();
-      setPhotoErrorHighlight(false);
-      setErrorMessage(null);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width || 640;
+        canvas.height = img.height || 480;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          // Add watermark overlay
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+          ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 14px sans-serif';
+          const timeStr = `${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')} | ${
+            !isClockedIn ? 'CLOCK IN (HP CAMERA)' : 'CLOCK OUT (HP CAMERA)'
+          } | ${selectedLocation?.name || 'GPS OK'}`;
+          ctx.fillText(timeStr, 14, canvas.height - 15);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          if (!isClockedIn) {
+            setClockInPhoto(dataUrl);
+          } else {
+            setClockOutPhoto(dataUrl);
+          }
+        } else {
+          const rawUrl = reader.result as string;
+          if (!isClockedIn) setClockInPhoto(rawUrl);
+          else setClockOutPhoto(rawUrl);
+        }
+        stopCamera();
+        setPhotoErrorHighlight(false);
+        setErrorMessage(null);
+      };
+      img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   // Simulation generator for development environments without a physical camera
@@ -733,13 +868,22 @@ export const ClockInView: React.FC = () => {
                   </span>
                 </div>
                 {!clockInPhoto && (
-                  <button
-                    type="button"
-                    onClick={startCamera}
-                    className="text-[11px] px-2.5 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 cursor-pointer"
-                  >
-                    Buka Kamera
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => startCamera()}
+                      className="text-[11px] px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 cursor-pointer"
+                    >
+                      Buka Live
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[11px] px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 cursor-pointer"
+                    >
+                      Kamera HP
+                    </button>
+                  </div>
                 )}
               </div>
             ) : !isClockedOut ? (
@@ -763,13 +907,22 @@ export const ClockInView: React.FC = () => {
                   </span>
                 </div>
                 {!clockOutPhoto && (
-                  <button
-                    type="button"
-                    onClick={startCamera}
-                    className="text-[11px] px-2.5 py-1 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 cursor-pointer"
-                  >
-                    Buka Kamera Pulang
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => startCamera()}
+                      className="text-[11px] px-2.5 py-1 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 cursor-pointer"
+                    >
+                      Buka Live
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[11px] px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 cursor-pointer"
+                    >
+                      Kamera HP
+                    </button>
+                  </div>
                 )}
               </div>
             ) : null}
@@ -860,7 +1013,18 @@ export const ClockInView: React.FC = () => {
 
             {/* Video Viewport / Snapshot Container */}
             <div className="relative aspect-4/3 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800 shadow-inner">
-              {currentActivePhoto ? (
+              {/* Always mounted video element so videoRef.current is never null */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`w-full h-full object-cover ${
+                  facingMode === 'user' ? 'transform -scale-x-100' : ''
+                } ${cameraActive && !currentActivePhoto ? 'block' : 'hidden'}`}
+              />
+
+              {currentActivePhoto && (
                 <div className="relative w-full h-full">
                   <img
                     src={currentActivePhoto}
@@ -869,30 +1033,31 @@ export const ClockInView: React.FC = () => {
                   />
                   <div className="absolute top-2 left-2 bg-emerald-950/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-1 rounded-md border border-emerald-400/40 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    <span>FOTO TERAMBIL</span>
+                    <span>FOTO TERAMBIL & TERVERIFIKASI</span>
                   </div>
                 </div>
-              ) : cameraActive ? (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover transform -scale-x-100"
-                />
-              ) : (
+              )}
+
+              {!cameraActive && !currentActivePhoto && (
                 <div className="text-center p-4 space-y-2">
                   <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
                     <Camera className="w-6 h-6" />
                   </div>
-                  <p className="text-xs text-slate-300 font-medium max-w-[200px] mx-auto">
-                    Kamera belum aktif. Klik tombol di bawah untuk mengambil foto selfie verifikasi.
+                  <p className="text-xs text-slate-300 font-medium max-w-[220px] mx-auto">
+                    Kamera siap. Tekan tombol di bawah untuk mengambil foto selfie verifikasi.
                   </p>
                 </div>
               )}
 
+              {cameraLoading && (
+                <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center text-white text-xs gap-2 z-10">
+                  <RefreshCw className="w-6 h-6 animate-spin text-blue-400" />
+                  <span className="font-semibold">Mengaktifkan kamera perangkat...</span>
+                </div>
+              )}
+
               {/* Geofence Overlay Pill on camera view */}
-              <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-xs text-white p-2 rounded-lg text-[10px] font-mono flex items-center justify-between border border-white/10">
+              <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-xs text-white p-2 rounded-lg text-[10px] font-mono flex items-center justify-between border border-white/10 z-10">
                 <span className="truncate max-w-[140px]">
                   {selectedLocation?.name.split(' - ')[0] || 'Office'}
                 </span>
@@ -902,51 +1067,98 @@ export const ClockInView: React.FC = () => {
               </div>
             </div>
 
-            {cameraError && (
-              <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-lg leading-relaxed font-medium">
-                {cameraError}
-              </p>
+            {/* Helper alert when camera is active */}
+            {cameraActive && (
+              <div className="flex items-center justify-between text-[11px] text-slate-600 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200">
+                <span>Layar kamera hitam di HP Anda?</span>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-blue-700 font-bold hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Buka Kamera HP Langsung</span>
+                </button>
+              </div>
             )}
 
-            {/* Camera Action Buttons */}
-            <div className="space-y-2">
-              {!cameraActive && !currentActivePhoto ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={startCamera}
-                    className="py-2.5 px-3 bg-[#1D63FF] hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>Buka Kamera</span>
-                  </button>
-
+            {cameraError && (
+              <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 p-3 rounded-xl leading-relaxed font-medium space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Kamera Live WebRTC Tidak Dapat Dirender</span>
+                </div>
+                <p>{cameraError}</p>
+                <div className="pt-1">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 text-xs shadow-xs"
                   >
                     <Smartphone className="w-3.5 h-3.5" />
-                    <span>Kamera HP (Native)</span>
+                    <span>Ambil Foto via Kamera HP Bawaan Sekarang</span>
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Camera Action Buttons */}
+            <div className="space-y-2.5">
+              {!cameraActive && !currentActivePhoto ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => startCamera()}
+                      className="py-3 px-3 bg-[#1D63FF] hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 cursor-pointer active:scale-95"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>Buka Kamera Live</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="py-3 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 cursor-pointer active:scale-95"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>Buka Kamera HP (Bawaan)</span>
+                    </button>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 leading-normal flex items-start gap-2">
+                    <span className="shrink-0 text-amber-500 font-bold">💡</span>
+                    <span>
+                      <b>Rekomendasi di Ponsel:</b> Gunakan tombol <b>"Buka Kamera HP (Bawaan)"</b> jika browser HP Anda mengalami layar hitam (*black screen*). Aplikasi kamera ponsel akan otomatis terbuka.
+                    </span>
+                  </div>
+                </div>
               ) : cameraActive ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={capturePhoto}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
-                  >
-                    <Camera className="w-4 h-4" />
-                    <span>AMBIL FOTO SEKARANG</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={stopCamera}
-                    className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl"
-                  >
-                    Batal
-                  </button>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={capturePhoto}
+                      className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/20 active:scale-95"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>AMBIL FOTO SEKARANG</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleFacingMode}
+                      className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl cursor-pointer"
+                      title="Ganti Kamera Depan / Belakang"
+                    >
+                      <SwitchCamera className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopCamera}
+                      className="px-3.5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -969,12 +1181,12 @@ export const ClockInView: React.FC = () => {
                     className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>Ganti Foto</span>
+                    <span>Ganti Foto via HP</span>
                   </button>
                 </div>
               )}
 
-              {/* Hidden file input for native mobile front camera capture */}
+              {/* Hidden file input for native mobile camera capture */}
               <input
                 ref={fileInputRef}
                 type="file"
