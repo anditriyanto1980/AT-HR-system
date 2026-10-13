@@ -59,7 +59,9 @@ export const PayrollView: React.FC = () => {
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('all');
-  const [activeTab, setActiveTab] = useState<'ITEMS' | 'BATCHES' | 'SALARY_PROFILES'>('ITEMS');
+  const [activeTab, setActiveTab] = useState<'ITEMS' | 'BATCHES' | 'SALARY_PROFILES' | 'TER_BPJS'>('ITEMS');
+  const [syncNotice, setSyncNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
 
   // Generation Modal
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -149,33 +151,79 @@ export const PayrollView: React.FC = () => {
     reloadData();
   };
 
+  const handleSyncAttendance = () => {
+    if (!selectedBatchId) return;
+    setSyncLoading(true);
+    try {
+      const res = dataService.syncLiveAttendanceToPayroll(selectedBatchId);
+      reloadData();
+      setSyncNotice({ type: 'success', message: res.message });
+      setTimeout(() => setSyncNotice(null), 6000);
+    } catch (err: any) {
+      setSyncNotice({ type: 'error', message: err.message || 'Gagal sinkronisasi data presensi.' });
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            {isEmployeeOnly ? 'My Payroll & Payslips (Slip Gaji)' : 'Enterprise Payroll & Payslip Operations'}
+            {isEmployeeOnly ? 'Slip Gaji & Riwayat Payroll Saya' : 'Operasional Payroll & Penggajian Karyawan'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500">
             {isEmployeeOnly
               ? 'Akses dan unduh arsip slip gaji resmi ber-barcode Anda setiap periode.'
-              : 'Perhitungan gaji otomatis, tunjangan, potongan BPJS & PPh 21 TER, serta slip gaji elektronik.'}
+              : 'Perhitungan gaji otomatis, tunjangan, potongan BPJS & PPh 21 TER, serta integrasi rekap presensi.'}
           </p>
         </div>
 
         {isSuperOrHr && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleSyncAttendance}
+              disabled={syncLoading || !selectedBatchId}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+              title="Kalkulasi ulang potongan telat, lembur, dan absensi otomatis dari log kehadiran terkini"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncLoading ? 'animate-spin' : ''}`} />
+              <span>Sinkronkan Rekap Absensi Realtime</span>
+            </button>
             <button
               onClick={() => setShowGenerateModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              Generate Payroll Baru
+              <span>Generate Payroll Baru</span>
             </button>
           </div>
         )}
       </div>
+
+      {/* Sync Alert Banner */}
+      {syncNotice && (
+        <div
+          className={`p-4 rounded-2xl text-xs font-semibold flex items-center justify-between border shadow-xs animate-in fade-in duration-200 ${
+            syncNotice.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-rose-50 border-rose-200 text-rose-900'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{syncNotice.message}</span>
+          </div>
+          <button
+            onClick={() => setSyncNotice(null)}
+            className="text-xs underline hover:no-underline font-bold cursor-pointer"
+          >
+            Tutup
+          </button>
+        </div>
+      )}
 
       {/* KPI Highlight Cards (Summary) */}
       {!isEmployeeOnly && currentBatch && (
@@ -236,7 +284,7 @@ export const PayrollView: React.FC = () => {
                   ? 'DISETUJUI FINANCE'
                   : currentBatch.status === 'VERIFIED'
                   ? 'TERVERIFIKASI HR'
-                  : 'DRAFT CALCULATION'}
+                  : 'DRAFT KALKULASI'}
               </span>
             </div>
             <div className="text-[11px] text-slate-400 mt-1">
@@ -282,13 +330,23 @@ export const PayrollView: React.FC = () => {
                 >
                   Profil Gaji & Kompensasi
                 </button>
+                <button
+                  onClick={() => setActiveTab('TER_BPJS')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === 'TER_BPJS'
+                      ? 'bg-[#1D63FF] text-white shadow-md shadow-blue-500/20'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Pajak TER & BPJS
+                </button>
               </>
             )}
           </div>
 
           {/* Batch Selector & Filters */}
           <div className="flex flex-wrap items-center gap-2.5">
-            {!isEmployeeOnly && activeTab === 'ITEMS' && (
+            {!isEmployeeOnly && (activeTab === 'ITEMS' || activeTab === 'TER_BPJS') && (
               <>
                 <select
                   value={selectedBatchId}
@@ -373,7 +431,7 @@ export const PayrollView: React.FC = () => {
                         </span>
                         {item.late_minutes > 0 && (
                           <span className="text-[10px] text-amber-600 block">
-                            {item.late_minutes}m late
+                            {item.late_minutes} mnt terlambat
                           </span>
                         )}
                       </td>

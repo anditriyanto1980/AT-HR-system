@@ -254,7 +254,7 @@ export const OrganizationView: React.FC = () => {
           }`}
         >
           <MapPin className="w-4 h-4" />
-          <span>Branches & Geofences ({branches.length})</span>
+          <span>Cabang & Geofence ({branches.length})</span>
         </button>
 
         <button
@@ -266,7 +266,7 @@ export const OrganizationView: React.FC = () => {
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span>Departments & Roles ({departments.length})</span>
+          <span>Departemen & Jabatan ({departments.length})</span>
         </button>
 
         <button
@@ -287,9 +287,9 @@ export const OrganizationView: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Branch Office Locations & GPS Geofencing</h3>
+              <h3 className="text-base font-bold text-slate-900">Lokasi Kantor Cabang & Radius GPS Geofence</h3>
               <p className="text-xs text-slate-500">
-                Define office coordinates, radius boundary, and outside-area attendance rules
+                Atur koordinat kantor, batas radius meter, dan aturan presensi di luar radius.
               </p>
             </div>
             <button
@@ -297,7 +297,7 @@ export const OrganizationView: React.FC = () => {
               className="px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Branch Location</span>
+              <span>Tambah Lokasi Cabang</span>
             </button>
           </div>
 
@@ -323,7 +323,7 @@ export const OrganizationView: React.FC = () => {
                           : 'bg-amber-50 text-amber-700 border-amber-200'
                       }`}
                     >
-                      {b.policy === 'BLOCK_OUTSIDE_RADIUS' ? 'Strict Geofence' : 'Approval Allowed'}
+                      {b.policy === 'BLOCK_OUTSIDE_RADIUS' ? 'Radius Ketat (Tolak)' : 'Perlu Izin Atasan'}
                     </span>
                   </div>
 
@@ -331,14 +331,14 @@ export const OrganizationView: React.FC = () => {
 
                   <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/80 space-y-1.5 text-xs font-mono">
                     <div className="flex items-center justify-between text-slate-500 text-[11px]">
-                      <span>Latitude / Longitude</span>
+                      <span>Lintang / Bujur (Lat/Lng)</span>
                       <span className="text-slate-900 font-semibold">
                         {b.latitude.toFixed(5)}, {b.longitude.toFixed(5)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-slate-500 text-[11px]">
-                      <span>Geofence Radius</span>
-                      <span className="text-emerald-700 font-bold">{b.radius_meters} meters</span>
+                      <span>Radius Geofence</span>
+                      <span className="text-emerald-700 font-bold">{b.radius_meters} meter</span>
                     </div>
                   </div>
                 </div>
@@ -346,15 +346,15 @@ export const OrganizationView: React.FC = () => {
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                   <button
                     onClick={() => handleOpenEditBranch(b)}
-                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded"
-                    title="Edit Branch"
+                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded cursor-pointer"
+                    title="Ubah Cabang"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDeleteBranch(b.id, b.name)}
-                    className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded"
-                    title="Delete Branch"
+                    className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
+                    title="Hapus Cabang"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -370,7 +370,7 @@ export const OrganizationView: React.FC = () => {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Departments & Job Positions (CRUD)</h3>
+              <h3 className="text-base font-bold text-slate-900">Departemen & Struktur Jabatan Karyawan</h3>
               <p className="text-xs text-slate-500">Kelola departemen, struktur organisasi, dan jabatan karier karyawan</p>
             </div>
             <div className="flex items-center gap-2">
@@ -858,23 +858,23 @@ export const OrganizationView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900">
-              {editingBranch ? 'Edit Branch Location' : 'Add New Branch Location'}
+              {editingBranch ? 'Ubah Lokasi Kantor Cabang' : 'Tambah Lokasi Cabang Baru'}
             </h3>
             <form onSubmit={handleSaveBranch} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Branch Name</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Kantor Cabang *</label>
                   <input
                     type="text"
                     required
                     value={branchForm.name}
                     onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })}
-                    placeholder="e.g. Jakarta Head Office"
+                    placeholder="misal: Kantor Pusat Jakarta"
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Branch Code</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kode Cabang *</label>
                   <input
                     type="text"
                     required
@@ -887,7 +887,7 @@ export const OrganizationView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">City</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Kota *</label>
                 <input
                   type="text"
                   required
@@ -899,20 +899,20 @@ export const OrganizationView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Address</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Alamat Lengkap *</label>
                 <input
                   type="text"
                   required
                   value={branchForm.address}
                   onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })}
-                  placeholder="Jl. Sudirman Kav 86"
+                  placeholder="Jl. Jend. Sudirman Kav 86"
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Latitude</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Garis Lintang (Latitude) *</label>
                   <input
                     type="number"
                     step="any"
@@ -923,7 +923,7 @@ export const OrganizationView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Longitude</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Garis Bujur (Longitude) *</label>
                   <input
                     type="number"
                     step="any"
@@ -937,7 +937,7 @@ export const OrganizationView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Geofence Radius (meters)</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Radius Geofence (meter) *</label>
                   <input
                     type="number"
                     min="10"
@@ -949,14 +949,14 @@ export const OrganizationView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Outside Geofence Policy</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kebijakan Luar Radius *</label>
                   <select
                     value={branchForm.policy}
                     onChange={(e) => setBranchForm({ ...branchForm, policy: e.target.value as any })}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium"
                   >
-                    <option value="BLOCK_OUTSIDE_RADIUS">BLOCK (Reject Clock In)</option>
-                    <option value="ALLOW_WITH_APPROVAL">ALLOW WITH APPROVAL</option>
+                    <option value="BLOCK_OUTSIDE_RADIUS">Tolak Absensi Jika di Luar Radius</option>
+                    <option value="ALLOW_WITH_APPROVAL">Izinkan dengan Persetujuan Atasan</option>
                   </select>
                 </div>
               </div>
@@ -965,15 +965,15 @@ export const OrganizationView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setBranchModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs rounded-lg"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs rounded-lg cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg"
+                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer"
                 >
-                  Save Branch
+                  Simpan Cabang
                 </button>
               </div>
             </form>

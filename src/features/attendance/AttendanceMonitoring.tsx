@@ -165,9 +165,9 @@ export const AttendanceMonitoring: React.FC = () => {
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Workforce Attendance Live Monitoring</h2>
+          <h2 className="text-base font-bold text-slate-900">Pemantauan Kehadiran Karyawan (Live)</h2>
           <p className="text-xs text-slate-500">
-            Real-time audit log of clock-in geolocations, selfie captures, and tolerances
+            Audit log real-time lokasi koordinat GPS, foto verifikasi kamera, dan kepatuhan jam kerja
           </p>
         </div>
 
@@ -201,7 +201,7 @@ export const AttendanceMonitoring: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search employee name or code..."
+            placeholder="Cari nama karyawan atau NIK..."
             className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
           />
         </div>
@@ -212,7 +212,7 @@ export const AttendanceMonitoring: React.FC = () => {
             onChange={(e) => setSelectedBranch(e.target.value)}
             className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium text-slate-700"
           >
-            <option value="all">All Branches</option>
+            <option value="all">Semua Cabang</option>
             {branches.map((b) => (
               <option key={b.id} value={b.name}>
                 {b.name}
@@ -227,10 +227,10 @@ export const AttendanceMonitoring: React.FC = () => {
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium text-slate-700"
           >
-            <option value="all">All Attendance Statuses</option>
-            <option value="present">Present (On Time)</option>
-            <option value="late">Late Arrival</option>
-            <option value="early_checkout">Early Checkout</option>
+            <option value="all">Semua Status Presensi</option>
+            <option value="present">Hadir Tepat Waktu</option>
+            <option value="late">Terlambat</option>
+            <option value="early_checkout">Pulang Awal</option>
           </select>
         </div>
       </div>
@@ -241,14 +241,14 @@ export const AttendanceMonitoring: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
               <tr>
-                <th className="py-3 px-4">Employee</th>
-                <th className="py-3 px-4">Shift</th>
-                <th className="py-3 px-4">Clock In</th>
-                <th className="py-3 px-4">Clock Out</th>
-                <th className="py-3 px-4">Status & Late</th>
-                <th className="py-3 px-4">Geofence / Location</th>
-                <th className="py-3 px-4">Device</th>
-                <th className="py-3 px-4 text-center">Selfie</th>
+                <th className="py-3 px-4">Karyawan</th>
+                <th className="py-3 px-4">Shift Kerja</th>
+                <th className="py-3 px-4">Jam Masuk</th>
+                <th className="py-3 px-4">Jam Pulang</th>
+                <th className="py-3 px-4">Status & Keterlambatan</th>
+                <th className="py-3 px-4">Lokasi GPS / Radius</th>
+                <th className="py-3 px-4">Perangkat</th>
+                <th className="py-3 px-4 text-center">Foto Selfie</th>
                 {isSuperOrHr && <th className="py-3 px-4 text-right">Aksi</th>}
               </tr>
             </thead>
@@ -256,7 +256,7 @@ export const AttendanceMonitoring: React.FC = () => {
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={isSuperOrHr ? 9 : 8} className="py-12 text-center text-slate-400">
-                    No attendance records found for {formatDate(selectedDate)}.
+                    Tidak ada catatan presensi pada tanggal {formatDate(selectedDate)}.
                   </td>
                 </tr>
               ) : (
@@ -293,7 +293,7 @@ export const AttendanceMonitoring: React.FC = () => {
                       <StatusBadge status={rec.clock_in_status} />
                       {rec.late_minutes > 0 && (
                         <span className="text-[11px] text-amber-700 font-mono font-semibold block mt-0.5">
-                          +{rec.late_minutes}m late
+                          +{rec.late_minutes} mnt terlambat
                         </span>
                       )}
                     </td>
@@ -307,11 +307,11 @@ export const AttendanceMonitoring: React.FC = () => {
                       <div className="text-[10px] text-slate-500 font-mono mt-0.5">
                         {rec.is_outside_geofence ? (
                           <span className="text-amber-700 font-semibold">
-                            Outside ({formatDistance(rec.clock_in_distance_meters || 0)})
+                            Luar Radius ({formatDistance(rec.clock_in_distance_meters || 0)})
                           </span>
                         ) : (
                           <span className="text-emerald-700">
-                            Verified ({formatDistance(rec.clock_in_distance_meters || 0)})
+                            Terverifikasi ({formatDistance(rec.clock_in_distance_meters || 0)})
                           </span>
                         )}
                       </div>

@@ -10,9 +10,9 @@ export const AuditLogView: React.FC = () => {
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Banner */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-        <h2 className="text-base font-bold text-slate-900">System Security & Audit Trail</h2>
+        <h2 className="text-base font-bold text-slate-900">Keamanan Sistem & Jejak Audit (Audit Trail)</h2>
         <p className="text-xs text-slate-500">
-          Immutable audit record of user access, shift updates, employee modifications, and attendance actions
+          Catatan audit permanen untuk akses pengguna, perubahan shift, data karyawan, dan aktivitas presensi.
         </p>
       </div>
 
@@ -22,19 +22,19 @@ export const AuditLogView: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
               <tr>
-                <th className="py-3 px-4">Timestamp</th>
-                <th className="py-3 px-4">Operator / User</th>
-                <th className="py-3 px-4">Module</th>
-                <th className="py-3 px-4">Action Event</th>
-                <th className="py-3 px-4">Record Identifier</th>
-                <th className="py-3 px-4">Payload Summary</th>
+                <th className="py-3 px-4">Waktu / Tanggal</th>
+                <th className="py-3 px-4">Pengguna / Operator</th>
+                <th className="py-3 px-4">Modul</th>
+                <th className="py-3 px-4">Aksi / Aktivitas</th>
+                <th className="py-3 px-4">ID Rekaman</th>
+                <th className="py-3 px-4">Ringkasan Data</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
               {logs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400 font-sans">
-                    No audit records logged yet.
+                    Belum ada catatan log audit sistem.
                   </td>
                 </tr>
               ) : (

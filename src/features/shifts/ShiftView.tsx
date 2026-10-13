@@ -89,9 +89,9 @@ export const ShiftView: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Shift Configurations & Late Tolerances</h2>
+          <h2 className="text-base font-bold text-slate-900">Pengaturan Shift Kerja & Toleransi Keterlambatan</h2>
           <p className="text-xs text-slate-500">
-            Configure working hours, break schedules, cross-day logic, and late grace periods
+            Atur jam kerja, waktu istirahat, shift lintas hari (malam), dan toleransi menit keterlambatan.
           </p>
         </div>
 
@@ -100,7 +100,7 @@ export const ShiftView: React.FC = () => {
           className="px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Create New Shift</span>
+          <span>Buat Shift Baru</span>
         </button>
       </div>
 
@@ -118,11 +118,11 @@ export const ShiftView: React.FC = () => {
                     <h3 className="text-sm font-bold text-slate-900">{shift.name}</h3>
                     {shift.is_cross_day && (
                       <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
-                        Cross-Day
+                        Lintas Hari
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-slate-500 font-medium">Type: {shift.shift_type}</span>
+                  <span className="text-xs text-slate-500 font-medium">Kategori: {shift.shift_type}</span>
                 </div>
 
                 <span
@@ -132,14 +132,14 @@ export const ShiftView: React.FC = () => {
                       : 'bg-slate-100 text-slate-500 border-slate-200'
                   }`}
                 >
-                  {shift.is_active ? 'Active' : 'Disabled'}
+                  {shift.is_active ? 'Aktif' : 'Nonaktif'}
                 </span>
               </div>
 
               {/* Working Hours Display */}
               <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500">Work Hours</span>
+                  <span className="text-xs text-slate-500">Jam Kerja</span>
                   <span className="text-sm font-mono font-bold text-slate-900 tabular-nums">
                     {shift.start_time} — {shift.end_time}
                   </span>
@@ -148,7 +148,7 @@ export const ShiftView: React.FC = () => {
                 <div className="flex items-center justify-between text-xs text-slate-600">
                   <span className="flex items-center gap-1 text-slate-500">
                     <Coffee className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Break Interval</span>
+                    <span>Waktu Istirahat</span>
                   </span>
                   <span className="font-mono tabular-nums">
                     {shift.break_start} - {shift.break_end}
@@ -156,9 +156,9 @@ export const ShiftView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/60">
-                  <span className="text-slate-500">Grace Tolerance</span>
+                  <span className="text-slate-500">Toleransi Telat</span>
                   <span className="text-amber-700 font-semibold font-mono">
-                    +{shift.tolerance_minutes} minutes
+                    +{shift.tolerance_minutes} menit
                   </span>
                 </div>
               </div>
@@ -168,15 +168,15 @@ export const ShiftView: React.FC = () => {
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 onClick={() => handleOpenEdit(shift)}
-                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded"
-                title="Edit Shift"
+                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded cursor-pointer"
+                title="Ubah Shift"
               >
                 <Edit2 className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => handleDeleteShift(shift.id, shift.name)}
-                className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded"
-                title="Delete Shift"
+                className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
+                title="Hapus Shift"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -190,41 +190,41 @@ export const ShiftView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900">
-              {editingShift ? 'Edit Shift Schedule' : 'Create New Shift'}
+              {editingShift ? 'Ubah Aturan Shift Kerja' : 'Buat Shift Baru'}
             </h3>
 
             <form onSubmit={handleSaveShift} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Shift Name *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Shift *</label>
                 <input
                   type="text"
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Normal Office Shift"
+                  placeholder="misal: Shift Reguler Kantor"
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Shift Category</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kategori Shift</label>
                   <select
                     value={form.shift_type}
                     onChange={(e) => setForm({ ...form, shift_type: e.target.value as any })}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
                   >
                     <option value="Normal">Normal</option>
-                    <option value="Morning">Morning</option>
-                    <option value="Afternoon">Afternoon</option>
-                    <option value="Night">Night</option>
-                    <option value="CrossDay">CrossDay</option>
+                    <option value="Morning">Pagi (Morning)</option>
+                    <option value="Afternoon">Siang (Afternoon)</option>
+                    <option value="Night">Malam (Night)</option>
+                    <option value="CrossDay">Lintas Hari (CrossDay)</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Late Tolerance (Mins)
+                    Toleransi Telat (Menit)
                   </label>
                   <input
                     type="number"
@@ -240,7 +240,7 @@ export const ShiftView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Start Time (HH:mm)</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Mulai (JJ:mm)</label>
                   <input
                     type="time"
                     required
@@ -250,7 +250,7 @@ export const ShiftView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">End Time (HH:mm)</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Selesai (JJ:mm)</label>
                   <input
                     type="time"
                     required
@@ -263,7 +263,7 @@ export const ShiftView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Break Start</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Mulai Istirahat</label>
                   <input
                     type="time"
                     value={form.break_start}
@@ -272,7 +272,7 @@ export const ShiftView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Break End</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Selesai Istirahat</label>
                   <input
                     type="time"
                     value={form.break_end}
@@ -290,7 +290,7 @@ export const ShiftView: React.FC = () => {
                     onChange={(e) => setForm({ ...form, is_cross_day: e.target.checked })}
                     className="rounded text-slate-900 focus:ring-slate-900"
                   />
-                  <span>Cross-day Shift (Overnight e.g. 22:00 - 06:00)</span>
+                  <span>Shift Lintas Hari (Malam misal 22:00 - 06:00)</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
@@ -300,7 +300,7 @@ export const ShiftView: React.FC = () => {
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
                     className="rounded text-slate-900 focus:ring-slate-900"
                   />
-                  <span>Active</span>
+                  <span>Status Aktif</span>
                 </label>
               </div>
 
@@ -308,15 +308,15 @@ export const ShiftView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs rounded-lg"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 text-xs rounded-lg cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg"
+                  className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer"
                 >
-                  Save Shift Rule
+                  Simpan Aturan Shift
                 </button>
               </div>
             </form>

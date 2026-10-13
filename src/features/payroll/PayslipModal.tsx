@@ -200,15 +200,22 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ item, onClose }) => 
             <div className="space-y-1.5 sm:border-l sm:border-slate-200 sm:pl-4">
               <div className="flex justify-between">
                 <span className="text-slate-500">Nomor NPWP</span>
-                <span className="font-mono font-medium text-slate-800">{profile.npwp}</span>
+                <span className="font-mono font-medium text-slate-800">{profile.npwp || 'Belum diisi'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Status PTKP & Pajak</span>
+                <span className="font-mono font-bold text-slate-800 flex items-center gap-1.5">
+                  <span>{profile.ptkp_status || 'TK/0'}</span>
+                  <span className="px-1.5 py-0.5 rounded-sm bg-blue-100 text-blue-800 text-[10px]">
+                    TER {dataService.getTerCategory(profile.ptkp_status || 'TK/0')}
+                  </span>
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">BPJS Ketenagakerjaan</span>
-                <span className="font-mono font-medium text-slate-800">{profile.bpjs_tk_number}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">BPJS Kesehatan</span>
-                <span className="font-mono font-medium text-slate-800">{profile.bpjs_kes_number}</span>
+                <span className="text-slate-500">BPJS TK & Kesehatan</span>
+                <span className="font-mono font-medium text-slate-800">
+                  {profile.bpjs_tk_number || '-'} / {profile.bpjs_kes_number || '-'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Rekening Payroll</span>
@@ -312,14 +319,26 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ item, onClose }) => 
                 </div>
                 <div className="flex justify-between items-center py-1 border-b border-slate-100">
                   <div>
-                    <span className="text-slate-600">Pajak Penghasilan (PPh 21 TER)</span>
-                    <span className="text-[10px] text-slate-400 block">Tarif Efektif Rata-rata</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-600">Pajak Penghasilan (PPh 21 TER)</span>
+                      <span className="px-1.5 py-0.2 rounded-xs bg-purple-100 text-purple-800 text-[10px] font-bold">
+                        {dataService.calculatePph21TerDetails(item.gross_income, profile.ptkp_status || 'TK/0').ratePercent}%
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">
+                      Tarif Efektif Kategori {dataService.getTerCategory(profile.ptkp_status || 'TK/0')} (PP 58/2023)
+                    </span>
                   </div>
                   <span className="font-semibold text-rose-700">-{formatIDR(item.pph21)}</span>
                 </div>
                 {item.late_deduction > 0 && (
                   <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                    <span className="text-slate-600">Denda Keterlambatan</span>
+                    <div>
+                      <span className="text-slate-600">Denda Keterlambatan</span>
+                      <span className="text-[10px] text-slate-400 block">
+                        Akumulasi {item.late_minutes} menit (Rp 50.000 / 15m)
+                      </span>
+                    </div>
                     <span className="font-semibold text-rose-700">-{formatIDR(item.late_deduction)}</span>
                   </div>
                 )}

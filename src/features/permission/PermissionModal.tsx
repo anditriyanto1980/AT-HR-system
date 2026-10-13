@@ -32,12 +32,12 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
     setError(null);
 
     if (!reason.trim()) {
-      setError('Please provide a specific reason.');
+      setError('Harap berikan alasan yang jelas.');
       return;
     }
 
     if (startTime >= endTime) {
-      setError('End time must be later than start time.');
+      setError('Jam selesai harus lebih akhir dari jam mulai.');
       return;
     }
 
@@ -65,10 +65,10 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Submit Permission Request</h2>
-            <p className="text-xs text-slate-500">Apply for short-duration absence or personal leave</p>
+            <h2 className="text-base font-bold text-slate-900">Formulir Pengajuan Izin</h2>
+            <p className="text-xs text-slate-500">Ajukan izin keluar sementara atau ketidakhadiran singkat</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -83,7 +83,7 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal *</label>
               <input
                 type="date"
                 required
@@ -93,24 +93,24 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Permission Category *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Kategori Izin *</label>
               <select
                 value={permissionType}
                 onChange={(e) => setPermissionType(e.target.value as any)}
                 className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium"
               >
-                <option value="Personal">Personal</option>
-                <option value="Medical">Medical (Clinic/Hospital)</option>
-                <option value="Family">Family Matter</option>
-                <option value="Emergency">Emergency</option>
-                <option value="Other">Other</option>
+                <option value="Personal">Keperluan Pribadi</option>
+                <option value="Medical">Medis (Klinik / Rumah Sakit)</option>
+                <option value="Family">Urusan Keluarga</option>
+                <option value="Emergency">Keadaan Darurat</option>
+                <option value="Other">Lainnya</option>
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Start Time (HH:mm) *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Mulai (JJ:mm) *</label>
               <input
                 type="time"
                 required
@@ -120,7 +120,7 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">End Time (HH:mm) *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Selesai (JJ:mm) *</label>
               <input
                 type="time"
                 required
@@ -132,25 +132,25 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Reason *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Alasan Izin *</label>
             <textarea
               required
               rows={2}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Attending parent-teacher conference"
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+              placeholder="Contoh: Menghadiri rapat orang tua murid di sekolah"
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Notes / Plan</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Catatan / Tindak Lanjut</label>
             <input
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Will catch up on pull requests in the evening"
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+              placeholder="Contoh: Pekerjaan akan diselesaikan pada malam hari"
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
 
@@ -158,16 +158,16 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
             >
-              Cancel
+              Batal
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5"
+              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Check className="w-4 h-4" />
-              <span>Submit Permission</span>
+              <span>Kirim Pengajuan Izin</span>
             </button>
           </div>
         </form>

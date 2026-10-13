@@ -35,6 +35,9 @@ import {
   PerformanceAppraisal,
   CompanyAnnouncement,
   EmployeeContractTracker,
+  ShiftSwapRequest,
+  ShiftRosterPattern,
+  ErpJournalEntry,
 } from '../types';
 import {
   DEMO_APPROVAL_LOGS,
@@ -63,6 +66,8 @@ import {
   DEMO_PERFORMANCES,
   DEMO_ANNOUNCEMENTS,
   DEMO_CONTRACT_TRACKERS,
+  DEMO_ROSTER_PATTERNS,
+  DEMO_SHIFT_SWAPS,
 } from './demoData';
 
 const STORAGE_KEYS = {
@@ -93,6 +98,8 @@ const STORAGE_KEYS = {
   PERFORMANCES: 'athr_performances',
   ANNOUNCEMENTS: 'athr_announcements',
   CONTRACT_TRACKERS: 'athr_contract_trackers',
+  SHIFT_SWAPS: 'athr_shift_swaps',
+  ROSTER_PATTERNS: 'athr_roster_patterns',
 };
 
 class DataService {
@@ -256,13 +263,15 @@ class DataService {
     if (!localStorage.getItem(STORAGE_KEYS.LOCATIONS)) {
       localStorage.setItem(STORAGE_KEYS.LOCATIONS, JSON.stringify(DEMO_ATTENDANCE_LOCATIONS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCE)) {
+    const existingAttendance = localStorage.getItem(STORAGE_KEYS.ATTENDANCE);
+    if (!existingAttendance || JSON.parse(existingAttendance).length <= 5) {
       localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(DEMO_ATTENDANCE));
     }
     if (!localStorage.getItem(STORAGE_KEYS.LEAVE_TYPES)) {
       localStorage.setItem(STORAGE_KEYS.LEAVE_TYPES, JSON.stringify(DEMO_LEAVE_TYPES));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.LEAVE_BALANCES)) {
+    const existingBalances = localStorage.getItem(STORAGE_KEYS.LEAVE_BALANCES);
+    if (!existingBalances || JSON.parse(existingBalances).length <= 4) {
       localStorage.setItem(STORAGE_KEYS.LEAVE_BALANCES, JSON.stringify(DEMO_LEAVE_BALANCES));
     }
     if (!localStorage.getItem(STORAGE_KEYS.LEAVE_REQUESTS)) {
@@ -312,6 +321,12 @@ class DataService {
     }
     if (!localStorage.getItem(STORAGE_KEYS.CONTRACT_TRACKERS)) {
       localStorage.setItem(STORAGE_KEYS.CONTRACT_TRACKERS, JSON.stringify(DEMO_CONTRACT_TRACKERS));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.ROSTER_PATTERNS)) {
+      localStorage.setItem(STORAGE_KEYS.ROSTER_PATTERNS, JSON.stringify(DEMO_ROSTER_PATTERNS));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.SHIFT_SWAPS)) {
+      localStorage.setItem(STORAGE_KEYS.SHIFT_SWAPS, JSON.stringify(DEMO_SHIFT_SWAPS));
     }
     if (!localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)) {
       const initialLogs: AuditLog[] = [
@@ -822,7 +837,22 @@ class DataService {
       localStorage.getItem(STORAGE_KEYS.LEAVE_BALANCES) || '[]'
     );
     if (employeeId) {
-      return balances.filter((b) => b.employee_id === employeeId);
+      const filtered = balances.filter((b) => b.employee_id === employeeId);
+      if (filtered.length === 0 || !filtered.some((b) => b.leave_type_name === 'Annual Leave')) {
+        const defaultBal: LeaveBalance = {
+          id: `bal-def-${employeeId}`,
+          employee_id: employeeId,
+          leave_type_id: 'lt-ann',
+          year: new Date().getFullYear(),
+          entitlement: 12,
+          used: 4,
+          pending: 1,
+          remaining: 7,
+          leave_type_name: 'Annual Leave',
+        };
+        return [defaultBal, ...filtered];
+      }
+      return filtered;
     }
     return balances;
   }
@@ -1676,35 +1706,112 @@ class DataService {
     return this.getPayrollItems().filter((i) => i.employee_id === employeeId);
   }
 
-  // Indonesian PPh 21 TER 2024 Category A Estimator
-  private calculatePph21Ter(grossMonthly: number): number {
-    if (grossMonthly <= 5400000) return 0;
-    if (grossMonthly <= 5650000) return Math.round(grossMonthly * 0.0025);
-    if (grossMonthly <= 5950000) return Math.round(grossMonthly * 0.005);
-    if (grossMonthly <= 6300000) return Math.round(grossMonthly * 0.0075);
-    if (grossMonthly <= 6750000) return Math.round(grossMonthly * 0.01);
-    if (grossMonthly <= 7500000) return Math.round(grossMonthly * 0.0125);
-    if (grossMonthly <= 8550000) return Math.round(grossMonthly * 0.015);
-    if (grossMonthly <= 9650000) return Math.round(grossMonthly * 0.0175);
-    if (grossMonthly <= 10050000) return Math.round(grossMonthly * 0.02);
-    if (grossMonthly <= 10350000) return Math.round(grossMonthly * 0.0225);
-    if (grossMonthly <= 10700000) return Math.round(grossMonthly * 0.025);
-    if (grossMonthly <= 11050000) return Math.round(grossMonthly * 0.03);
-    if (grossMonthly <= 11600000) return Math.round(grossMonthly * 0.035);
-    if (grossMonthly <= 12500000) return Math.round(grossMonthly * 0.04);
-    if (grossMonthly <= 13750000) return Math.round(grossMonthly * 0.05);
-    if (grossMonthly <= 15100000) return Math.round(grossMonthly * 0.06);
-    if (grossMonthly <= 16950000) return Math.round(grossMonthly * 0.07);
-    if (grossMonthly <= 19750000) return Math.round(grossMonthly * 0.08);
-    if (grossMonthly <= 24150000) return Math.round(grossMonthly * 0.09);
-    if (grossMonthly <= 26450000) return Math.round(grossMonthly * 0.1);
-    if (grossMonthly <= 28000000) return Math.round(grossMonthly * 0.11);
-    if (grossMonthly <= 30050000) return Math.round(grossMonthly * 0.12);
-    if (grossMonthly <= 32400000) return Math.round(grossMonthly * 0.13);
-    if (grossMonthly <= 35400000) return Math.round(grossMonthly * 0.14);
-    if (grossMonthly <= 39100000) return Math.round(grossMonthly * 0.15);
-    if (grossMonthly <= 43850000) return Math.round(grossMonthly * 0.16);
-    return Math.round(grossMonthly * 0.18);
+  // Determine TER Category based on Indonesian tax law PP 58/2023 & PMK 168/2023
+  public getTerCategory(ptkp: string = 'TK/0'): 'A' | 'B' | 'C' {
+    const clean = (ptkp || 'TK/0').toUpperCase().trim();
+    if (['TK/0', 'TK/1', 'K/0'].includes(clean)) return 'A';
+    if (['TK/2', 'TK/3', 'K/1', 'K/2'].includes(clean)) return 'B';
+    return 'C'; // K/3
+  }
+
+  // Indonesian PPh 21 TER 2024 Detailed (PP 58/2023 & PMK 168/2023)
+  public calculatePph21TerDetails(
+    grossMonthly: number,
+    ptkp: string = 'TK/0'
+  ): { pph21: number; ratePercent: number; category: 'A' | 'B' | 'C' } {
+    const category = this.getTerCategory(ptkp);
+    let rate = 0;
+
+    if (category === 'A') {
+      if (grossMonthly <= 5400000) rate = 0;
+      else if (grossMonthly <= 5650000) rate = 0.0025;
+      else if (grossMonthly <= 5950000) rate = 0.005;
+      else if (grossMonthly <= 6300000) rate = 0.0075;
+      else if (grossMonthly <= 6750000) rate = 0.01;
+      else if (grossMonthly <= 7500000) rate = 0.0125;
+      else if (grossMonthly <= 8550000) rate = 0.015;
+      else if (grossMonthly <= 9650000) rate = 0.0175;
+      else if (grossMonthly <= 10050000) rate = 0.02;
+      else if (grossMonthly <= 10350000) rate = 0.0225;
+      else if (grossMonthly <= 10700000) rate = 0.025;
+      else if (grossMonthly <= 11050000) rate = 0.03;
+      else if (grossMonthly <= 11600000) rate = 0.035;
+      else if (grossMonthly <= 12500000) rate = 0.04;
+      else if (grossMonthly <= 13750000) rate = 0.05;
+      else if (grossMonthly <= 15100000) rate = 0.06;
+      else if (grossMonthly <= 16950000) rate = 0.07;
+      else if (grossMonthly <= 19750000) rate = 0.08;
+      else if (grossMonthly <= 24150000) rate = 0.09;
+      else if (grossMonthly <= 26450000) rate = 0.1;
+      else if (grossMonthly <= 28000000) rate = 0.11;
+      else if (grossMonthly <= 30050000) rate = 0.12;
+      else if (grossMonthly <= 32400000) rate = 0.13;
+      else if (grossMonthly <= 35400000) rate = 0.14;
+      else if (grossMonthly <= 39100000) rate = 0.15;
+      else if (grossMonthly <= 43850000) rate = 0.16;
+      else rate = 0.18;
+    } else if (category === 'B') {
+      if (grossMonthly <= 6200000) rate = 0;
+      else if (grossMonthly <= 6500000) rate = 0.0025;
+      else if (grossMonthly <= 6850000) rate = 0.005;
+      else if (grossMonthly <= 7300000) rate = 0.0075;
+      else if (grossMonthly <= 9200000) rate = 0.01;
+      else if (grossMonthly <= 10750000) rate = 0.015;
+      else if (grossMonthly <= 11250000) rate = 0.02;
+      else if (grossMonthly <= 11600000) rate = 0.025;
+      else if (grossMonthly <= 12600000) rate = 0.03;
+      else if (grossMonthly <= 13600000) rate = 0.04;
+      else if (grossMonthly <= 14950000) rate = 0.05;
+      else if (grossMonthly <= 16400000) rate = 0.06;
+      else if (grossMonthly <= 18450000) rate = 0.07;
+      else if (grossMonthly <= 21850000) rate = 0.08;
+      else if (grossMonthly <= 26000000) rate = 0.09;
+      else if (grossMonthly <= 27700000) rate = 0.1;
+      else if (grossMonthly <= 29300000) rate = 0.11;
+      else if (grossMonthly <= 31450000) rate = 0.12;
+      else if (grossMonthly <= 33950000) rate = 0.13;
+      else if (grossMonthly <= 37100000) rate = 0.14;
+      else if (grossMonthly <= 41100000) rate = 0.15;
+      else if (grossMonthly <= 45800000) rate = 0.16;
+      else rate = 0.18;
+    } else {
+      // Category C
+      if (grossMonthly <= 6600000) rate = 0;
+      else if (grossMonthly <= 6950000) rate = 0.0025;
+      else if (grossMonthly <= 7350000) rate = 0.005;
+      else if (grossMonthly <= 7800000) rate = 0.0075;
+      else if (grossMonthly <= 8850000) rate = 0.01;
+      else if (grossMonthly <= 9800000) rate = 0.0125;
+      else if (grossMonthly <= 10950000) rate = 0.015;
+      else if (grossMonthly <= 11200000) rate = 0.0175;
+      else if (grossMonthly <= 12050000) rate = 0.02;
+      else if (grossMonthly <= 12950000) rate = 0.03;
+      else if (grossMonthly <= 14150000) rate = 0.04;
+      else if (grossMonthly <= 15550000) rate = 0.05;
+      else if (grossMonthly <= 17050000) rate = 0.06;
+      else if (grossMonthly <= 19500000) rate = 0.07;
+      else if (grossMonthly <= 22700000) rate = 0.08;
+      else if (grossMonthly <= 26600000) rate = 0.09;
+      else if (grossMonthly <= 28100000) rate = 0.1;
+      else if (grossMonthly <= 30100000) rate = 0.11;
+      else if (grossMonthly <= 32600000) rate = 0.12;
+      else if (grossMonthly <= 35400000) rate = 0.13;
+      else if (grossMonthly <= 38900000) rate = 0.14;
+      else if (grossMonthly <= 43300000) rate = 0.15;
+      else if (grossMonthly <= 48500000) rate = 0.16;
+      else rate = 0.18;
+    }
+
+    const pph21 = Math.round(grossMonthly * rate);
+    return {
+      pph21,
+      ratePercent: Number((rate * 100).toFixed(2)),
+      category,
+    };
+  }
+
+  public calculatePph21Ter(grossMonthly: number, ptkp: string = 'TK/0'): number {
+    return this.calculatePph21TerDetails(grossMonthly, ptkp).pph21;
   }
 
   public calculatePayrollForEmployee(
@@ -1759,7 +1866,8 @@ class DataService {
     const bpjsTkJhtEmp = Math.round(profile.base_salary * 0.02);
     const bpjsTkJpEmp = Math.round(Math.min(profile.base_salary, bpjsJpCeiling) * 0.01);
 
-    const pph21 = this.calculatePph21Ter(grossIncome);
+    const terResult = this.calculatePph21TerDetails(grossIncome, profile.ptkp_status || 'TK/0');
+    const pph21 = terResult.pph21;
     const totalDeductions =
       lateDeduction + absenceDeduction + bpjsKesEmp + bpjsTkJhtEmp + bpjsTkJpEmp + pph21;
 
@@ -2171,6 +2279,489 @@ class DataService {
       record_id: newAnc.id,
     });
     return newAnc;
+  }
+
+  // ==========================================
+  // SYNC LIVE ATTENDANCE TO PAYROLL (Fitur 2)
+  // ==========================================
+  public syncLiveAttendanceToPayroll(batchId: string): {
+    updatedCount: number;
+    totalLateMinutes: number;
+    totalOvertimeHours: number;
+    message: string;
+  } {
+    const batches = this.getPayrollBatches();
+    const batchIndex = batches.findIndex((b) => b.id === batchId);
+    if (batchIndex < 0) {
+      throw new Error(`Batch payroll ${batchId} tidak ditemukan.`);
+    }
+
+    const batch = batches[batchIndex];
+    const items = this.getPayrollItems();
+    const batchItems = items.filter((i) => i.payroll_batch_id === batchId);
+
+    let totalLate = 0;
+    let totalOvertime = 0;
+    let newGross = 0;
+    let newDeductions = 0;
+    let newNet = 0;
+
+    const updatedItems = items.map((item) => {
+      if (item.payroll_batch_id !== batchId) return item;
+      const recalculated = this.calculatePayrollForEmployee(
+        item.employee_id,
+        batch.month,
+        batch.year,
+        batchId
+      );
+      totalLate += recalculated.late_minutes;
+      totalOvertime += recalculated.overtime_hours;
+      newGross += recalculated.gross_income;
+      newDeductions += recalculated.total_deductions;
+      newNet += recalculated.take_home_pay;
+      return recalculated;
+    });
+
+    batches[batchIndex].total_gross = newGross;
+    batches[batchIndex].total_deductions = newDeductions;
+    batches[batchIndex].total_net_payroll = newNet;
+
+    localStorage.setItem(STORAGE_KEYS.PAYROLL_ITEMS, JSON.stringify(updatedItems));
+    localStorage.setItem(STORAGE_KEYS.PAYROLL_BATCHES, JSON.stringify(batches));
+
+    this.logAudit({
+      user_name: 'HR & Payroll System',
+      action: 'SYNC_ATTENDANCE_TO_PAYROLL',
+      module: 'PAYROLL',
+      record_id: batchId,
+      after_data: {
+        total_employees: batchItems.length,
+        total_late_minutes: totalLate,
+        total_overtime_hours: totalOvertime,
+        total_net_payroll: newNet,
+      },
+    });
+
+    return {
+      updatedCount: batchItems.length,
+      totalLateMinutes: totalLate,
+      totalOvertimeHours: totalOvertime,
+      message: `Berhasil mensinkronkan rekap absensi untuk ${batchItems.length} karyawan (${totalLate} menit keterlambatan & ${totalOvertime} jam lembur diproses ke penggajian).`,
+    };
+  }
+
+  // ==========================================
+  // SHIFT SWAP MANAGEMENT (Fitur 4)
+  // ==========================================
+  public getShiftSwaps(): ShiftSwapRequest[] {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.SHIFT_SWAPS) || '[]');
+  }
+
+  public saveShiftSwap(
+    swap: Omit<ShiftSwapRequest, 'id' | 'created_at' | 'status'> & { id?: string }
+  ): ShiftSwapRequest {
+    const list = this.getShiftSwaps();
+    const newSwap: ShiftSwapRequest = {
+      ...swap,
+      id: swap.id || `swap-${Date.now()}`,
+      status: 'PENDING_PEER',
+      created_at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+    };
+    list.unshift(newSwap);
+    localStorage.setItem(STORAGE_KEYS.SHIFT_SWAPS, JSON.stringify(list));
+
+    // Send notification to target peer
+    this.addNotification({
+      user_id: newSwap.target_employee_id,
+      title: 'Permohonan Tukar Shift',
+      message: `${newSwap.requester_name} mengajukan tukar shift untuk tanggal ${newSwap.requester_date}.`,
+      type: 'ACTION_REQUIRED',
+      target_tab: 'schedule',
+      read: false,
+    });
+
+    this.logAudit({
+      user_name: newSwap.requester_name,
+      action: 'SUBMIT_SHIFT_SWAP',
+      module: 'SCHEDULE',
+      record_id: newSwap.id,
+      after_data: { target: newSwap.target_employee_name, date: newSwap.requester_date },
+    });
+
+    return newSwap;
+  }
+
+  public respondToShiftSwapPeer(swapId: string, approved: boolean, note?: string): void {
+    const list = this.getShiftSwaps();
+    const index = list.findIndex((s) => s.id === swapId);
+    if (index >= 0) {
+      const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+      list[index].peer_responded_at = now;
+      list[index].peer_response_note = note || (approved ? 'Disetujui rekan kerja.' : 'Ditolak rekan kerja.');
+      list[index].status = approved ? 'PENDING_MANAGER' : 'REJECTED';
+      localStorage.setItem(STORAGE_KEYS.SHIFT_SWAPS, JSON.stringify(list));
+
+      // Notify requester
+      this.addNotification({
+        user_id: list[index].requester_id,
+        title: approved ? 'Tukar Shift Disetujui Rekan' : 'Tukar Shift Ditolak',
+        message: approved
+          ? `${list[index].target_employee_name} menyetujui tukar shift. Menunggu persetujuan Manager.`
+          : `${list[index].target_employee_name} menolak permohonan tukar shift.`,
+        type: approved ? 'INFO' : 'WARNING',
+        target_tab: 'schedule',
+        read: false,
+      });
+
+      this.logAudit({
+        user_name: list[index].target_employee_name,
+        action: approved ? 'PEER_APPROVE_SHIFT_SWAP' : 'PEER_REJECT_SHIFT_SWAP',
+        module: 'SCHEDULE',
+        record_id: swapId,
+      });
+    }
+  }
+
+  public approveShiftSwapManager(
+    swapId: string,
+    approved: boolean,
+    managerId: string,
+    managerName: string,
+    note?: string
+  ): void {
+    const list = this.getShiftSwaps();
+    const index = list.findIndex((s) => s.id === swapId);
+    if (index >= 0) {
+      const target = list[index];
+      const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+      target.manager_id = managerId;
+      target.manager_name = managerName;
+      target.manager_approved_at = now;
+      target.manager_note = note || (approved ? 'Disetujui Manager.' : 'Ditolak Manager.');
+      target.status = approved ? 'APPROVED' : 'REJECTED';
+
+      if (approved) {
+        // Swap actual schedule assignments in storage
+        const schedules = this.getWorkSchedules();
+        const schedReq = schedules.find(
+          (s) => s.employee_id === target.requester_id && s.date === target.requester_date
+        );
+        const schedTarget = schedules.find(
+          (s) => s.employee_id === target.target_employee_id && s.date === target.target_date
+        );
+
+        if (schedReq && schedTarget) {
+          const tempShiftId = schedReq.shift_id;
+          const tempShiftName = schedReq.shift_name;
+          const tempStartTime = schedReq.start_time;
+          const tempEndTime = schedReq.end_time;
+          const tempIsOff = schedReq.is_day_off;
+
+          schedReq.shift_id = schedTarget.shift_id;
+          schedReq.shift_name = schedTarget.shift_name;
+          schedReq.start_time = schedTarget.start_time;
+          schedReq.end_time = schedTarget.end_time;
+          schedReq.is_day_off = schedTarget.is_day_off;
+
+          schedTarget.shift_id = tempShiftId;
+          schedTarget.shift_name = tempShiftName;
+          schedTarget.start_time = tempStartTime;
+          schedTarget.end_time = tempEndTime;
+          schedTarget.is_day_off = tempIsOff;
+
+          localStorage.setItem(STORAGE_KEYS.WORK_SCHEDULES, JSON.stringify(schedules));
+        }
+      }
+
+      localStorage.setItem(STORAGE_KEYS.SHIFT_SWAPS, JSON.stringify(list));
+
+      [target.requester_id, target.target_employee_id].forEach((uid) => {
+        this.addNotification({
+          user_id: uid,
+          title: approved ? 'Jadwal Shift Berhasil Ditukar' : 'Tukar Shift Ditolak Manager',
+          message: approved
+            ? `Persetujuan manager selesai. Jadwal kerja Anda telah otomatis diperbarui.`
+            : `Permohonan tukar shift ditolak oleh ${managerName}.`,
+          type: approved ? 'SUCCESS' : 'WARNING',
+          target_tab: 'schedule',
+          read: false,
+        });
+      });
+
+      this.logAudit({
+        user_name: managerName,
+        action: approved ? 'MANAGER_APPROVE_SHIFT_SWAP' : 'MANAGER_REJECT_SHIFT_SWAP',
+        module: 'SCHEDULE',
+        record_id: swapId,
+      });
+    }
+  }
+
+  // ==========================================
+  // ROSTER PATTERNS & GENERATION (Fitur 4)
+  // ==========================================
+  public getRosterPatterns(): ShiftRosterPattern[] {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ROSTER_PATTERNS) || '[]');
+  }
+
+  public applyRosterPattern(
+    patternId: string,
+    employeeIds: string[],
+    startDate: string,
+    daysCount: number = 30
+  ): number {
+    const patterns = this.getRosterPatterns();
+    const pattern = patterns.find((p) => p.id === patternId);
+    if (!pattern) throw new Error('Pola roster tidak ditemukan');
+
+    const employees = this.getEmployees();
+    const schedules = this.getWorkSchedules();
+    let appliedCount = 0;
+    const start = new Date(startDate);
+
+    employeeIds.forEach((empId, empIdx) => {
+      const emp = employees.find((e) => e.id === empId);
+      for (let day = 0; day < daysCount; day++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + day);
+        const dateStr = d.toISOString().split('T')[0];
+
+        const patternIndex = (day + empIdx) % pattern.pattern_shifts.length;
+        const pShift = pattern.pattern_shifts[patternIndex];
+
+        const existingIdx = schedules.findIndex((s) => s.employee_id === empId && s.date === dateStr);
+        const assignment: WorkScheduleAssignment = {
+          id: `sched-${empId}-${dateStr}`,
+          employee_id: empId,
+          date: dateStr,
+          shift_id: pShift.shift_id,
+          is_day_off: pShift.is_off,
+          shift_name: pShift.shift_name,
+          start_time: pShift.is_off ? '-' : '08:00',
+          end_time: pShift.is_off ? '-' : '17:00',
+          employee_name: emp?.full_name,
+        };
+
+        if (existingIdx >= 0) {
+          schedules[existingIdx] = assignment;
+        } else {
+          schedules.push(assignment);
+        }
+        appliedCount++;
+      }
+    });
+
+    localStorage.setItem(STORAGE_KEYS.WORK_SCHEDULES, JSON.stringify(schedules));
+
+    this.logAudit({
+      user_name: 'HR Roster Generator',
+      action: 'APPLY_ROSTER_PATTERN',
+      module: 'SCHEDULE',
+      record_id: patternId,
+      after_data: { employees_count: employeeIds.length, days: daysCount, total_assignments: appliedCount },
+    });
+
+    return appliedCount;
+  }
+
+  // ==========================================
+  // MULTI-FORMAT EXPORT: EXCEL XML & ERP (Fitur 5)
+  // ==========================================
+  public exportToExcelXml(filename: string, sheetName: string, headers: string[], rows: any[][]): void {
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<?mso-application progid="Excel.Sheet"?>\n`;
+    xml += `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n`;
+    xml += ` xmlns:o="urn:schemas-microsoft-com:office:office"\n`;
+    xml += ` xmlns:x="urn:schemas-microsoft-com:office:excel"\n`;
+    xml += ` xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\n`;
+    xml += ` xmlns:html="http://www.w3.org/TR/REC-html40">\n`;
+    xml += ` <Styles>\n`;
+    xml += `  <Style ss:ID="Header">\n`;
+    xml += `   <Font ss:Bold="1" ss:Color="#FFFFFF" ss:FontName="Calibri" ss:Size="11"/>\n`;
+    xml += `   <Interior ss:Color="#1E3A8A" ss:Pattern="Solid"/>\n`;
+    xml += `   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>\n`;
+    xml += `  </Style>\n`;
+    xml += `  <Style ss:ID="Data">\n`;
+    xml += `   <Font ss:FontName="Calibri" ss:Size="10"/>\n`;
+    xml += `   <Alignment ss:Vertical="Center"/>\n`;
+    xml += `  </Style>\n`;
+    xml += `  <Style ss:ID="Number">\n`;
+    xml += `   <Font ss:FontName="Calibri" ss:Size="10"/>\n`;
+    xml += `   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>\n`;
+    xml += `  </Style>\n`;
+    xml += ` </Styles>\n`;
+    xml += ` <Worksheet ss:Name="${sheetName}">\n`;
+    xml += `  <Table>\n`;
+
+    // Header Row
+    xml += `   <Row ss:Height="24">\n`;
+    headers.forEach((h) => {
+      xml += `    <Cell ss:StyleID="Header"><Data ss:Type="String">${this.escapeXml(h)}</Data></Cell>\n`;
+    });
+    xml += `   </Row>\n`;
+
+    // Data Rows
+    rows.forEach((row) => {
+      xml += `   <Row ss:Height="20">\n`;
+      row.forEach((cell) => {
+        const isNum = typeof cell === 'number' && !isNaN(cell);
+        const cellType = isNum ? 'Number' : 'String';
+        const cellStyle = isNum ? 'Number' : 'Data';
+        const safeVal = isNum ? cell : this.escapeXml(String(cell ?? ''));
+        xml += `    <Cell ss:StyleID="${cellStyle}"><Data ss:Type="${cellType}">${safeVal}</Data></Cell>\n`;
+      });
+      xml += `   </Row>\n`;
+    });
+
+    xml += `  </Table>\n`;
+    xml += ` </Worksheet>\n`;
+    xml += `</Workbook>`;
+
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}.xls`;
+    link.click();
+  }
+
+  private escapeXml(unsafe: string): string {
+    return unsafe.replace(/[<>&'"]/g, (c) => {
+      switch (c) {
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '&': return '&amp;';
+        case '\'': return '&apos;';
+        case '"': return '&quot;';
+        default: return c;
+      }
+    });
+  }
+
+  // ERP PAYROLL JOURNAL GENERATOR (Format Jurnal / Accurate / SAP)
+  public generateErpPayrollJournal(
+    month: number,
+    year: number,
+    format: 'JURNAL' | 'ACCURATE' | 'SAP' = 'ACCURATE'
+  ): ErpJournalEntry[] {
+    const mm = month < 10 ? `0${month}` : `${month}`;
+    const batchId = `batch-${year}-${mm}`;
+    const items = this.getPayrollItems(batchId);
+
+    if (items.length === 0) return [];
+
+    let totalBaseSalary = 0;
+    let totalAllowances = 0;
+    let totalOvertime = 0;
+    let totalLateDeductions = 0;
+    let totalAbsenceDeductions = 0;
+    let totalBpjsKesEmp = 0;
+    let totalBpjsTkEmp = 0;
+    let totalBpjsKesComp = 0;
+    let totalBpjsTkComp = 0;
+    let totalPph21 = 0;
+    let totalNetPay = 0;
+
+    items.forEach((item) => {
+      totalBaseSalary += item.base_salary;
+      totalAllowances +=
+        item.position_allowance +
+        item.transport_allowance +
+        item.meal_allowance +
+        item.communication_allowance;
+      totalOvertime += item.overtime_pay;
+      totalLateDeductions += item.late_deduction;
+      totalAbsenceDeductions += item.absence_deduction;
+      totalBpjsKesEmp += item.bpjs_kes_employee;
+      totalBpjsTkEmp += item.bpjs_tk_jht_employee + item.bpjs_tk_jp_employee;
+      totalBpjsKesComp += item.bpjs_kes_company;
+      totalBpjsTkComp +=
+        item.bpjs_tk_jht_company +
+        item.bpjs_tk_jkk_company +
+        item.bpjs_tk_jkm_company +
+        item.bpjs_tk_jp_company;
+      totalPph21 += item.pph21;
+      totalNetPay += item.take_home_pay;
+    });
+
+    const periodStr = `${month}/${year}`;
+
+    const entries: ErpJournalEntry[] = [
+      {
+        account_code: format === 'SAP' ? '600100' : '5-1001',
+        account_name: 'Beban Gaji & Upah Pokok',
+        debit: totalBaseSalary,
+        credit: 0,
+        description: `Beban Gaji Karyawan Periode ${periodStr}`,
+      },
+      {
+        account_code: format === 'SAP' ? '600110' : '5-1002',
+        account_name: 'Beban Tunjangan Karyawan',
+        debit: totalAllowances,
+        credit: 0,
+        description: `Tunjangan Posisi, Transport & Makan ${periodStr}`,
+      },
+      {
+        account_code: format === 'SAP' ? '600120' : '5-1003',
+        account_name: 'Beban Upah Lembur (Overtime)',
+        debit: totalOvertime,
+        credit: 0,
+        description: `Beban Lembur Karyawan Periode ${periodStr}`,
+      },
+      {
+        account_code: format === 'SAP' ? '600130' : '5-1004',
+        account_name: 'Beban Iuran BPJS TK (Perusahaan)',
+        debit: totalBpjsTkComp,
+        credit: 0,
+        description: `Beban Iuran BPJS Ketenagakerjaan Perusahaan ${periodStr}`,
+      },
+      {
+        account_code: format === 'SAP' ? '600140' : '5-1005',
+        account_name: 'Beban Iuran BPJS Kesehatan (Perusahaan)',
+        debit: totalBpjsKesComp,
+        credit: 0,
+        description: `Beban Iuran BPJS Kesehatan Perusahaan ${periodStr}`,
+      },
+      {
+        account_code: format === 'SAP' ? '210100' : '2-1001',
+        account_name: 'Hutang PPh Pasal 21 (TER)',
+        debit: 0,
+        credit: totalPph21,
+        description: `Hutang Pajak PPh 21 TER Karyawan ${periodStr}`,
+      },
+      {
+        account_code: format === 'SAP' ? '210110' : '2-1002',
+        account_name: 'Hutang Iuran BPJS Ketenagakerjaan',
+        debit: 0,
+        credit: totalBpjsTkEmp + totalBpjsTkComp,
+        description: `Hutang Iuran BPJS TK Terutang ${periodStr}`,
+      },
+      {
+        account_code: format === 'SAP' ? '210120' : '2-1003',
+        account_name: 'Hutang Iuran BPJS Kesehatan',
+        debit: 0,
+        credit: totalBpjsKesEmp + totalBpjsKesComp,
+        description: `Hutang Iuran BPJS Kesehatan Terutang ${periodStr}`,
+      },
+      {
+        account_code: format === 'SAP' ? '210200' : '2-1004',
+        account_name: 'Hutang Gaji Karyawan (Payroll Payable)',
+        debit: 0,
+        credit: totalNetPay,
+        description: `Gaji Bersih / Take Home Pay Terutang ${periodStr}`,
+      },
+    ];
+
+    if (totalLateDeductions + totalAbsenceDeductions > 0) {
+      entries.push({
+        account_code: format === 'SAP' ? '700100' : '5-1099',
+        account_name: 'Pendapatan Lain-lain / Denda Absensi',
+        debit: 0,
+        credit: totalLateDeductions + totalAbsenceDeductions,
+        description: `Potongan Keterlambatan & Mangkir ${periodStr}`,
+      });
+    }
+
+    return entries;
   }
 
   public getContractTrackers(): EmployeeContractTracker[] {

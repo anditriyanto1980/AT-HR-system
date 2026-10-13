@@ -74,15 +74,15 @@ export const BusinessTripView: React.FC = () => {
   const handleSaveTrip = (e: React.FormEvent) => {
     e.preventDefault();
     if (!destinationCity.trim()) {
-      setError('Please provide destination city.');
+      setError('Harap isi kota / daerah tujuan.');
       return;
     }
     if (!purpose.trim()) {
-      setError('Please provide the purpose of the official trip.');
+      setError('Harap isi maksud dan agenda kedinasan.');
       return;
     }
     if (new Date(endDate) < new Date(startDate)) {
-      setError('End date cannot be prior to start date.');
+      setError('Tanggal kembali tidak boleh sebelum tanggal berangkat.');
       return;
     }
 
@@ -120,7 +120,7 @@ export const BusinessTripView: React.FC = () => {
       approvingTrip.id,
       decisionAction,
       currentUser,
-      decisionComment.trim() || (decisionAction === 'APPROVED' ? 'Approved' : 'Rejected')
+      decisionComment.trim() || (decisionAction === 'APPROVED' ? 'Disetujui untuk tugas kedinasan.' : 'Ditolak')
     );
 
     setApprovingTrip(null);
@@ -167,11 +167,11 @@ export const BusinessTripView: React.FC = () => {
               <Plane className="w-5 h-5" />
             </span>
             <h2 className="text-lg font-bold text-slate-900">
-              Business Trip Management (SPPD)
+              Manajemen Perjalanan Dinas (SPPD)
             </h2>
           </div>
           <p className="text-xs text-slate-500">
-            Official business travel requests, cash advances, itinerary approvals & attendance alignment
+            Pengajuan surat tugas perjalanan dinas (SPPD), uang muka operasional, dan integrasi otomatis status presensi
           </p>
         </div>
 
@@ -180,38 +180,38 @@ export const BusinessTripView: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1D63FF] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>New Business Trip (SPPD)</span>
+          <span>Ajukan SPPD Baru</span>
         </button>
       </div>
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
-          <div className="text-xs font-semibold text-slate-500 uppercase">My Total Trips</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase">Total Perjalanan Saya</div>
           <div className="text-2xl font-bold font-mono text-slate-900">{myTrips.length}</div>
-          <div className="text-[11px] text-slate-500">recorded journeys</div>
+          <div className="text-[11px] text-slate-500">total perjalanan</div>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
-          <div className="text-xs font-semibold text-slate-500 uppercase">Approved Trips</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase">SPPD Disetujui</div>
           <div className="text-2xl font-bold font-mono text-emerald-700">
             {myTrips.filter((t) => t.status === 'APPROVED').length}
           </div>
-          <div className="text-[11px] text-emerald-600">attendance marked</div>
+          <div className="text-[11px] text-emerald-600">tercatat di absensi</div>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
-          <div className="text-xs font-semibold text-slate-500 uppercase">Pending Approvals</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase">Menunggu Persetujuan</div>
           <div className="text-2xl font-bold font-mono text-amber-600">
             {isManagerOrAdmin ? pendingApprovals.length : myTrips.filter((t) => t.status === 'PENDING').length}
           </div>
           <div className="text-[11px] text-amber-700">
-            {isManagerOrAdmin ? 'awaiting your decision' : 'in review'}
+            {isManagerOrAdmin ? 'menunggu keputusan Anda' : 'sedang ditinjau'}
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
-          <div className="text-xs font-semibold text-slate-500 uppercase">Total Advance Disbursed</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase">Total Uang Muka Diterima</div>
           <div className="text-xl font-bold font-mono text-slate-900">
             {formatCurrency(
               myTrips
@@ -219,7 +219,7 @@ export const BusinessTripView: React.FC = () => {
                 .reduce((acc, curr) => acc + curr.cash_advance_requested, 0)
             )}
           </div>
-          <div className="text-[11px] text-slate-500">operational allowance</div>
+          <div className="text-[11px] text-slate-500">dana operasional dinas</div>
         </div>
       </div>
 
@@ -228,23 +228,23 @@ export const BusinessTripView: React.FC = () => {
         <div className="flex border-b border-slate-200 space-x-6">
           <button
             onClick={() => setActiveTab('my')}
-            className={`pb-3 text-xs font-semibold border-b-2 transition-colors ${
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
               activeTab === 'my'
                 ? 'border-slate-900 text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            My Business Trips ({myTrips.length})
+            Perjalanan Dinas Saya ({myTrips.length})
           </button>
           <button
             onClick={() => setActiveTab('approvals')}
-            className={`pb-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
               activeTab === 'approvals'
                 ? 'border-slate-900 text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            <span>Team Approvals Queue</span>
+            <span>Antrean Persetujuan Tim</span>
             {pendingApprovals.length > 0 && (
               <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-mono font-bold">
                 {pendingApprovals.length}
@@ -258,19 +258,19 @@ export const BusinessTripView: React.FC = () => {
       {activeTab === 'my' ? (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Your Business Trips (SPPD)</h3>
-            <span className="text-xs text-slate-500">Real-time sync with corporate travel policy</span>
+            <h3 className="text-sm font-bold text-slate-900">Daftar Perjalanan Dinas (SPPD) Saya</h3>
+            <span className="text-xs text-slate-500">Sinkronisasi otomatis dengan status absensi dan kebijakan dinas</span>
           </div>
 
           {myTrips.length === 0 ? (
             <div className="p-12 text-center text-slate-400 space-y-3">
               <Plane className="w-10 h-10 mx-auto text-slate-300" />
-              <p className="text-sm">You haven't submitted any business trips yet.</p>
+              <p className="text-sm">Belum ada pengajuan perjalanan dinas.</p>
               <button
                 onClick={handleOpenAdd}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold"
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold cursor-pointer"
               >
-                Submit New SPPD
+                Ajukan SPPD Baru
               </button>
             </div>
           ) : (
@@ -286,7 +286,17 @@ export const BusinessTripView: React.FC = () => {
                         </span>
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700 font-medium">
                           {getTransportIcon(trip.transportation)}
-                          <span>{trip.transportation.replace(/_/g, ' ')}</span>
+                          <span>
+                            {trip.transportation === 'Flight'
+                              ? 'Pesawat'
+                              : trip.transportation === 'Train'
+                              ? 'Kereta Api'
+                              : trip.transportation === 'Car_Rental'
+                              ? 'Mobil Sewa / Taksi'
+                              : trip.transportation === 'Company_Vehicle'
+                              ? 'Mobil Kantor'
+                              : 'Transportasi Umum'}
+                          </span>
                         </span>
                         <span
                           className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
@@ -297,7 +307,7 @@ export const BusinessTripView: React.FC = () => {
                               : 'bg-amber-50 text-amber-800 border-amber-200'
                           }`}
                         >
-                          {trip.status}
+                          {trip.status === 'APPROVED' ? 'Disetujui' : trip.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
                         </span>
                       </div>
 
@@ -306,19 +316,19 @@ export const BusinessTripView: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
                         <span className="flex items-center gap-1 font-mono">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          {formatDate(trip.start_date)} - {formatDate(trip.end_date)} ({trip.total_days} days)
+                          {formatDate(trip.start_date)} - {formatDate(trip.end_date)} ({trip.total_days} hari)
                         </span>
                         <span className="font-mono">
-                          Est. Budget: <strong>{formatCurrency(trip.estimated_cost)}</strong>
+                          Estimasi Biaya: <strong>{formatCurrency(trip.estimated_cost)}</strong>
                         </span>
                         <span className="font-mono text-emerald-700">
-                          Cash Advance: <strong>{formatCurrency(trip.cash_advance_requested)}</strong>
+                          Uang Muka: <strong>{formatCurrency(trip.cash_advance_requested)}</strong>
                         </span>
                       </div>
 
                       {trip.approver_name && (
                         <div className="text-[11px] text-slate-500 pt-1 italic bg-slate-50 p-2 rounded-lg border border-slate-100">
-                          Decision by {trip.approver_name}: &quot;{trip.approver_comment || 'No comment'}&quot;
+                          Keputusan oleh {trip.approver_name}: &quot;{trip.approver_comment || 'Disetujui'}&quot;
                         </div>
                       )}
                     </div>
@@ -333,9 +343,9 @@ export const BusinessTripView: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Pending Business Trip Approvals</h3>
+              <h3 className="text-sm font-bold text-slate-900">Persetujuan Perjalanan Dinas Tim</h3>
               <p className="text-xs text-slate-500">
-                Approving this request will automatically record attendance days as &quot;Business Trip&quot;
+                Menyetujui permohonan ini akan otomatis mencatat presensi hari kerja sebagai &quot;Perjalanan Dinas (SPPD)&quot;
               </p>
             </div>
           </div>
@@ -343,7 +353,7 @@ export const BusinessTripView: React.FC = () => {
           {pendingApprovals.length === 0 ? (
             <div className="p-12 text-center text-slate-400 space-y-2">
               <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500" />
-              <p className="text-xs">No pending business trip requests for your approval.</p>
+              <p className="text-xs">Tidak ada pengajuan perjalanan dinas yang menunggu persetujuan Anda.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
@@ -365,7 +375,7 @@ export const BusinessTripView: React.FC = () => {
                         </span>
                         <span className="text-xs text-slate-400">·</span>
                         <span className="text-xs text-slate-600 font-mono">
-                          {formatDate(trip.start_date)} - {formatDate(trip.end_date)} ({trip.total_days} days)
+                          {formatDate(trip.start_date)} - {formatDate(trip.end_date)} ({trip.total_days} hari)
                         </span>
                       </div>
 
@@ -374,10 +384,21 @@ export const BusinessTripView: React.FC = () => {
                       </p>
 
                       <div className="flex items-center gap-4 text-xs font-mono text-slate-600">
-                        <span>Transport: {trip.transportation}</span>
-                        <span>Budget: {formatCurrency(trip.estimated_cost)}</span>
+                        <span>
+                          Transport:{' '}
+                          {trip.transportation === 'Flight'
+                            ? 'Pesawat'
+                            : trip.transportation === 'Train'
+                            ? 'Kereta Api'
+                            : trip.transportation === 'Car_Rental'
+                            ? 'Mobil Sewa'
+                            : trip.transportation === 'Company_Vehicle'
+                            ? 'Mobil Kantor'
+                            : 'Umum'}
+                        </span>
+                        <span>Estimasi: {formatCurrency(trip.estimated_cost)}</span>
                         <span className="text-emerald-700 font-bold">
-                          Cash Advance: {formatCurrency(trip.cash_advance_requested)}
+                          Uang Muka: {formatCurrency(trip.cash_advance_requested)}
                         </span>
                       </div>
                     </div>
@@ -387,12 +408,12 @@ export const BusinessTripView: React.FC = () => {
                         onClick={() => {
                           setApprovingTrip(trip);
                           setDecisionAction('APPROVED');
-                          setDecisionComment('Approved for official business duty.');
+                          setDecisionComment('Disetujui untuk tugas dinas resmi.');
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
+                        className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Approve SPPD</span>
+                        <span>Setujui SPPD</span>
                       </button>
                       <button
                         onClick={() => {
@@ -400,10 +421,10 @@ export const BusinessTripView: React.FC = () => {
                           setDecisionAction('REJECTED');
                           setDecisionComment('');
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                        className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <XCircle className="w-4 h-4" />
-                        <span>Reject</span>
+                        <span>Tolak</span>
                       </button>
                     </div>
                   </div>
@@ -421,15 +442,15 @@ export const BusinessTripView: React.FC = () => {
             <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Submit Official Business Trip (SPPD)
+                  Formulir Pengajuan Perjalanan Dinas (SPPD)
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Surat Perintah Perjalanan Dinas with automated attendance & allowance tracking
+                  Surat Perintah Perjalanan Dinas dengan integrasi absensi otomatis & tunjangan operasional
                 </p>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
               >
                 ✕
               </button>
@@ -444,11 +465,11 @@ export const BusinessTripView: React.FC = () => {
               )}
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Destination City / Area *</label>
+                <label className="text-xs font-semibold text-slate-700">Kota / Daerah Tujuan *</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Surabaya, Jawa Timur or Singapore"
+                  placeholder="Contoh: Surabaya, Jawa Timur atau Singapura"
                   value={destinationCity}
                   onChange={(e) => setDestinationCity(e.target.value)}
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
@@ -456,11 +477,11 @@ export const BusinessTripView: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Official Purpose & Agenda *</label>
+                <label className="text-xs font-semibold text-slate-700">Maksud & Agenda Kedinasan *</label>
                 <textarea
                   required
                   rows={3}
-                  placeholder="Describe client meetings, technical deployment, or audit objectives..."
+                  placeholder="Jelaskan agenda pertemuan klien, implementasi teknis, audit, atau tugas dinas..."
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
@@ -469,7 +490,7 @@ export const BusinessTripView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Start Date *</label>
+                  <label className="text-xs font-semibold text-slate-700">Tanggal Berangkat *</label>
                   <input
                     type="date"
                     required
@@ -479,7 +500,7 @@ export const BusinessTripView: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">End Date *</label>
+                  <label className="text-xs font-semibold text-slate-700">Tanggal Kembali *</label>
                   <input
                     type="date"
                     required
@@ -491,28 +512,28 @@ export const BusinessTripView: React.FC = () => {
               </div>
 
               <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs flex items-center justify-between font-mono">
-                <span className="text-slate-500">Calculated Trip Duration:</span>
-                <span className="font-bold text-slate-900">{calculatedDays} Calendar Days</span>
+                <span className="text-slate-500">Total Durasi Perjalanan:</span>
+                <span className="font-bold text-slate-900">{calculatedDays} Hari Kalender</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Transportation</label>
+                  <label className="text-xs font-semibold text-slate-700">Moda Transportasi</label>
                   <select
                     value={transportation}
                     onChange={(e) => setTransportation(e.target.value as TransportationMode)}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none font-medium"
                   >
-                    <option value="Flight">Commercial Flight</option>
-                    <option value="Train">Kereta Api (Train)</option>
-                    <option value="Car_Rental">Car Rental / Taxi</option>
-                    <option value="Company_Vehicle">Company Vehicle</option>
-                    <option value="Public_Transit">Public Transit</option>
+                    <option value="Flight">Pesawat Terbang</option>
+                    <option value="Train">Kereta Api</option>
+                    <option value="Car_Rental">Mobil Sewa / Taksi</option>
+                    <option value="Company_Vehicle">Kendaraan Kantor</option>
+                    <option value="Public_Transit">Transportasi Umum</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Estimated Budget (IDR)</label>
+                  <label className="text-xs font-semibold text-slate-700">Estimasi Total Biaya (Rp)</label>
                   <input
                     type="number"
                     min="0"
@@ -524,7 +545,7 @@ export const BusinessTripView: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Cash Advance (IDR)</label>
+                  <label className="text-xs font-semibold text-slate-700">Permohonan Uang Muka (Rp)</label>
                   <input
                     type="number"
                     min="0"
@@ -537,10 +558,10 @@ export const BusinessTripView: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Notes / Hotel & Flight Details</label>
+                <label className="text-xs font-semibold text-slate-700">Catatan / Detail Hotel & Tiket</label>
                 <input
                   type="text"
-                  placeholder="e.g. Hotel Santika Premiere, Garuda GA-310"
+                  placeholder="Contoh: Hotel Santika Premiere, Garuda GA-310"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
@@ -551,15 +572,15 @@ export const BusinessTripView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors"
+                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
                 >
-                  Submit SPPD
+                  Kirim Pengajuan SPPD
                 </button>
               </div>
             </form>
@@ -573,21 +594,21 @@ export const BusinessTripView: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
             <div className="p-5 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900">
-                Confirm SPPD {decisionAction}
+                Konfirmasi {decisionAction === 'APPROVED' ? 'Persetujuan' : 'Penolakan'} SPPD
               </h3>
               <p className="text-xs text-slate-500">
-                {approvingTrip.employee_name} &bull; {approvingTrip.destination_city} ({approvingTrip.total_days} days)
+                {approvingTrip.employee_name} &bull; {approvingTrip.destination_city} ({approvingTrip.total_days} hari)
               </p>
             </div>
 
             <form onSubmit={handleProcessDecision} className="p-5 space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Approver Notes / Instructions</label>
+                <label className="text-xs font-semibold text-slate-700">Catatan / Instruksi Penyetuju</label>
                 <textarea
                   rows={3}
                   value={decisionComment}
                   onChange={(e) => setDecisionComment(e.target.value)}
-                  placeholder="Enter comments or reimbursement instructions..."
+                  placeholder="Tuliskan catatan arahan dinas atau instruksi klaim reimbursement..."
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
                 />
               </div>
@@ -596,19 +617,19 @@ export const BusinessTripView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setApprovingTrip(null)}
-                  className="px-4 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 font-medium"
+                  className="px-4 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100 font-medium cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className={`px-4 py-2 rounded-xl text-white text-xs font-semibold shadow-xs ${
+                  className={`px-4 py-2 rounded-xl text-white text-xs font-semibold shadow-xs cursor-pointer ${
                     decisionAction === 'APPROVED'
                       ? 'bg-emerald-700 hover:bg-emerald-800'
                       : 'bg-rose-600 hover:bg-rose-700'
                   }`}
                 >
-                  Confirm {decisionAction}
+                  Konfirmasi {decisionAction === 'APPROVED' ? 'Setujui' : 'Tolak'}
                 </button>
               </div>
             </form>

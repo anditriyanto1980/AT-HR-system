@@ -79,15 +79,15 @@ export function evaluateClockOut(
 }
 
 /**
- * Formats minutes into human readable string e.g. "8h 15m"
+ * Formats minutes into human readable Indonesian string e.g. "8 jam 15 mnt"
  */
 export function formatMinutes(minutes: number): string {
-  if (minutes <= 0) return '0m';
+  if (minutes <= 0) return '0 mnt';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
+  if (h === 0) return `${m} mnt`;
+  if (m === 0) return `${h} jam`;
+  return `${h} jam ${m} mnt`;
 }
 
 /**
@@ -96,16 +96,16 @@ export function formatMinutes(minutes: number): string {
 export function formatTime(isoStringOrDate?: string | Date): string {
   if (!isoStringOrDate) return '--:--';
   const d = typeof isoStringOrDate === 'string' ? new Date(isoStringOrDate) : isoStringOrDate;
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 /**
- * Formats date to "DD MMM YYYY"
+ * Formats date to Indonesian "DD MMM YYYY"
  */
 export function formatDate(dateString?: string | Date): string {
   if (!dateString) return '-';
   const d = typeof dateString === 'string' ? new Date(dateString) : dateString;
-  return d.toLocaleDateString('en-GB', {
+  return d.toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

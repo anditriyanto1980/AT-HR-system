@@ -24,11 +24,18 @@ import {
   Eye,
   Check,
   Building,
+  Bell,
+  BellRing,
+  Volume2,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { formatDate, formatTime } from '../../utils/attendance';
+import { useClockInReminder } from '../../hooks/useClockInReminder';
+import { MonthlyAttendanceSummary } from '../../components/dashboard/MonthlyAttendanceSummary';
+import { AnnualLeaveProgressBar } from '../../components/dashboard/AnnualLeaveProgressBar';
+import { TeamAvailabilityCalendar } from '../../components/dashboard/TeamAvailabilityCalendar';
 
 interface EmployeeDashboardProps {
   onNavigateTab: (tab: string) => void;
@@ -37,6 +44,12 @@ interface EmployeeDashboardProps {
 export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigateTab }) => {
   const { currentUser } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const {
+    permission,
+    requestPushPermission,
+    triggerTestReminder,
+  } = useClockInReminder(onNavigateTab);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -69,12 +82,23 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigate
 
   const totalPending = pendingLeaves.length + pendingPerms.length + pendingOTs.length;
 
-  // Recent attendance records
-  const myRecords = dataService
+  // All attendance records for employee
+  const allMyRecords = dataService
     .getAttendanceRecords()
-    .filter((r) => r.employee_id === currentUser.id)
+    .filter((r) => r.employee_id === currentUser.id);
+
+  // Recent attendance records (latest 5)
+  const myRecords = [...allMyRecords]
     .sort((a, b) => new Date(b.attendance_date).getTime() - new Date(a.attendance_date).getTime())
     .slice(0, 5);
+
+  // Quick attendance rate calculation
+  const onTimeCountAll = allMyRecords.filter(
+    (r) => r.clock_in_time && (r.clock_in_status === 'present' || !r.late_minutes || r.late_minutes === 0)
+  ).length;
+  const attendanceRate = allMyRecords.length > 0
+    ? Math.round((onTimeCountAll / allMyRecords.length) * 100)
+    : 100;
 
   const isClockedIn = Boolean(todayAttendance?.clock_in_time);
   const isClockedOut = Boolean(todayAttendance?.clock_out_time);
@@ -291,6 +315,65 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigate
             </div>
           </div>
         </div>
+
+        {/* PUSH NOTIFICATION CLOCK-IN REMINDER STATUS & TEST BAR */}
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-gradient-to-r from-amber-50/70 via-yellow-50/50 to-blue-50/40 p-3.5 rounded-2xl border border-amber-200/70">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+              <BellRing className="w-4 h-4 animate-bounce" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-bold text-slate-900">
+                  Pengingat Otomatis Jam Masuk ({activeShift?.start_time} WIB)
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    permission === 'granted'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      : permission === 'denied'
+                      ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                      : 'bg-amber-100 text-amber-800 border border-amber-200'
+                  }`}
+                >
+                  {permission === 'granted'
+                    ? '🔔 Push Browser Aktif'
+                    : permission === 'denied'
+                    ? 'Izin Ditolak Browser'
+                    : 'Izin Belum Aktif'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
+                {!isClockedIn
+                  ? `Sistem akan otomatis membunyikan alarm dan mengirim notifikasi push ke layar HP/laptop Anda saat jam ${activeShift?.start_time} WIB dimulai jika belum melakukan Clock In.`
+                  : 'Anda telah melakukan Clock In hari ini. Pengingat otomatis berikutnya akan aktif pada jam masuk hari kerja selanjutnya.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            {permission !== 'granted' && (
+              <button
+                type="button"
+                onClick={requestPushPermission}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>Izinkan Push</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={triggerTestReminder}
+              className="px-3 py-1.5 bg-white hover:bg-slate-100 active:scale-95 text-slate-800 font-bold rounded-xl text-xs border border-slate-300 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              title="Kirim notifikasi pengingat uji coba ke layar sekarang"
+            >
+              <BellRing className="w-3.5 h-3.5 text-amber-600" />
+              <span>Tes Notifikasi</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -423,13 +506,29 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigate
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. STATISTIK KARYAWAN (2x2 Grid on Mobile, 4-Cols on Desktop)             */}
+      {/* 4. SISA JATAH CUTI TAHUNAN DENGAN PROGRESS BAR                            */}
+      {/* ========================================================================= */}
+      <AnnualLeaveProgressBar
+        balance={annualBalance}
+        onNavigateTab={onNavigateTab}
+      />
+
+      {/* ========================================================================= */}
+      {/* 5. STATISTIK RINGKASAN KEHADIRAN BULANAN (Recharts BarChart & Metrik)     */}
+      {/* ========================================================================= */}
+      <MonthlyAttendanceSummary
+        records={allMyRecords}
+        onNavigateTab={onNavigateTab}
+      />
+
+      {/* ========================================================================= */}
+      {/* 6. STATISTIK KARYAWAN (2x2 Grid on Mobile, 4-Cols on Desktop)             */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Card 1: Annual Leave Remaining */}
+        {/* Card 1: Annual Leave Remaining with Progress Bar */}
         <div
           onClick={() => onNavigateTab('leave')}
-          className="rounded-2xl p-4 bg-gradient-to-br from-[#00A86B] to-[#00C887] text-white shadow-md cursor-pointer hover:shadow-lg transition-all group"
+          className="rounded-2xl p-4 bg-gradient-to-br from-[#00A86B] to-[#00C887] text-white shadow-md cursor-pointer hover:shadow-lg transition-all group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold text-white/90">Sisa Cuti Tahunan</span>
@@ -437,10 +536,31 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigate
           </div>
           <div className="mt-2">
             <div className="text-2xl font-bold tracking-tight font-mono">
-              {annualBalance?.remaining ?? 12} Hari
+              {annualBalance?.remaining ?? 7} Hari
             </div>
-            <div className="text-[10px] text-white/80 mt-0.5">
-              Dari kuota {annualBalance?.entitlement ?? 12} hari/tahun
+            {/* Mini Progress Bar inside the card */}
+            <div className="w-full bg-black/20 h-1.5 rounded-full mt-1.5 overflow-hidden">
+              <div
+                className="bg-white h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${Math.round(
+                    ((annualBalance?.remaining ?? 7) /
+                      (annualBalance?.entitlement ?? 12)) *
+                      100
+                  )}%`,
+                }}
+              />
+            </div>
+            <div className="text-[10px] text-white/85 mt-1 flex justify-between font-mono">
+              <span>Kuota {annualBalance?.entitlement ?? 12} hari</span>
+              <span>
+                {Math.round(
+                  ((annualBalance?.remaining ?? 7) /
+                    (annualBalance?.entitlement ?? 12)) *
+                    100
+                )}
+                %
+              </span>
             </div>
           </div>
         </div>
@@ -500,7 +620,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigate
           </div>
           <div className="mt-2">
             <div className="text-2xl font-bold tracking-tight font-mono">
-              100%
+              {attendanceRate}%
             </div>
             <div className="text-[10px] text-white/80 mt-0.5">
               Disiplin Tepat Waktu
@@ -510,7 +630,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigate
       </div>
 
       {/* ========================================================================= */}
-      {/* 5. RIWAYAT ABSENSI TERAKHIR (Mobile Cards + Desktop Table)                */}
+      {/* 7. KALENDER TIM & CUTI BERSAMA (Team Leave & Availability Calendar)       */}
+      {/* ========================================================================= */}
+      <TeamAvailabilityCalendar onNavigateTab={onNavigateTab} />
+
+      {/* ========================================================================= */}
+      {/* 8. RIWAYAT ABSENSI TERAKHIR (Mobile Cards + Desktop Table)                */}
       {/* ========================================================================= */}
       <div className="bg-white rounded-2xl sm:rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-3">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -576,8 +701,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigate
               <tr className="text-slate-400 border-b border-slate-100 font-semibold">
                 <th className="pb-2.5 font-mono">Tanggal</th>
                 <th className="pb-2.5">Shift</th>
-                <th className="pb-2.5 font-mono">Clock In</th>
-                <th className="pb-2.5 font-mono">Clock Out</th>
+                <th className="pb-2.5 font-mono">Jam Masuk</th>
+                <th className="pb-2.5 font-mono">Jam Pulang</th>
                 <th className="pb-2.5 text-center">Foto Verifikasi</th>
                 <th className="pb-2.5 text-right">Status</th>
               </tr>

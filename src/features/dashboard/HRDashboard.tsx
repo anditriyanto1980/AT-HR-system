@@ -88,16 +88,16 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
   return (
     <div className="space-y-5 max-w-[1600px] mx-auto">
       {/* ========================================================================= */}
-      {/* ROW 1: THE 6 VIBRANT GRADIENT METRIC CARDS (Direct from reference image) */}
+      {/* ROW 1: THE 6 VIBRANT GRADIENT METRIC CARDS                                */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
-        {/* Card 1: Purple Gradient (Today's Attendance) */}
+        {/* Card 1: Purple Gradient (Kehadiran Hari Ini) */}
         <div
           onClick={() => onNavigateTab('attendance-monitoring')}
           className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-[#5B4DFB] to-[#7B61FF] text-white shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all group"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-white/90">Today's Attendance</span>
+            <span className="text-xs font-semibold text-white/90">Kehadiran Hari Ini</span>
             <div className="w-8 h-8 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white backdrop-blur-xs">
               <ShoppingBag className="w-4 h-4" />
             </div>
@@ -107,10 +107,9 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
               {clockedTotal} / {totalCount}
             </div>
             <div className="text-[11px] font-medium text-white/90 flex items-center gap-1">
-              <span>▲ 12.8% vs Yesterday</span>
+              <span>▲ 12.8% dibanding Kemarin</span>
             </div>
           </div>
-          {/* Subtle SVG Wave Curve at bottom */}
           <div className="absolute -bottom-1 left-0 right-0 h-6 pointer-events-none opacity-40">
             <svg viewBox="0 0 500 150" preserveAspectRatio="none" className="h-full w-full">
               <path
@@ -121,23 +120,23 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Card 2: Emerald Green Gradient (On-Time Attendance) */}
+        {/* Card 2: Emerald Green Gradient (Jam Kerja Bulan Ini) */}
         <div
           onClick={() => onNavigateTab('reports')}
           className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-[#00A86B] to-[#00C887] text-white shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all group"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-white/90">This Month Hours</span>
+            <span className="text-xs font-semibold text-white/90">Total Jam Kerja Bulan Ini</span>
             <div className="w-8 h-8 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white backdrop-blur-xs">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 space-y-1">
             <div className="text-2xl font-bold tracking-tight font-mono">
-              2,865.4 hrs
+              2.865,4 jam
             </div>
             <div className="text-[11px] font-medium text-white/90 flex items-center gap-1">
-              <span>▲ 18.6% vs Last Month</span>
+              <span>▲ 18.6% dibanding Bulan Lalu</span>
             </div>
           </div>
           <div className="absolute -bottom-1 left-0 right-0 h-6 pointer-events-none opacity-40">
@@ -150,23 +149,23 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Card 3: Orange Gradient (Today's Overtime / Productivity) */}
+        {/* Card 3: Orange Gradient (Lembur Hari Ini) */}
         <div
           onClick={() => onNavigateTab('overtime')}
           className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-[#FF6B00] to-[#FFA200] text-white shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all group"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-white/90">Today's Overtime</span>
+            <span className="text-xs font-semibold text-white/90">Lembur Hari Ini</span>
             <div className="w-8 h-8 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white backdrop-blur-xs">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 space-y-1">
             <div className="text-2xl font-bold tracking-tight font-mono">
-              18.5 hrs
+              18,5 jam
             </div>
             <div className="text-[11px] font-medium text-white/90 flex items-center gap-1">
-              <span>▲ 10.4% vs Yesterday</span>
+              <span>▲ 10.4% dibanding Kemarin</span>
             </div>
           </div>
           <div className="absolute -bottom-1 left-0 right-0 h-6 pointer-events-none opacity-40">
@@ -179,23 +178,23 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Card 4: Royal Blue Gradient (Total Payroll Value) */}
+        {/* Card 4: Royal Blue Gradient (Total Anggaran Gaji) */}
         <div
           onClick={() => onNavigateTab('payroll')}
           className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-[#176BFF] to-[#0096FF] text-white shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all group"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-white/90">Total Payroll Value</span>
+            <span className="text-xs font-semibold text-white/90">Total Anggaran Gaji</span>
             <div className="w-8 h-8 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white backdrop-blur-xs">
               <Gem className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 space-y-1">
             <div className="text-xl font-bold tracking-tight font-mono truncate">
-              Rp 248.5M
+              Rp 248,5 Jt
             </div>
             <div className="text-[11px] font-medium text-white/90 flex items-center gap-1">
-              <span>▲ 9.2% vs Last Month</span>
+              <span>▲ 9.2% dibanding Bulan Lalu</span>
             </div>
           </div>
           <div className="absolute -bottom-1 left-0 right-0 h-6 pointer-events-none opacity-40">
@@ -208,23 +207,23 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Card 5: Hot Pink Gradient (Total Workforce) */}
+        {/* Card 5: Hot Pink Gradient (Total Karyawan Aktif) */}
         <div
           onClick={() => onNavigateTab('employees')}
           className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-[#FF2E7E] to-[#FF5E98] text-white shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all group"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-white/90">Total Workforce</span>
+            <span className="text-xs font-semibold text-white/90">Total Karyawan Aktif</span>
             <div className="w-8 h-8 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white backdrop-blur-xs">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 space-y-1">
             <div className="text-2xl font-bold tracking-tight font-mono">
-              {totalCount} Staff
+              {totalCount} Staf
             </div>
             <div className="text-[11px] font-medium text-white/90 flex items-center gap-1">
-              <span>▲ 7.1% vs Last Month</span>
+              <span>▲ 7.1% dibanding Bulan Lalu</span>
             </div>
           </div>
           <div className="absolute -bottom-1 left-0 right-0 h-6 pointer-events-none opacity-40">
@@ -237,23 +236,23 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Card 6: Teal Gradient (Reimbursement Claims Out) */}
+        {/* Card 6: Teal Gradient (Klaim & Pengeluaran) */}
         <div
           onClick={() => onNavigateTab('reimbursements')}
           className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-[#00B4D8] to-[#0096C7] text-white shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all group"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-white/90">Claims & Expenses</span>
+            <span className="text-xs font-semibold text-white/90">Klaim & Pengeluaran</span>
             <div className="w-8 h-8 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white backdrop-blur-xs">
               <Wallet className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2 space-y-1">
             <div className="text-xl font-bold tracking-tight font-mono truncate">
-              Rp 18.7M
+              Rp 18,7 Jt
             </div>
             <div className="text-[11px] font-medium text-white/90 flex items-center gap-1">
-              <span>▼ 3.4% vs Last Month</span>
+              <span>▼ 3.4% dibanding Bulan Lalu</span>
             </div>
           </div>
           <div className="absolute -bottom-1 left-0 right-0 h-6 pointer-events-none opacity-40">
@@ -271,27 +270,27 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
       {/* ROW 2: LINE CHART + DONUT CHART + COLLECTION SUMMARY                      */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Card 1: Attendance Overview Line Chart (Span 6) */}
+        {/* Card 1: Attendance Overview Line Chart */}
         <div className="lg:col-span-6 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-sm font-bold text-slate-800">
-                Attendance Overview (This Month)
+                Tren Kehadiran Karyawan (Bulan Ini)
               </h3>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-3 text-xs">
                 <span className="flex items-center gap-1.5 font-medium text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-                  Clock-Ins
+                  Masuk Kerja
                 </span>
                 <span className="flex items-center gap-1.5 font-medium text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  On-Time
+                  Tepat Waktu
                 </span>
               </div>
               <button className="px-2.5 py-1 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-700 flex items-center gap-1">
-                <span>This Month</span>
+                <span>Bulan Ini</span>
                 <ChevronDown className="w-3 h-3 text-slate-400" />
               </button>
             </div>
@@ -328,16 +327,16 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
 
                 {/* Y-Axis Labels */}
                 <text x="15" y="45" fontSize="10" fill="#94A3B8" fontFamily="monospace">
-                  20 Staff
+                  20 Staf
                 </text>
                 <text x="15" y="85" fontSize="10" fill="#94A3B8" fontFamily="monospace">
-                  15 Staff
+                  15 Staf
                 </text>
                 <text x="15" y="125" fontSize="10" fill="#94A3B8" fontFamily="monospace">
-                  10 Staff
+                  10 Staf
                 </text>
                 <text x="15" y="165" fontSize="10" fill="#94A3B8" fontFamily="monospace">
-                  5 Staff
+                  5 Staf
                 </text>
 
                 {/* Blue Area Fill & Path */}
@@ -425,17 +424,15 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Card 2: Sales / Workforce by Category Donut Chart (Span 3) */}
+        {/* Card 2: Komposisi Departemen */}
         <div className="lg:col-span-3 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-800">Workforce by Department</h3>
+            <h3 className="text-sm font-bold text-slate-800">Komposisi per Departemen</h3>
           </div>
 
           <div className="flex flex-col items-center justify-center py-2">
-            {/* SVG Donut with Center Diamond Icon */}
             <div className="relative w-36 h-36 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                {/* Segment 1: Engineering (Orange) - 45% */}
                 <circle
                   cx="50"
                   cy="50"
@@ -446,7 +443,6 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                   strokeDasharray="107.4 238.7"
                   strokeDashoffset="0"
                 />
-                {/* Segment 2: Human Resources (Blue) - 25% */}
                 <circle
                   cx="50"
                   cy="50"
@@ -457,7 +453,6 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                   strokeDasharray="59.7 238.7"
                   strokeDashoffset="-107.4"
                 />
-                {/* Segment 3: Finance (Emerald) - 15% */}
                 <circle
                   cx="50"
                   cy="50"
@@ -468,7 +463,6 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                   strokeDasharray="35.8 238.7"
                   strokeDashoffset="-167.1"
                 />
-                {/* Segment 4: Product (Purple) - 10% */}
                 <circle
                   cx="50"
                   cy="50"
@@ -479,7 +473,6 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                   strokeDasharray="23.9 238.7"
                   strokeDashoffset="-202.9"
                 />
-                {/* Segment 5: Sales (Pink) - 5% */}
                 <circle
                   cx="50"
                   cy="50"
@@ -492,7 +485,6 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                 />
               </svg>
 
-              {/* Center Diamond Icon */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-700 shadow-inner">
                   <Gem className="w-5 h-5 text-slate-800" />
@@ -505,64 +497,62 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#FF7828]" />
-                  <span className="font-medium text-slate-700">Engineering</span>
+                  <span className="font-medium text-slate-700">Teknologi & IT</span>
                 </div>
-                <div className="font-mono text-slate-900 font-bold">45% (8 staff)</div>
+                <div className="font-mono text-slate-900 font-bold">45% (8 staf)</div>
               </div>
 
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#1D63FF]" />
-                  <span className="font-medium text-slate-700">Human Resources</span>
+                  <span className="font-medium text-slate-700">SDM (HR & GA)</span>
                 </div>
-                <div className="font-mono text-slate-900 font-bold">25% (4 staff)</div>
+                <div className="font-mono text-slate-900 font-bold">25% (4 staf)</div>
               </div>
 
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#00C887]" />
-                  <span className="font-medium text-slate-700">Finance & Acc</span>
+                  <span className="font-medium text-slate-700">Keuangan & Akun</span>
                 </div>
-                <div className="font-mono text-slate-900 font-bold">15% (3 staff)</div>
+                <div className="font-mono text-slate-900 font-bold">15% (3 staf)</div>
               </div>
 
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#7B61FF]" />
-                  <span className="font-medium text-slate-700">Product & Design</span>
+                  <span className="font-medium text-slate-700">Produk & Desain</span>
                 </div>
-                <div className="font-mono text-slate-900 font-bold">10% (2 staff)</div>
+                <div className="font-mono text-slate-900 font-bold">10% (2 staf)</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Card 3: Collection / Workforce Summary (Today) (Span 3) */}
+        {/* Card 3: Sebaran Kantor Cabang Hari Ini */}
         <div className="lg:col-span-3 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="text-sm font-bold text-slate-800">
-              Workforce Summary (Today)
+              Sebaran Lokasi Karyawan (Hari Ini)
             </h3>
           </div>
 
           <div className="space-y-3 py-2">
-            {/* Item 1: On-Duty Office (Green) */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
                   🏢
                 </div>
                 <div className="text-xs font-semibold text-slate-800">
-                  Head Office (JKT)
+                  Kantor Pusat (JKT)
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-xs font-mono font-bold text-slate-900">8 Staff</div>
+                <div className="text-xs font-mono font-bold text-slate-900">8 Staf</div>
                 <div className="text-[10px] text-slate-400 font-mono">47%</div>
               </div>
             </div>
 
-            {/* Item 2: Tech Hub Surabaya (Blue) */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
@@ -573,12 +563,11 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-xs font-mono font-bold text-slate-900">5 Staff</div>
+                <div className="text-xs font-mono font-bold text-slate-900">5 Staf</div>
                 <div className="text-[10px] text-slate-400 font-mono">29%</div>
               </div>
             </div>
 
-            {/* Item 3: Bandung R&D (Orange) */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">
@@ -589,33 +578,31 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-xs font-mono font-bold text-slate-900">2 Staff</div>
+                <div className="text-xs font-mono font-bold text-slate-900">2 Staf</div>
                 <div className="text-[10px] text-slate-400 font-mono">12%</div>
               </div>
             </div>
 
-            {/* Item 4: Remote / SPPD (Purple) */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">
                   ✈️
                 </div>
                 <div className="text-xs font-semibold text-slate-800">
-                  Remote & SPPD
+                  Remote & Dinas Luar
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-xs font-mono font-bold text-slate-900">2 Staff</div>
+                <div className="text-xs font-mono font-bold text-slate-900">2 Staf</div>
                 <div className="text-[10px] text-slate-400 font-mono">12%</div>
               </div>
             </div>
           </div>
 
-          {/* Green Bottom Summary Banner */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-800">
-            <span>Total Workforce</span>
+            <span>Total Karyawan</span>
             <span className="text-emerald-600 font-mono text-sm">
-              17 Staff (100%)
+              17 Staf (100%)
             </span>
           </div>
         </div>
@@ -625,12 +612,12 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
       {/* ROW 3: TOP PERFORMERS TABLE + STOCK SUMMARY + LOW STOCK ALERTS            */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Card 1: Top 5 Best Disciplined Departments (Span 4) */}
+        {/* Card 1: Peringkat Kehadiran Departemen */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div className="border-b border-slate-100 pb-3">
               <h3 className="text-sm font-bold text-slate-800">
-                Top 5 Attendance Ranking
+                Peringkat Kedisiplinan Departemen
               </h3>
             </div>
 
@@ -639,41 +626,41 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                 <thead>
                   <tr className="text-slate-400 border-b border-slate-100 font-semibold">
                     <th className="pb-2 font-mono">#</th>
-                    <th className="pb-2">Department</th>
-                    <th className="pb-2 font-mono">Staff</th>
-                    <th className="pb-2 font-mono text-right">Ratio</th>
+                    <th className="pb-2">Departemen</th>
+                    <th className="pb-2 font-mono">Staf</th>
+                    <th className="pb-2 font-mono text-right">Rasio</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   <tr>
                     <td className="py-2.5 font-mono text-slate-400">1</td>
-                    <td className="py-2.5 font-bold text-slate-800">Engineering & Tech</td>
-                    <td className="py-2.5 font-mono text-slate-500">8 staff</td>
-                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">98.5%</td>
+                    <td className="py-2.5 font-bold text-slate-800">Teknologi & IT</td>
+                    <td className="py-2.5 font-mono text-slate-500">8 staf</td>
+                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">98,5%</td>
                   </tr>
                   <tr>
                     <td className="py-2.5 font-mono text-slate-400">2</td>
-                    <td className="py-2.5 font-bold text-slate-800">Finance & Accounting</td>
-                    <td className="py-2.5 font-mono text-slate-500">3 staff</td>
-                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">96.0%</td>
+                    <td className="py-2.5 font-bold text-slate-800">Keuangan & Akun</td>
+                    <td className="py-2.5 font-mono text-slate-500">3 staf</td>
+                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">96,0%</td>
                   </tr>
                   <tr>
                     <td className="py-2.5 font-mono text-slate-400">3</td>
-                    <td className="py-2.5 font-bold text-slate-800">Human Resources</td>
-                    <td className="py-2.5 font-mono text-slate-500">4 staff</td>
-                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">95.2%</td>
+                    <td className="py-2.5 font-bold text-slate-800">SDM & HR</td>
+                    <td className="py-2.5 font-mono text-slate-500">4 staf</td>
+                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">95,2%</td>
                   </tr>
                   <tr>
                     <td className="py-2.5 font-mono text-slate-400">4</td>
-                    <td className="py-2.5 font-bold text-slate-800">Product & Design</td>
-                    <td className="py-2.5 font-mono text-slate-500">2 staff</td>
-                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">92.0%</td>
+                    <td className="py-2.5 font-bold text-slate-800">Produk & Desain</td>
+                    <td className="py-2.5 font-mono text-slate-500">2 staf</td>
+                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">92,0%</td>
                   </tr>
                   <tr>
                     <td className="py-2.5 font-mono text-slate-400">5</td>
-                    <td className="py-2.5 font-bold text-slate-800">Sales & Operations</td>
-                    <td className="py-2.5 font-mono text-slate-500">1 staff</td>
-                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">90.0%</td>
+                    <td className="py-2.5 font-bold text-slate-800">Penjualan & Bisnis</td>
+                    <td className="py-2.5 font-mono text-slate-500">1 staf</td>
+                    <td className="py-2.5 font-mono text-emerald-600 font-bold text-right">90,0%</td>
                   </tr>
                 </tbody>
               </table>
@@ -683,77 +670,72 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           <div className="pt-3 border-t border-slate-100 text-center">
             <button
               onClick={() => onNavigateTab('reports')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <span>View All Reports</span>
+              <span>Lihat Semua Laporan</span>
               <span>→</span>
             </button>
           </div>
         </div>
 
-        {/* Card 2: Stock / Workforce & Shifts Summary (Span 4) */}
+        {/* Card 2: Ringkasan Metrik Karyawan */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div className="border-b border-slate-100 pb-3">
               <h3 className="text-sm font-bold text-slate-800">
-                Workforce Metrics Summary
+                Ringkasan Operasional SDM
               </h3>
             </div>
 
             <div className="space-y-3 py-3">
-              {/* Metric 1 */}
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                     👥
                   </div>
-                  <span className="font-medium text-slate-700">Total Registered Items</span>
+                  <span className="font-medium text-slate-700">Total Karyawan Terdaftar</span>
                 </div>
-                <span className="font-mono font-bold text-slate-900">17 Employees</span>
+                <span className="font-mono font-bold text-slate-900">17 Karyawan</span>
               </div>
 
-              {/* Metric 2 */}
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
                     ⏱️
                   </div>
-                  <span className="font-medium text-slate-700">Monthly Working Hours</span>
+                  <span className="font-medium text-slate-700">Total Jam Kerja Bulan Ini</span>
                 </div>
-                <span className="font-mono font-bold text-slate-900">2,865.4 hrs</span>
+                <span className="font-mono font-bold text-slate-900">2.865,4 jam</span>
               </div>
 
-              {/* Metric 3 */}
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                     💰
                   </div>
-                  <span className="font-medium text-slate-700">Total Net Payroll Payout</span>
+                  <span className="font-medium text-slate-700">Total Pengeluaran Gaji Bersih</span>
                 </div>
-                <span className="font-mono font-bold text-slate-900">Rp 248,540,000</span>
+                <span className="font-mono font-bold text-slate-900">Rp 248.540.000</span>
               </div>
 
-              {/* Metric 4 */}
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                     📋
                   </div>
-                  <span className="font-medium text-slate-700">Active Reimbursements</span>
+                  <span className="font-medium text-slate-700">Total Klaim Biaya Cair</span>
                 </div>
-                <span className="font-mono font-bold text-slate-900">Rp 18,754,000</span>
+                <span className="font-mono font-bold text-slate-900">Rp 18.754.000</span>
               </div>
 
-              {/* Metric 5 */}
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
                     🎯
                   </div>
-                  <span className="font-medium text-slate-700">KPI Performance Index</span>
+                  <span className="font-medium text-slate-700">Indeks Kinerja (KPI Rata-rata)</span>
                 </div>
-                <span className="font-mono font-bold text-slate-900">89.4 / 100</span>
+                <span className="font-mono font-bold text-slate-900">89,4 / 100</span>
               </div>
             </div>
           </div>
@@ -761,22 +743,22 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           <div className="pt-3 border-t border-slate-100 text-center">
             <button
               onClick={() => onNavigateTab('payroll')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <span>View Financial & Payroll Report</span>
+              <span>Lihat Laporan Keuangan & Gaji</span>
               <span>→</span>
             </button>
           </div>
         </div>
 
-        {/* Card 3: Action Required Alerts (Span 4) */}
+        {/* Card 3: Tindakan Menunggu Persetujuan */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-rose-600">
                 <AlertCircle className="w-4 h-4" />
                 <h3 className="text-sm font-bold text-slate-800">
-                  Action Required Alerts (5 Items)
+                  Antrean Butuh Persetujuan (5 Data)
                 </h3>
               </div>
             </div>
@@ -785,9 +767,9 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
               <table className="w-full text-xs text-left">
                 <thead>
                   <tr className="text-slate-400 border-b border-slate-100 font-semibold">
-                    <th className="pb-2">Requester / Task</th>
-                    <th className="pb-2 font-mono">Category</th>
-                    <th className="pb-2 font-mono">Date</th>
+                    <th className="pb-2">Pemohon / Tugas</th>
+                    <th className="pb-2 font-mono">Kategori</th>
+                    <th className="pb-2 font-mono">Tanggal</th>
                     <th className="pb-2 font-mono text-right">Status</th>
                   </tr>
                 </thead>
@@ -798,7 +780,7 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                     <td className="py-2.5 font-mono text-slate-400">12 Jul</td>
                     <td className="py-2.5 text-right">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                        Pending
+                        Menunggu
                       </span>
                     </td>
                   </tr>
@@ -808,17 +790,17 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                     <td className="py-2.5 font-mono text-slate-400">11 Jul</td>
                     <td className="py-2.5 text-right">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                        Pending
+                        Menunggu
                       </span>
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 font-bold text-slate-800">Eko Prasetyo</td>
-                    <td className="py-2.5 font-mono text-slate-500">Late Arrival</td>
+                    <td className="py-2.5 font-mono text-slate-500">Koreksi Absen</td>
                     <td className="py-2.5 font-mono text-slate-400">11 Jul</td>
                     <td className="py-2.5 text-right">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                        Late
+                        Terlambat
                       </span>
                     </td>
                   </tr>
@@ -828,17 +810,17 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                     <td className="py-2.5 font-mono text-slate-400">10 Jul</td>
                     <td className="py-2.5 text-right">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                        Critical
+                        Penting
                       </span>
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 font-bold text-slate-800">Budi Santoso</td>
-                    <td className="py-2.5 font-mono text-slate-500">SPPD Sby</td>
+                    <td className="py-2.5 font-mono text-slate-500">SPPD Surabaya</td>
                     <td className="py-2.5 font-mono text-slate-400">09 Jul</td>
                     <td className="py-2.5 text-right">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Active
+                        Aktif
                       </span>
                     </td>
                   </tr>
@@ -850,9 +832,9 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           <div className="pt-3 border-t border-slate-100 text-center">
             <button
               onClick={() => onNavigateTab('approvals-hub')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <span>View All Approvals & Alerts</span>
+              <span>Buka Pusat Persetujuan</span>
               <span>→</span>
             </button>
           </div>
@@ -860,22 +842,21 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
       </div>
 
       {/* ========================================================================= */}
-      {/* ROW 4: MONTHLY BAR CHART + RECENT ACTIVITIES + BRANCH WISE SALES PROGRESS  */}
+      {/* ROW 4: MONTHLY BAR CHART + RECENT TRANSACTIONS + BRANCH PROGRESS           */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Card 1: Monthly Attendance Trend Bar Chart (Span 4) */}
+        {/* Card 1: Tren Kehadiran Bulanan */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-bold text-slate-800">
-              Monthly Attendance Trend
+              Tren Kehadiran Bulanan
             </h3>
             <button className="px-2.5 py-1 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-700 flex items-center gap-1">
-              <span>This Year</span>
+              <span>Tahun Ini</span>
               <ChevronDown className="w-3 h-3 text-slate-400" />
             </button>
           </div>
 
-          {/* Vertical Green Bars (Exact match to reference image) */}
           <div className="pt-6 pb-2">
             <div className="h-44 flex items-end justify-between px-2 gap-2">
               {[
@@ -883,7 +864,7 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
                 { month: 'Feb', val: 70, label: '94%' },
                 { month: 'Mar', val: 80, label: '96%' },
                 { month: 'Apr', val: 85, label: '97%' },
-                { month: 'May', val: 65, label: '93%' },
+                { month: 'Mei', val: 65, label: '93%' },
                 { month: 'Jun', val: 78, label: '95%' },
                 { month: 'Jul', val: 95, label: '99%' },
               ].map((item, idx) => (
@@ -907,166 +888,157 @@ export const HRDashboard: React.FC<HRDashboardProps> = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Card 2: Recent Transactions / Operations List (Span 4) */}
+        {/* Card 2: Aktivitas Transaksi Terbaru */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-800">Recent Transactions</h3>
+            <h3 className="text-sm font-bold text-slate-800">Aktivitas Terkini</h3>
             <button
               onClick={() => onNavigateTab('approvals-hub')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
             >
-              View All →
+              Lihat Semua →
             </button>
           </div>
 
           <div className="space-y-3 py-2">
-            {/* Item 1 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center font-mono font-bold text-xs shrink-0">
-                  INV
+                  GAJI
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-slate-900 truncate">
                     PAY-2026-0701 · Budi Santoso
                   </div>
-                  <div className="text-[10px] text-slate-400">Salary Slip Approved</div>
+                  <div className="text-[10px] text-slate-400">Slip Gaji Disetujui</div>
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <div className="text-xs font-mono font-bold text-slate-900">
-                  Rp 18,250,000
+                  Rp 18.250.000
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono">11:25 AM</div>
+                <div className="text-[10px] text-slate-400 font-mono">11:25 WIB</div>
               </div>
             </div>
 
-            {/* Item 2 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-mono font-bold text-xs shrink-0">
-                  CLM
+                  KLAIM
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-slate-900 truncate">
                     CLM-2026-0702 · Dewi Lestari
                   </div>
-                  <div className="text-[10px] text-slate-400">Transport & Tol Claim</div>
+                  <div className="text-[10px] text-slate-400">Klaim Transport & Tol</div>
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <div className="text-xs font-mono font-bold text-slate-900">
-                  Rp 450,000
+                  Rp 450.000
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono">10:45 AM</div>
+                <div className="text-[10px] text-slate-400 font-mono">10:45 WIB</div>
               </div>
             </div>
 
-            {/* Item 3 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center font-mono font-bold text-xs shrink-0">
-                  SPD
+                  SPPD
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-slate-900 truncate">
                     SPD-2026-0703 · Triyanto Andi
                   </div>
-                  <div className="text-[10px] text-slate-400">Surabaya Hub Visit</div>
+                  <div className="text-[10px] text-slate-400">Kunjungan Hub Surabaya</div>
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <div className="text-xs font-mono font-bold text-slate-900">
-                  Rp 4,500,000
+                  Rp 4.500.000
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono">09:30 AM</div>
+                <div className="text-[10px] text-slate-400 font-mono">09:30 WIB</div>
               </div>
             </div>
 
-            {/* Item 4 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-mono font-bold text-xs shrink-0">
-                  RCP
+                  MED
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-slate-900 truncate">
                     RCP-2026-0704 · Nadia Safira
                   </div>
-                  <div className="text-[10px] text-slate-400">Medical Claim Receipt</div>
+                  <div className="text-[10px] text-slate-400">Kuitansi Pengobatan</div>
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <div className="text-xs font-mono font-bold text-slate-900">
-                  Rp 1,850,000
+                  Rp 1.850.000
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono">08:55 AM</div>
+                <div className="text-[10px] text-slate-400 font-mono">08:55 WIB</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Card 3: Branch Wise Attendance (This Month) (Span 4) */}
+        {/* Card 3: Realisasi Kehadiran per Cabang */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="text-sm font-bold text-slate-800">
-              Branch Wise Attendance (This Month)
+              Realisasi Kehadiran per Cabang (Bulan Ini)
             </h3>
           </div>
 
           <div className="space-y-3.5 py-3">
-            {/* Branch 1: Main Branch (Blue) */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-slate-800">Main Branch (Jakarta)</span>
-                <span className="font-mono text-slate-900 font-bold">Rp 125,400,000 (98%)</span>
+                <span className="text-slate-800">Kantor Pusat (Jakarta)</span>
+                <span className="font-mono text-slate-900 font-bold">98% Kehadiran</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                <div className="bg-[#1D63FF] h-full rounded-full w-[95%]" />
+                <div className="bg-[#1D63FF] h-full rounded-full w-[98%]" />
               </div>
             </div>
 
-            {/* Branch 2: Surabaya (Green) */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-slate-800">Surabaya Tech Hub</span>
-                <span className="font-mono text-slate-900 font-bold">Rp 65,200,000 (94%)</span>
+                <span className="font-mono text-slate-900 font-bold">94% Kehadiran</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                <div className="bg-[#00C887] h-full rounded-full w-[70%]" />
+                <div className="bg-[#00C887] h-full rounded-full w-[94%]" />
               </div>
             </div>
 
-            {/* Branch 3: Bandung (Orange) */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-slate-800">Bandung R&D Center</span>
-                <span className="font-mono text-slate-900 font-bold">Rp 48,750,000 (92%)</span>
+                <span className="font-mono text-slate-900 font-bold">92% Kehadiran</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                <div className="bg-[#FF7828] h-full rounded-full w-[52%]" />
+                <div className="bg-[#FF7828] h-full rounded-full w-[92%]" />
               </div>
             </div>
 
-            {/* Branch 4: Bali Hub (Purple) */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-slate-800">Bali Operational Hub</span>
-                <span className="font-mono text-slate-900 font-bold">Rp 28,300,000 (90%)</span>
+                <span className="text-slate-800">Kantor Operasional Bali</span>
+                <span className="font-mono text-slate-900 font-bold">90% Kehadiran</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                <div className="bg-[#7B61FF] h-full rounded-full w-[35%]" />
+                <div className="bg-[#7B61FF] h-full rounded-full w-[90%]" />
               </div>
             </div>
 
-            {/* Branch 5: Remote (Pink) */}
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-slate-800">Remote & Field Staff</span>
-                <span className="font-mono text-slate-900 font-bold">Rp 18,890,000 (88%)</span>
+                <span className="text-slate-800">Staf Lapangan & Remote</span>
+                <span className="font-mono text-slate-900 font-bold">88% Kehadiran</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                <div className="bg-[#FF2E7E] h-full rounded-full w-[25%]" />
+                <div className="bg-[#FF2E7E] h-full rounded-full w-[88%]" />
               </div>
             </div>
           </div>

@@ -640,4 +640,67 @@ export interface EmployeeContractTracker {
   action_needed: string;
 }
 
+// ==========================================
+// SHIFT SWAP & ROSTER MANAGEMENT
+// ==========================================
+export type ShiftSwapStatus =
+  | 'PENDING_PEER'
+  | 'PENDING_MANAGER'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'CANCELLED';
+
+export interface ShiftSwapRequest {
+  id: string;
+  requester_id: string;
+  requester_name: string;
+  requester_code: string;
+  requester_date: string; // YYYY-MM-DD
+  requester_shift_id: string;
+  requester_shift_name: string;
+
+  target_employee_id: string;
+  target_employee_name: string;
+  target_employee_code: string;
+  target_date: string; // YYYY-MM-DD
+  target_shift_id: string;
+  target_shift_name: string;
+
+  reason: string;
+  status: ShiftSwapStatus;
+  created_at: string;
+  peer_response_note?: string;
+  peer_responded_at?: string;
+  manager_id?: string;
+  manager_name?: string;
+  manager_note?: string;
+  manager_approved_at?: string;
+}
+
+export interface ShiftRosterPattern {
+  id: string;
+  name: string;
+  code: string;
+  cycle_days: number;
+  description: string;
+  pattern_shifts: {
+    day_number: number;
+    shift_id: string;
+    shift_name: string;
+    is_off: boolean;
+  }[];
+}
+
+// ==========================================
+// ERP PAYROLL EXPORT JOURNAL
+// ==========================================
+export interface ErpJournalEntry {
+  account_code: string;
+  account_name: string;
+  debit: number;
+  credit: number;
+  description: string;
+}
+
+
 

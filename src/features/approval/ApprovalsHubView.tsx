@@ -203,7 +203,7 @@ export const ApprovalsHubView: React.FC = () => {
       item: item.rawItem,
       action,
     });
-    setComment(action === 'APPROVED' ? 'Approved.' : 'Rejected.');
+    setComment(action === 'APPROVED' ? 'Disetujui.' : 'Ditolak.');
   };
 
   const handleConfirmDecision = (e: React.FormEvent) => {
@@ -244,15 +244,15 @@ export const ApprovalsHubView: React.FC = () => {
       {/* Top Banner */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Unified Approvals Hub</h2>
+          <h2 className="text-base font-bold text-slate-900">Pusat Persetujuan Terpadu (Approvals Hub)</h2>
           <p className="text-xs text-slate-500">
-            Manager & HR central inbox for leave, partial-day permission, and overtime workflows
+            Kotak masuk terpusat bagi Manajer & HR untuk permohonan cuti, izin, lembur, SPPD, koreksi absen, dan klaim
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-mono">
-            {unifiedList.filter((i) => i.status === 'PENDING').length} Pending Review
+            {unifiedList.filter((i) => i.status === 'PENDING').length} Menunggu Persetujuan
           </span>
         </div>
       </div>
@@ -265,7 +265,7 @@ export const ApprovalsHubView: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by staff name, reason..."
+            placeholder="Cari nama staf, alasan pengajuan..."
             className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
           />
         </div>
@@ -276,13 +276,13 @@ export const ApprovalsHubView: React.FC = () => {
             onChange={(e) => setTypeFilter(e.target.value as any)}
             className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-700"
           >
-            <option value="ALL">All Request Categories</option>
-            <option value="LEAVE">Leave Requests Only</option>
-            <option value="PERMISSION">Permission Requests Only</option>
-            <option value="OVERTIME">Overtime Requests Only</option>
-            <option value="CORRECTION">Attendance Corrections Only</option>
-            <option value="BUSINESS_TRIP">Business Trips (SPPD) Only</option>
-            <option value="REIMBURSEMENT">Reimbursement Claims Only</option>
+            <option value="ALL">Semua Kategori Pengajuan</option>
+            <option value="LEAVE">Cuti Saja</option>
+            <option value="PERMISSION">Izin Singkat Saja</option>
+            <option value="OVERTIME">Lembur Saja</option>
+            <option value="CORRECTION">Koreksi Presensi Saja</option>
+            <option value="BUSINESS_TRIP">Perjalanan Dinas (SPPD) Saja</option>
+            <option value="REIMBURSEMENT">Klaim Biaya (Reimbursement) Saja</option>
           </select>
         </div>
 
@@ -292,9 +292,9 @@ export const ApprovalsHubView: React.FC = () => {
             onChange={(e) => setStatusFilter(e.target.value as any)}
             className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-700"
           >
-            <option value="PENDING">Pending Action Only</option>
-            <option value="RESOLVED">Resolved History (Approved / Rejected)</option>
-            <option value="ALL">All Statuses</option>
+            <option value="PENDING">Perlu Tindakan (Menunggu)</option>
+            <option value="RESOLVED">Riwayat Selesai (Disetujui / Ditolak)</option>
+            <option value="ALL">Semua Status</option>
           </select>
         </div>
       </div>
@@ -305,20 +305,20 @@ export const ApprovalsHubView: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
               <tr>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Applicant</th>
-                <th className="py-3 px-4">Request Scope</th>
-                <th className="py-3 px-4">Timing Details</th>
-                <th className="py-3 px-4">Reason & Justification</th>
+                <th className="py-3 px-4">Kategori</th>
+                <th className="py-3 px-4">Pemohon</th>
+                <th className="py-3 px-4">Rincian Pengajuan</th>
+                <th className="py-3 px-4">Waktu / Jadwal</th>
+                <th className="py-3 px-4">Alasan & Catatan</th>
                 <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Action / Logs</th>
+                <th className="py-3 px-4 text-right">Tindakan / Riwayat</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredList.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400">
-                    No requests pending review matching current filter.
+                    Tidak ada pengajuan yang sesuai dengan filter saat ini.
                   </td>
                 </tr>
               ) : (
@@ -336,10 +336,22 @@ export const ApprovalsHubView: React.FC = () => {
                             ? 'bg-teal-50 text-teal-700 border-teal-200'
                             : item.requestType === 'BUSINESS_TRIP'
                             ? 'bg-sky-50 text-sky-700 border-sky-200'
+                            : item.requestType === 'REIMBURSEMENT'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}
                       >
-                        {item.requestType.replace(/_/g, ' ')}
+                        {item.requestType === 'LEAVE'
+                          ? 'Cuti'
+                          : item.requestType === 'PERMISSION'
+                          ? 'Izin'
+                          : item.requestType === 'OVERTIME'
+                          ? 'Lembur'
+                          : item.requestType === 'BUSINESS_TRIP'
+                          ? 'SPPD'
+                          : item.requestType === 'REIMBURSEMENT'
+                          ? 'Klaim'
+                          : 'Koreksi'}
                       </span>
                     </td>
 
@@ -375,7 +387,7 @@ export const ApprovalsHubView: React.FC = () => {
                             : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}
                       >
-                        {item.status}
+                        {item.status === 'APPROVED' ? 'Disetujui' : item.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
                       </span>
                     </td>
 
@@ -385,23 +397,23 @@ export const ApprovalsHubView: React.FC = () => {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleOpenDecision(item, 'APPROVED')}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs cursor-pointer"
                           >
-                            Approve
+                            Setujui
                           </button>
                           <button
                             onClick={() => handleOpenDecision(item, 'REJECTED')}
-                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-2xs"
+                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-2xs cursor-pointer"
                           >
-                            Reject
+                            Tolak
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => handleViewLogs(item)}
-                          className="text-xs text-slate-600 hover:text-slate-900 font-semibold underline"
+                          className="text-xs text-slate-600 hover:text-slate-900 font-semibold underline cursor-pointer"
                         >
-                          Audit Logs
+                          Log Audit
                         </button>
                       )}
                     </td>
@@ -418,25 +430,25 @@ export const ApprovalsHubView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900">
-              Confirm {decisionModal.action === 'APPROVED' ? 'Approval' : 'Rejection'}
+              Konfirmasi {decisionModal.action === 'APPROVED' ? 'Persetujuan' : 'Penolakan'}
             </h3>
             <p className="text-xs text-slate-600">
-              Processing <strong>{decisionModal.type}</strong> request for{' '}
+              Memproses pengajuan <strong>{decisionModal.type}</strong> untuk{' '}
               <strong>{decisionModal.item.employee_name}</strong>.
             </p>
 
             <form onSubmit={handleConfirmDecision} className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Approver Remarks *
+                  Catatan Penyetuju *
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Enter remarks..."
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                  placeholder="Tuliskan catatan persetujuan atau alasan penolakan..."
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -444,19 +456,19 @@ export const ApprovalsHubView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setDecisionModal(null)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className={`px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-xs ${
+                  className={`px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer ${
                     decisionModal.action === 'APPROVED'
                       ? 'bg-emerald-600 hover:bg-emerald-700'
                       : 'bg-rose-600 hover:bg-rose-700'
                   }`}
                 >
-                  Confirm {decisionModal.action}
+                  Konfirmasi {decisionModal.action === 'APPROVED' ? 'Setujui' : 'Tolak'}
                 </button>
               </div>
             </form>
@@ -471,13 +483,13 @@ export const ApprovalsHubView: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Approval Audit Trail</span>
+                <span>Jejak Audit Persetujuan (Audit Trail)</span>
               </h3>
               <button
                 onClick={() => setSelectedLogs(null)}
-                className="text-xs text-slate-400 hover:text-slate-700 font-semibold"
+                className="text-xs text-slate-400 hover:text-slate-700 font-semibold cursor-pointer"
               >
-                Close
+                Tutup
               </button>
             </div>
 
@@ -485,7 +497,7 @@ export const ApprovalsHubView: React.FC = () => {
 
             <div className="space-y-3 max-h-60 overflow-y-auto pt-1">
               {selectedLogs.logs.length === 0 ? (
-                <div className="text-xs text-slate-400 italic">No previous log entries found.</div>
+                <div className="text-xs text-slate-400 italic">Tidak ada catatan riwayat sebelumnya.</div>
               ) : (
                 selectedLogs.logs.map((log) => (
                   <div key={log.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
@@ -496,7 +508,7 @@ export const ApprovalsHubView: React.FC = () => {
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-600">
-                      Transitioned from <span className="font-mono">{log.previous_status}</span> to{' '}
+                      Perubahan status dari <span className="font-mono">{log.previous_status}</span> menjadi{' '}
                       <span className="font-mono font-bold text-slate-900">{log.new_status}</span>
                     </div>
                     {log.comment && (

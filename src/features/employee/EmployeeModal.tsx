@@ -191,16 +191,16 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-white leading-tight">
-                {employeeToEdit ? 'Edit Employee Record' : 'Register New Employee'}
+                {employeeToEdit ? 'Ubah Data Karyawan' : 'Pendaftaran Karyawan Baru'}
               </h2>
               <p className="text-xs text-amber-400/90 font-medium">
-                Ensure national identity, corporate email, and organizational unit are accurate
+                Pastikan NIK, email kantor, dan unit organisasi diisi dengan akurat
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -211,13 +211,13 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Full Name *
+                Nama Lengkap *
               </label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. Budi Wicaksono"
+                placeholder="misal: Budi Wicaksono"
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
               {errors.fullName && (
@@ -227,7 +227,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Employee ID Code *
+                Kode Karyawan *
               </label>
               <input
                 type="text"
@@ -243,7 +243,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                NIK (KTP) *
+                Nomor Induk Kependudukan (NIK) *
               </label>
               <input
                 type="text"
@@ -256,20 +256,20 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Gender</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Jenis Kelamin</label>
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value as any)}
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
               >
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
+                <option value="Male">Laki-laki</option>
+                <option value="Female">Perempuan</option>
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Corporate Email *
+                Email Kantor *
               </label>
               <input
                 type="email"
@@ -283,7 +283,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Phone Number *
+                Nomor Telepon / WhatsApp *
               </label>
               <input
                 type="text"
@@ -299,12 +299,12 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
           {/* Org & Role Details */}
           <div className="pt-3 border-t border-slate-200">
             <h3 className="text-xs font-bold text-slate-900 mb-3 uppercase tracking-wider">
-              Employment & Hierarchy
+              Status Kerja & Struktur Organisasi
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Assigned Branch *
+                  Kantor Cabang *
                 </label>
                 <select
                   value={branchId}
@@ -321,7 +321,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Department *
+                  Departemen *
                 </label>
                 <select
                   value={departmentId}
@@ -338,7 +338,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Position / Title *
+                  Jabatan / Posisi *
                 </label>
                 <select
                   value={positionId}
@@ -355,14 +355,14 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Direct Manager
+                  Atasan Langsung
                 </label>
                 <select
                   value={managerId}
                   onChange={(e) => setManagerId(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
-                  <option value="">No Direct Manager (Executive)</option>
+                  <option value="">Tanpa Atasan Langsung (Direksi/Lead)</option>
                   {allEmployees
                     .filter((e) => e.role === 'MANAGER' || e.role === 'SUPER_ADMIN' || e.role === 'HR_ADMIN')
                     .map((m) => (
@@ -375,33 +375,33 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  System Role (RBAC)
+                  Peran Pengguna (RBAC)
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as any)}
                   className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 font-semibold"
                 >
-                  <option value="EMPLOYEE">EMPLOYEE (Standard Self-Service)</option>
-                  <option value="MANAGER">MANAGER (Team Approval & Monitoring)</option>
-                  <option value="HR_ADMIN">HR_ADMIN (Workforce & Shifts)</option>
-                  <option value="SUPER_ADMIN">SUPER_ADMIN (Full Platform Access)</option>
+                  <option value="EMPLOYEE">EMPLOYEE (Karyawan - Layanan Mandiri)</option>
+                  <option value="MANAGER">MANAGER (Manajer - Persetujuan Tim)</option>
+                  <option value="HR_ADMIN">HR_ADMIN (Admin HR & Kepegawaian)</option>
+                  <option value="SUPER_ADMIN">SUPER_ADMIN (Akses Penuh Seluruh Sistem)</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Employment Status
+                  Status Kepegawaian
                 </label>
                 <select
                   value={employmentStatus}
                   onChange={(e) => setEmploymentStatus(e.target.value as any)}
                   className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
-                  <option value="Active">Active</option>
-                  <option value="Resigned">Resigned</option>
-                  <option value="Terminated">Terminated</option>
-                  <option value="On_Leave">On Leave</option>
+                  <option value="Active">Aktif (Active)</option>
+                  <option value="Resigned">Mengundurkan Diri (Resigned)</option>
+                  <option value="Terminated">Diberhentikan (Terminated)</option>
+                  <option value="On_Leave">Cuti Panjang (On Leave)</option>
                 </select>
               </div>
             </div>

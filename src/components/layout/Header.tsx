@@ -76,6 +76,18 @@ export const Header: React.FC<HeaderProps> = ({
     }
   }, [currentUser, currentTab, role]);
 
+  useEffect(() => {
+    const handleNotifUpdate = () => {
+      if (currentUser) {
+        setNotifications(dataService.getNotifications(currentUser.id));
+      }
+    };
+    window.addEventListener('clockin_reminder_triggered', handleNotifUpdate);
+    return () => {
+      window.removeEventListener('clockin_reminder_triggered', handleNotifUpdate);
+    };
+  }, [currentUser]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleMarkAllRead = () => {
@@ -109,27 +121,29 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const roleLabels: Record<UserRole, { title: string; subtitle: string }> = {
-    SUPER_ADMIN: { title: 'Admin', subtitle: 'Main Branch' },
-    HR_ADMIN: { title: 'HR Admin', subtitle: 'Head Office' },
-    MANAGER: { title: 'Manager', subtitle: 'Tech Branch' },
-    EMPLOYEE: { title: 'Employee', subtitle: 'Jakarta Hub' },
+    SUPER_ADMIN: { title: 'Super Admin', subtitle: 'Kantor Pusat' },
+    HR_ADMIN: { title: 'Admin HR', subtitle: 'Kantor Pusat' },
+    MANAGER: { title: 'Manajer Tim', subtitle: 'Cabang' },
+    EMPLOYEE: { title: 'Karyawan', subtitle: 'Cabang Jakarta' },
   };
 
   const quickNavList = [
-    { label: 'Dashboard Overview', tab: 'dashboard', category: 'Overview' },
-    { label: 'Clock In / Live Attendance', tab: 'clock-in', category: 'Attendance' },
-    { label: 'Leave Requests (Cuti)', tab: 'leave', category: 'Time Off' },
-    { label: 'Overtime Logging (Lembur)', tab: 'overtime', category: 'Time Off' },
-    { label: 'Payroll & Slip Gaji', tab: 'payroll', category: 'Finance' },
-    { label: 'Reimbursement Claims', tab: 'reimbursements', category: 'Finance' },
-    { label: 'Performance & KPI', tab: 'performance', category: 'Talent' },
-    { label: 'Company Hub Announcements', tab: 'company-hub', category: 'Corporate' },
-    { label: 'Employee Directory & Accounts', tab: 'employees', category: 'People' },
-    { label: 'Shift Rules & Tolerances', tab: 'shifts', category: 'People' },
-    { label: 'Work Schedule Calendar', tab: 'schedule', category: 'People' },
-    { label: 'Attendance Reports', tab: 'reports', category: 'Reports' },
-    { label: 'Approvals Hub', tab: 'approvals-hub', category: 'Approvals' },
-    { label: 'Buku Panduan & User Guideline', tab: 'user-guide', category: 'Documentation' },
+    { label: 'Ringkasan Beranda', tab: 'dashboard', category: 'Umum' },
+    { label: 'Presensi / Absen Live GPS', tab: 'clock-in', category: 'Kehadiran' },
+    { label: 'Pengajuan Cuti Karyawan', tab: 'leave', category: 'Kehadiran' },
+    { label: 'Pengajuan Izin & Sakit', tab: 'permission', category: 'Kehadiran' },
+    { label: 'Pencatatan Lembur', tab: 'overtime', category: 'Kehadiran' },
+    { label: 'Perjalanan Dinas (SPPD)', tab: 'business-trip', category: 'Operasional' },
+    { label: 'Slip Gaji & Penggajian', tab: 'payroll', category: 'Keuangan' },
+    { label: 'Klaim Penggantian (Reimburse)', tab: 'reimbursements', category: 'Keuangan' },
+    { label: 'Penilaian Kinerja (KPI)', tab: 'performance', category: 'SDM' },
+    { label: 'Pengumuman Perusahaan', tab: 'company-hub', category: 'Korporat' },
+    { label: 'Data & Akun Karyawan', tab: 'employees', category: 'Organisasi' },
+    { label: 'Jadwal & Aturan Shift', tab: 'shifts', category: 'Organisasi' },
+    { label: 'Jadwal Roster Kerja', tab: 'schedule', category: 'Organisasi' },
+    { label: 'Laporan & Rekap Kehadiran', tab: 'reports', category: 'Laporan' },
+    { label: 'Pusat Persetujuan (Approval)', tab: 'approvals-hub', category: 'Persetujuan' },
+    { label: 'Buku Panduan Pengguna (SOP)', tab: 'user-guide', category: 'Panduan' },
   ];
 
   const filteredQuickNav = searchQuery.trim()
@@ -147,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
     setSearchResultsOpen(false);
   };
 
-  const formattedDate = new Date().toLocaleDateString('en-GB', {
+  const formattedDate = new Date().toLocaleDateString('id-ID', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -164,10 +178,10 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-sm sm:text-base font-bold text-white tracking-tight leading-none flex items-center gap-1.5 truncate max-w-[180px] sm:max-w-xs md:max-w-sm">
-              <span className="truncate">{company.app_name || company.name || 'AT-HR Enterprise'}</span>
+              <span className="truncate">{company.app_name || company.name || 'AT-HR Portal'}</span>
             </span>
             <span className="text-[10px] text-amber-400 font-medium tracking-wide mt-0.5 hidden xs:inline truncate max-w-[200px] sm:max-w-xs">
-              {company.tagline || 'Smart Solutions for Smart Business'}
+              {company.tagline || 'Solusi Cerdas Manajemen Kehadiran & HRIS'}
             </span>
           </div>
         </div>
@@ -182,13 +196,13 @@ export const Header: React.FC<HeaderProps> = ({
             }
           }}
           className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors ml-1 focus:outline-none cursor-pointer"
-          title="Toggle Navigation Menu"
+          title="Buka Menu Navigasi"
         >
           <Menu className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Zone 2: Global Search Bar (Matching Reference Image) */}
+      {/* Zone 2: Global Search Bar */}
       <div className="flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-3 lg:mx-6 hidden sm:block relative">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
@@ -200,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({
               setSearchResultsOpen(true);
             }}
             onFocus={() => setSearchResultsOpen(true)}
-            placeholder="Search here..."
+            placeholder="Cari fitur, menu, atau modul..."
             className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs rounded-full pl-9 pr-9 py-2 border border-slate-200/80 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           />
           {searchQuery ? (
@@ -227,13 +241,13 @@ export const Header: React.FC<HeaderProps> = ({
             />
             <div className="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 z-40 max-h-72 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Quick Navigation
+                Navigasi Cepat
               </div>
               {filteredQuickNav.map((item) => (
                 <button
                   key={item.tab}
                   onClick={() => handleSelectNav(item.tab)}
-                  className="w-full text-left px-3.5 py-2 flex items-center justify-between hover:bg-blue-50 text-xs text-slate-800 transition-colors group"
+                  className="w-full text-left px-3.5 py-2 flex items-center justify-between hover:bg-blue-50 text-xs text-slate-800 transition-colors group cursor-pointer"
                 >
                   <span className="font-semibold group-hover:text-blue-600">{item.label}</span>
                   <span className="text-[10px] text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 group-hover:bg-blue-100 group-hover:text-blue-700">
@@ -246,13 +260,13 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </div>
 
-      {/* Zone 3: Actions & Profile Lockup (Matching Reference Image) */}
+      {/* Zone 3: Actions & Profile Lockup */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Date Pill (White pill with calendar icon) */}
+        {/* Date Pill */}
         <div className="relative hidden md:block">
           <button
             onClick={() => setCalendarMenuOpen(!calendarMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-slate-800 text-xs font-semibold shadow-xs hover:bg-slate-50 transition-colors border border-slate-200"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-slate-800 text-xs font-semibold shadow-xs hover:bg-slate-50 transition-colors border border-slate-200 cursor-pointer"
           >
             <Calendar className="w-3.5 h-3.5 text-slate-600" />
             <span className="font-medium">{formattedDate}</span>
@@ -267,7 +281,7 @@ export const Header: React.FC<HeaderProps> = ({
               />
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-40 text-slate-800 space-y-2">
                 <div className="text-xs font-bold text-slate-900 border-b border-slate-100 pb-1.5">
-                  Corporate Calendar
+                  Kalender Perusahaan
                 </div>
                 <div className="text-[11px] text-slate-500">
                   Hari kerja aktif: Senin – Jumat (08:00 – 17:00 WIB)
@@ -277,7 +291,7 @@ export const Header: React.FC<HeaderProps> = ({
                     setCalendarMenuOpen(false);
                     if (onNavigateTab) onNavigateTab('holiday');
                   }}
-                  className="w-full py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg text-xs transition-colors"
+                  className="w-full py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
                 >
                   Lihat Kalender Libur Nasional
                 </button>
@@ -289,16 +303,16 @@ export const Header: React.FC<HeaderProps> = ({
         {/* PWA In-App Install Prompt */}
         <PWAInstallButton variant="header" />
 
-        {/* Notifications Bell with Red Badge */}
+        {/* Notifications Bell with Badge */}
         <div className="relative">
           <button
             onClick={() => setNotifMenuOpen(!notifMenuOpen)}
-            className="p-2 rounded-xl hover:bg-white/10 text-white relative transition-colors"
-            title="Notifications"
+            className="p-2 rounded-xl hover:bg-white/10 text-white relative transition-colors cursor-pointer"
+            title="Pemberitahuan & Notifikasi"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute 1 top-1 right-1 w-4 h-4 rounded-full bg-[#FF2E7E] text-white font-mono text-[9px] font-bold flex items-center justify-center animate-pulse shadow-xs">
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#FF2E7E] text-white font-mono text-[9px] font-bold flex items-center justify-center animate-pulse shadow-xs">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -313,20 +327,20 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-40 overflow-hidden text-slate-800 animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-sm">Notifications</span>
+                    <span className="font-bold text-slate-900 text-sm">Pemberitahuan</span>
                     {unreadCount > 0 && (
                       <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 font-bold border border-rose-200 font-mono">
-                        {unreadCount} new
+                        {unreadCount} baru
                       </span>
                     )}
                   </div>
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllRead}
-                      className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1 font-medium"
+                      className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1 font-medium cursor-pointer"
                     >
                       <CheckCheck className="w-3.5 h-3.5" />
-                      <span>Mark all read</span>
+                      <span>Tandai Semua Dibaca</span>
                     </button>
                   )}
                 </div>
@@ -334,7 +348,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
                   {notifications.length === 0 ? (
                     <div className="py-8 text-center text-slate-400 text-xs">
-                      No notifications at this time.
+                      Belum ada notifikasi saat ini.
                     </div>
                   ) : (
                     notifications.map((notif) => (
@@ -373,10 +387,10 @@ export const Header: React.FC<HeaderProps> = ({
                             {notif.message}
                           </p>
                           <div className="text-[10px] text-slate-400 font-mono pt-0.5">
-                            {new Date(notif.created_at).toLocaleTimeString([], {
+                            {new Date(notif.created_at).toLocaleTimeString('id-ID', {
                               hour: '2-digit',
                               minute: '2-digit',
-                            })}
+                            })} WIB
                           </div>
                         </div>
                       </div>
@@ -388,19 +402,19 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* User Guideline (Panduan Pengguna) Icon */}
+        {/* User Guideline Icon */}
         <button
           onClick={() => onNavigateTab && onNavigateTab('user-guide')}
-          className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors"
-          title="Buku Panduan Pengguna & SOP Sistem (User Guideline)"
+          className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors cursor-pointer"
+          title="Buku Panduan Pengguna & SOP Sistem"
         >
           <BookOpen className="w-4 h-4 text-amber-300" />
         </button>
 
-        {/* Settings Gear Icon (Database & Configuration) */}
+        {/* Settings Gear Icon (Database) */}
         <button
           onClick={onOpenDbModal}
-          className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors"
+          className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors cursor-pointer"
           title="Status Database Firebase Cloud Firestore"
         >
           <Settings className="w-4 h-4" />
@@ -409,24 +423,24 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Fullscreen Expand Icon */}
         <button
           onClick={toggleFullscreen}
-          className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors hidden sm:block"
-          title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors hidden sm:block cursor-pointer"
+          title={isFullscreen ? 'Keluar dari Layar Penuh' : 'Mode Layar Penuh'}
         >
           {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
         </button>
 
-        {/* User Profile Area (Matching Reference Image) */}
+        {/* User Profile Area */}
         <div className="relative pl-1">
           <button
             onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-            className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors focus:outline-none"
+            className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors focus:outline-none cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-slate-800 border-2 border-white/20 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-xs">
               {currentUser?.full_name?.charAt(0) || 'A'}
             </div>
             <div className="text-left hidden lg:block leading-tight">
               <div className="text-xs font-bold text-white flex items-center gap-1">
-                <span>{role === 'SUPER_ADMIN' ? 'Admin' : currentUser?.full_name || 'Admin'}</span>
+                <span>{role === 'SUPER_ADMIN' ? 'Super Admin' : currentUser?.full_name || 'Admin'}</span>
                 <ChevronDown className="w-3 h-3 text-slate-400" />
               </div>
               <span className="text-[10px] text-emerald-400 font-medium">
@@ -471,7 +485,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                 <div className="px-3 py-2 border-b border-slate-100">
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Switch Active RBAC Role
+                    Ganti Peran Akun (Mode Demo)
                   </div>
                   <div className="space-y-1">
                     {(['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER', 'EMPLOYEE'] as UserRole[]).map(
@@ -484,7 +498,7 @@ export const Header: React.FC<HeaderProps> = ({
                               switchRole(r);
                               setRoleMenuOpen(false);
                             }}
-                            className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between text-xs transition-colors ${
+                            className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between text-xs transition-colors cursor-pointer ${
                               isCurrent ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
                             }`}
                           >
@@ -505,10 +519,10 @@ export const Header: React.FC<HeaderProps> = ({
                       setRoleMenuOpen(false);
                       logout();
                     }}
-                    className="w-full px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2 transition-colors"
+                    className="w-full px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>Sign Out of Workspace</span>
+                    <span>Keluar dari Akun (Logout)</span>
                   </button>
                 </div>
               </div>

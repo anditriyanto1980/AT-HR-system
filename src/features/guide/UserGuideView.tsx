@@ -139,8 +139,8 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
           title: 'Langkah Mengganti Nama & Branding Sistem',
           description: `Sistem ini mendukung fitur Whitelabeling penuh. Administrator dapat mengubah nama "${appName}" menjadi nama sistem internal perusahaan Anda dalam hitungan detik.`,
           steps: [
-            'Buka menu "Branch & Units" (Organisasi) pada sidebar sebelah kiri.',
-            'Pilih Tab ke-3 bertuliskan "Company Profile & Branding" di bagian atas halaman.',
+            'Buka menu "Cabang & Unit Kerja" (Organisasi) pada sidebar sebelah kiri.',
+            'Pilih Tab ke-3 bertuliskan "Profil Perusahaan & Branding" di bagian atas halaman.',
             'Pada kolom "Nama Aplikasi / Sistem HR", ketik nama aplikasi yang Anda inginkan (contoh: "PT Maju Bersama HRIS", "Presensi Pintar Indah", atau "Nexus HR").',
             'Isi kolom "Tagline / Slogan Aplikasi" (contoh: "Smart Attendance & Workforce Platform").',
             'Tentukan "Kode Singkat / Inisial Brand" (2-5 huruf kapital, misal: "MBH", "NEX", "HR").',
@@ -232,6 +232,7 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
             'Dilarang menggunakan aplikasi Fake GPS atau memanipulasi foto. Metadata perangkat, koordinat, dan waktu tercatat ke Audit Trail.',
           ],
           tips: [
+            'Sistem Pengingat Push: Sistem otomatis memantau jam mulai shift kerja Anda. Jika belum melakukan clock-in saat jam masuk dimulai, sistem akan membunyikan alarm dan mengirim notifikasi push ke layar perangkat Anda dengan tombol "Absen Sekarang".',
             'Pada smartphone Android atau iPhone, Anda dapat menggunakan opsi "Kamera HP (Native)" jika kamera browser Chrome/Safari Anda terkunci.',
             'Jika sinyal GPS melemah di dalam gedung tinggi, nyalakan Wi-Fi ponsel untuk membantu triangulasi lokasi Google Maps.',
           ],
@@ -267,14 +268,14 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
           title: 'Alur Pengajuan Koreksi Presensi',
           description: 'Jika Anda lupa melakukan clock-in karena baterai ponsel habis atau terburu-buru menghadiri rapat eksternal, ikuti prosedur berikut:',
           steps: [
-            'Buka menu "Correction" pada menu Operations.',
+            'Buka menu "Koreksi Absensi" pada menu Operasional.',
             'Klik tombol "+ Ajukan Koreksi Absensi".',
             'Pilih tanggal kerja yang ingin dikoreksi.',
-            'Pilih tipe koreksi: "Koreksi Jam Masuk (Clock In)", "Koreksi Jam Pulang (Clock Out)", atau "Koreksi Keduanya".',
+            'Pilih tipe koreksi: "Koreksi Jam Masuk (Absen Masuk)", "Koreksi Jam Pulang (Absen Pulang)", atau "Koreksi Keduanya".',
             'Tentukan waktu jam dan menit yang sebenarnya.',
             'Pilih Alasan Koreksi (Lupa Absen, Kendala Teknis Aplikasi, Tugas Luar Mendadak, atau Pemadaman Listrik).',
             'Tuliskan kronologi singkat dan lampirkan bukti pendukung (foto tanda terima tugas / surat tugas jika ada).',
-            'Kirimkan pengajuan. Permohonan akan masuk ke Approvals Hub Manager dan HR Admin.',
+            'Kirimkan pengajuan. Permohonan akan masuk ke Pusat Persetujuan Manajer dan HR Admin.',
           ],
           tips: [
             'Koreksi yang telah disetujui oleh HR Admin akan secara otomatis memperbarui status absensi di database dan mempengaruhi rekapitulasi slip gaji akhir bulan.',
@@ -296,7 +297,7 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
         {
           title: 'Ketentuan & Alur Permohonan Cuti',
           steps: [
-            'Masuk ke menu "Leave (Cuti)" pada sidebar.',
+            'Masuk ke menu "Cuti Karyawan" pada sidebar.',
             'Cek kartu saldo kuota cuti Anda: Kuota Tahunan, Terpakai, dan Sisa Hari yang tersedia.',
             'Klik tombol "+ Ajukan Permohonan Cuti".',
             'Pilih Jenis Cuti:',
@@ -308,7 +309,7 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
             'Pilih Tanggal Mulai dan Tanggal Selesai. Sistem otomatis menghitung jumlah hari kerja (melewati hari libur akhir pekan).',
             'Isi Alasan Pengambilan Cuti serta Nomor Telepon Darurat yang dapat dihubungi selama cuti.',
             'Tentukan nama Karyawan Pengganti (Handover / Backup PIC) selama Anda tidak masuk kerja.',
-            'Klik "Submit Permohonan". Notifikasi akan dikirimkan langsung ke dashboard Manager Anda.',
+            'Klik "Kirim Permohonan". Notifikasi akan dikirimkan langsung ke dashboard Manager Anda.',
           ],
           tips: [
             'Ajukan cuti tahunan selambat-lambatnya 3 hari kerja sebelum tanggal mulai cuti agar tim kerja dapat mengatur pembagian beban tugas.',
@@ -357,7 +358,7 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
         {
           title: 'Ketentuan & Alur Pengajuan Lembur',
           steps: [
-            'Buka menu "Overtime (Lembur)".',
+            'Buka menu "Lembur Kerja (Overtime)".',
             'Klik tombol "+ Buat Form Lembur (SPL)".',
             'Pilih Tanggal Pelaksanaan Lembur dan Jam Mulai s/d Jam Selesai.',
             'Pilih Tipe Hari: "Hari Kerja Biasa (Weekdays)" atau "Hari Libur / Akhir Pekan (Weekend/Holiday)".',
@@ -386,11 +387,11 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
           title: 'Efisiensi Persetujuan Terpadu',
           description: 'Approvals Hub menyatukan seluruh antrean permohonan staf Anda ke dalam satu meja kerja yang ringkas dan cepat.',
           steps: [
-            'Buka menu "Approvals Hub". Badge merah di samping menu menandakan jumlah permohonan yang menunggu persetujuan Anda.',
+            'Buka menu "Pusat Persetujuan (Approvals)". Badge merah di samping menu menandakan jumlah permohonan yang menunggu persetujuan Anda.',
             'Filter berdasarkan jenis permohonan: Semua, Cuti, Izin, Lembur, Dinas, Reimbursement, atau Koreksi Absensi.',
             'Klik salah satu kartu untuk melihat rincian permohonan, riwayat kehadiran staf, sisa saldo cuti, dan lampiran foto struk/surat.',
-            'Klik tombol hijau "Approve" untuk menyetujui, atau tombol merah "Reject" dengan menyertakan alasan penolakan jika tidak memenuhi syarat.',
-            'Gunakan tombol "Batch Approve" untuk menyetujui sekaligus beberapa permohonan rutin dalam 1 detik.',
+            'Klik tombol hijau "Setujui" untuk menyetujui, atau tombol merah "Tolak" dengan menyertakan alasan penolakan jika tidak memenuhi syarat.',
+            'Gunakan tombol "Setujui Sekaligus" untuk menyetujui sekaligus beberapa permohonan rutin dalam 1 detik.',
           ],
           tips: [
             'Setelah disetujui, pemohon akan menerima notifikasi konfirmasi di sistem mereka dan status dokumen langsung diperbarui di Firebase Firestore.',
@@ -426,7 +427,7 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
             ],
           },
           steps: [
-            'Karyawan: Buka tab "My Payslips" untuk melihat daftar riwayat slip gaji per periode bulan.',
+            'Karyawan: Buka tab "Slip Gaji Saya" untuk melihat daftar riwayat slip gaji per periode bulan.',
             'Klik tombol "Lihat Slip Gaji" untuk membuka pratinjau dokumen dengan kop surat resmi perusahaan Anda.',
             'Klik "Cetak / Unduh PDF" untuk menyimpan salinan slip gaji bertanda tangan digital.',
             'HR Admin: Dapat melakukan generate batch penggajian massal seluruh karyawan, mengubah profil gaji per individu, dan mengunci batch payroll periode bersangkutan.',
@@ -451,19 +452,19 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
         {
           title: 'Pengelolaan Karyawan & Kredensial Akun',
           steps: [
-            'Buka menu "Employees" untuk melihat seluruh direktori karyawan aktif.',
+            'Buka menu "Data Karyawan" untuk melihat seluruh direktori karyawan aktif.',
             'Gunakan tombol "+ Tambah Karyawan" untuk mendaftarkan staf baru.',
             'Lengkapi NIK Karyawan, Nama Lengkap, Email, No HP, Cabang Penempatan, Departemen, Jabatan, dan Tanggal Bergabung.',
-            'Klik tombol kunci "User Access" pada baris karyawan untuk mengatur Username, Role Hak Akses, atau Generate Password baru.',
+            'Klik tombol kunci "Akses Pengguna" pada baris karyawan untuk mengatur Username, Peran Hak Akses, atau Buat Kata Sandi baru.',
             'Gunakan tombol "Salin Kredensial" untuk mengirimkan data login WhatsApp/Email kepada karyawan bersangkutan.',
           ],
         },
         {
           title: 'Shift Kerja & Penugasan Jadwal Roster',
           steps: [
-            'Buka menu "Shift Rules" untuk melihat dan membuat aturan jam kerja (contoh: Shift Reguler 08:00 - 17:00, Shift Malam 22:00 - 06:00).',
+            'Buka menu "Aturan Shift" untuk melihat dan membuat aturan jam kerja (contoh: Shift Reguler 08:00 - 17:00, Shift Malam 22:00 - 06:00).',
             'Tentukan toleransi keterlambatan (misal 15 menit) dan batas jam lembur.',
-            'Buka menu "Work Schedule" untuk menugaskan karyawan ke shift tertentu dalam format kalender bulanan.',
+            'Buka menu "Jadwal Kerja" untuk menugaskan karyawan ke shift tertentu dalam format kalender bulanan.',
           ],
         },
       ],
@@ -485,7 +486,7 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
           steps: [
             'Klik ikon Pengaturan (Gear) pada pojok kanan atas Header untuk membuka panel status Firebase Firestore.',
             'Panel menampilkan informasi: Project ID, Database Mode (Production Realtime), Status Auth, dan jumlah koleksi aktif.',
-            'Gunakan tombol "Sync All Data to Cloud Firestore" untuk mencadangkan dan menyinkronkan seluruh master data (karyawan, absensi, cuti, payroll, dan profil branding) ke cloud dalam satu sentuhan.',
+            'Gunakan tombol "Sinkronkan Semua Data ke Cloud Firestore" untuk mencadangkan dan menyinkronkan seluruh master data (karyawan, absensi, cuti, payroll, dan profil branding) ke cloud dalam satu sentuhan.',
             'Koleksi data dilindungi oleh Firestore Security Rules yang memastikan hanya pengguna berwenang yang dapat membaca atau memodifikasi dokumen.',
           ],
         },
@@ -520,7 +521,7 @@ export const UserGuideView: React.FC<UserGuideViewProps> = ({ onNavigateTab }) =
             'Tanya: Saya sudah berada di kantor, tetapi sistem mendeteksi saya di luar radius?',
             'Jawab: Akurasi GPS ponsel dapat terpengaruh oleh gedung berstruktur baja atau berada di ruang bawah tanah. Nyalakan Wi-Fi ponsel (tidak harus tersambung ke internet, cukup nyala untuk membantu triangulasi lokasi Google) dan tunggu 10 detik agar titik akurasi menyempit.',
             'Tanya: Bagaimana jika saya lupa kata sandi akun saya?',
-            'Jawab: Hubungi Super Admin atau tim HR Admin perusahaan Anda. Admin dapat mereset atau memberikan kata sandi baru melalui menu "Employees" -> "User Access".',
+            'Jawab: Hubungi Super Admin atau tim HR Admin perusahaan Anda. Admin dapat mereset atau memberikan kata sandi baru melalui menu "Data Karyawan" -> "Akses Pengguna".',
             'Tanya: Apakah data saya aman jika ponsel saya hilang?',
             'Jawab: Sangat aman. Seluruh data tersimpan secara terenkripsi di Google Firebase Cloud Firestore. Akun Anda dapat langsung diakses dari perangkat lain dengan username dan password Anda, dan Admin dapat menonaktifkan akun lama sewaktu-waktu.',
           ],

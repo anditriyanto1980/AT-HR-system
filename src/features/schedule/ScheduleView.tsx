@@ -52,7 +52,7 @@ export const ScheduleView: React.FC = () => {
     const monday = new Date(curr.setDate(diff));
 
     const week: { dateStr: string; dayName: string; dayNumber: number }[] = [];
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
@@ -86,7 +86,7 @@ export const ScheduleView: React.FC = () => {
       date: targetDate,
       shift_id: targetShiftId,
       is_day_off: isDayOff,
-      shift_name: isDayOff ? 'Day Off' : shift?.name || 'Regular Shift',
+      shift_name: isDayOff ? 'Hari Libur' : shift?.name || 'Shift Normal',
       start_time: isDayOff ? '-' : shift?.start_time || '08:00',
       end_time: isDayOff ? '-' : shift?.end_time || '17:00',
       employee_name: emp?.full_name,
@@ -110,7 +110,7 @@ export const ScheduleView: React.FC = () => {
           date: w.dateStr,
           shift_id: defaultShift?.id || 'shift-01',
           is_day_off: isOff,
-          shift_name: isOff ? 'Day Off' : defaultShift?.name || 'Office Hours',
+          shift_name: isOff ? 'Hari Libur' : defaultShift?.name || 'Jam Kantor',
           start_time: isOff ? '-' : defaultShift?.start_time || '08:00',
           end_time: isOff ? '-' : defaultShift?.end_time || '17:00',
           employee_name: emp.full_name,
@@ -126,9 +126,9 @@ export const ScheduleView: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Work Schedule & Roster Calendar</h2>
+          <h2 className="text-lg font-bold text-slate-900">Jadwal Kerja & Kalender Roster Karyawan</h2>
           <p className="text-xs text-slate-500">
-            5-day / 6-day work weeks, rotating shift rosters, and employee day off assignments
+            Pengaturan 5 / 6 hari kerja, roster shift bergilir, dan penetapan hari libur karyawan.
           </p>
         </div>
 
@@ -137,11 +137,11 @@ export const ScheduleView: React.FC = () => {
             <>
               <button
                 onClick={() => handleApplyPreset('5_DAY')}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                title="Apply standard 5-day work week (Sat & Sun off)"
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Terapkan standar 5 hari kerja (Sabtu & Minggu libur)"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Auto 5-Day Week</span>
+                <span>Pola 5 Hari Kerja (Auto)</span>
               </button>
 
               <button
@@ -149,7 +149,7 @@ export const ScheduleView: React.FC = () => {
                 className="px-4 py-2.5 rounded-xl bg-[#1D63FF] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>Assign Shift</span>
+                <span>Tetapkan Jadwal Shift</span>
               </button>
             </>
           )}
@@ -177,9 +177,9 @@ export const ScheduleView: React.FC = () => {
           {weekOffset !== 0 && (
             <button
               onClick={() => setWeekOffset(0)}
-              className="text-xs text-slate-600 hover:text-slate-900 underline ml-2 font-medium"
+              className="text-xs text-slate-600 hover:text-slate-900 underline ml-2 font-medium cursor-pointer"
             >
-              Current Week
+              Minggu Ini
             </button>
           )}
         </div>
@@ -187,13 +187,13 @@ export const ScheduleView: React.FC = () => {
         {/* Filters */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-slate-600">Branch:</span>
+            <span className="font-semibold text-slate-600">Cabang:</span>
             <select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
               className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-slate-900 focus:outline-none"
             >
-              <option value="all">All Branches</option>
+              <option value="all">Semua Cabang</option>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -203,13 +203,13 @@ export const ScheduleView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-slate-600">Dept:</span>
+            <span className="font-semibold text-slate-600">Departemen:</span>
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
               className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-slate-900 focus:outline-none"
             >
-              <option value="all">All Departments</option>
+              <option value="all">Semua Departemen</option>
               {departments.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -226,7 +226,7 @@ export const ScheduleView: React.FC = () => {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-100/80 border-b border-slate-200">
-                <th className="py-3 px-4 font-bold text-slate-900 w-64 shrink-0">Employee</th>
+                <th className="py-3 px-4 font-bold text-slate-900 w-64 shrink-0">Karyawan</th>
                 {weekDays.map((d) => (
                   <th key={d.dateStr} className="py-3 px-3 font-bold text-center border-l border-slate-200/80 min-w-[110px]">
                     <div className="text-[11px] uppercase tracking-wider text-slate-500">{d.dayName}</div>
@@ -253,7 +253,7 @@ export const ScheduleView: React.FC = () => {
                     // Default fallback logic: weekends off, weekdays normal 08:00 - 17:00
                     const isWeekend = dayIdx === 5 || dayIdx === 6;
                     const isOff = assign ? assign.is_day_off : isWeekend;
-                    const shiftName = assign ? assign.shift_name : isWeekend ? 'Day Off' : 'Normal (08-17)';
+                    const shiftName = assign ? assign.shift_name : isWeekend ? 'Hari Libur' : 'Normal (08-17)';
                     const timeRange = assign
                       ? assign.start_time !== '-'
                         ? `${assign.start_time} - ${assign.end_time}`
@@ -279,7 +279,7 @@ export const ScheduleView: React.FC = () => {
                       >
                         {isOff ? (
                           <div className="px-2 py-1.5 rounded-lg bg-slate-100 text-slate-500 text-[10px] font-semibold border border-slate-200">
-                            OFF
+                            LIBUR
                           </div>
                         ) : (
                           <div className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-medium leading-tight">
@@ -302,10 +302,10 @@ export const ScheduleView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Assign Work Shift / Day Off</h3>
+              <h3 className="text-base font-bold text-slate-900">Tetapkan Shift Kerja / Hari Libur</h3>
               <button
                 onClick={() => setModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -313,7 +313,7 @@ export const ScheduleView: React.FC = () => {
 
             <form onSubmit={handleSaveSchedule} className="p-5 space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Employee</label>
+                <label className="text-xs font-semibold text-slate-700">Karyawan</label>
                 <select
                   value={targetEmployeeId}
                   onChange={(e) => setTargetEmployeeId(e.target.value)}
@@ -328,7 +328,7 @@ export const ScheduleView: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Schedule Date</label>
+                <label className="text-xs font-semibold text-slate-700">Tanggal Jadwal</label>
                 <input
                   type="date"
                   required
@@ -347,13 +347,13 @@ export const ScheduleView: React.FC = () => {
                   className="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300"
                 />
                 <label htmlFor="isDayOffCheck" className="text-xs font-semibold text-slate-800 cursor-pointer">
-                  Mark as Scheduled Day Off (Libur)
+                  Tetapkan Sebagai Hari Libur (Day Off)
                 </label>
               </div>
 
               {!isDayOff && (
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Select Shift Template</label>
+                  <label className="text-xs font-semibold text-slate-700">Pilih Template Shift</label>
                   <select
                     value={targetShiftId}
                     onChange={(e) => setTargetShiftId(e.target.value)}
@@ -372,15 +372,15 @@ export const ScheduleView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs"
+                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs cursor-pointer"
                 >
-                  Save Schedule
+                  Simpan Jadwal
                 </button>
               </div>
             </form>

@@ -25,6 +25,8 @@ import {
   PerformanceAppraisal,
   CompanyAnnouncement,
   EmployeeContractTracker,
+  ShiftSwapRequest,
+  ShiftRosterPattern,
 } from '../types';
 
 export const DEMO_COMPANY: Company = {
@@ -687,136 +689,169 @@ export const DEMO_EMPLOYEES: Employee[] = [
 ];
 
 // Helper to generate today's ISO date
-const todayStr = new Date().toISOString().split('T')[0];
+const today = new Date();
+const todayStr = today.toISOString().split('T')[0];
 
-export const DEMO_ATTENDANCE: AttendanceRecord[] = [
-  {
-    id: 'att-01',
-    employee_id: 'emp-01',
-    attendance_date: todayStr,
-    shift_id: 'shift-norm',
-    clock_in_time: `${todayStr}T07:55:12Z`,
-    clock_in_lat: -6.21461,
-    clock_in_lng: 106.82153,
-    clock_in_accuracy: 12,
-    clock_in_distance_meters: 15,
-    clock_in_location_name: 'Jakarta Head Office',
-    clock_in_device: 'Chrome on macOS',
-    clock_in_status: 'present',
-    late_minutes: 0,
-    early_checkout_minutes: 0,
-    work_duration_minutes: 0,
-    overtime_minutes: 0,
-    is_outside_geofence: false,
-    approval_status: 'APPROVED',
-    employee_name: 'Triyanto Andi',
-    employee_code: 'EMP-001',
-    department_name: 'Human Resources & People',
-    branch_name: 'Jakarta Head Office',
-    shift_name: 'Normal Office Shift',
-  },
-  {
-    id: 'att-02',
-    employee_id: 'emp-02',
-    attendance_date: todayStr,
-    shift_id: 'shift-norm',
-    clock_in_time: `${todayStr}T08:04:45Z`,
-    clock_in_lat: -6.21463,
-    clock_in_lng: 106.82156,
-    clock_in_accuracy: 14,
-    clock_in_distance_meters: 20,
-    clock_in_location_name: 'Jakarta Head Office',
-    clock_in_device: 'Safari on iOS Device',
-    clock_in_status: 'present',
-    late_minutes: 0,
-    early_checkout_minutes: 0,
-    work_duration_minutes: 0,
-    overtime_minutes: 0,
-    is_outside_geofence: false,
-    approval_status: 'APPROVED',
-    employee_name: 'Siti Rahmawati',
-    employee_code: 'EMP-002',
-    department_name: 'Human Resources & People',
-    branch_name: 'Jakarta Head Office',
-    shift_name: 'Normal Office Shift',
-  },
-  {
-    id: 'att-03',
-    employee_id: 'emp-03',
-    attendance_date: todayStr,
-    shift_id: 'shift-norm',
-    clock_in_time: `${todayStr}T08:08:10Z`,
-    clock_in_lat: -6.21460,
-    clock_in_lng: 106.82158,
-    clock_in_accuracy: 10,
-    clock_in_distance_meters: 25,
-    clock_in_location_name: 'Jakarta Head Office',
-    clock_in_device: 'Chrome on Windows',
-    clock_in_status: 'present', // within 10 min tolerance
-    late_minutes: 0,
-    early_checkout_minutes: 0,
-    work_duration_minutes: 0,
-    overtime_minutes: 0,
-    is_outside_geofence: false,
-    approval_status: 'APPROVED',
-    employee_name: 'Budi Santoso',
-    employee_code: 'EMP-003',
-    department_name: 'Engineering & Technology',
-    branch_name: 'Jakarta Head Office',
-    shift_name: 'Normal Office Shift',
-  },
-  {
-    id: 'att-04',
-    employee_id: 'emp-07',
-    attendance_date: todayStr,
-    shift_id: 'shift-norm',
-    clock_in_time: `${todayStr}T08:24:18Z`,
-    clock_in_lat: -6.21465,
-    clock_in_lng: 106.82154,
-    clock_in_accuracy: 15,
-    clock_in_distance_meters: 18,
-    clock_in_location_name: 'Jakarta Head Office',
-    clock_in_device: 'Chrome on Linux',
-    clock_in_status: 'late',
-    late_minutes: 24,
-    early_checkout_minutes: 0,
-    work_duration_minutes: 0,
-    overtime_minutes: 0,
-    is_outside_geofence: false,
-    approval_status: 'APPROVED',
-    notes: 'Traffic congestion on Sudirman',
-    employee_name: 'Ahmad Rizky',
-    employee_code: 'EMP-007',
-    department_name: 'Engineering & Technology',
-    branch_name: 'Jakarta Head Office',
-    shift_name: 'Normal Office Shift',
-  },
-  {
-    id: 'att-05',
-    employee_id: 'emp-12',
-    attendance_date: todayStr,
-    shift_id: 'shift-morn',
-    clock_in_time: `${todayStr}T05:58:30Z`,
-    clock_in_lat: -7.27582,
-    clock_in_lng: 112.75339,
-    clock_in_accuracy: 8,
-    clock_in_distance_meters: 12,
-    clock_in_location_name: 'Surabaya Tech Hub',
-    clock_in_device: 'Chrome on Windows',
-    clock_in_status: 'present',
-    late_minutes: 0,
-    early_checkout_minutes: 0,
-    work_duration_minutes: 0,
-    overtime_minutes: 0,
-    is_outside_geofence: false,
-    approval_status: 'APPROVED',
-    employee_name: 'Faisal Anugerah',
-    employee_code: 'EMP-012',
-    department_name: 'Engineering & Technology',
-    branch_name: 'Surabaya Tech Hub',
-    shift_name: 'Morning Support Shift',
-  },
-];
+const generateMonthlyAttendanceRecords = (): AttendanceRecord[] => {
+  const records: AttendanceRecord[] = [];
+  const year = today.getFullYear();
+  const month = today.getMonth(); // 0-indexed
+  const currentDay = today.getDate();
+
+  // 1. Generate records for current month (up to current day)
+  for (let day = 1; day <= currentDay; day++) {
+    const d = new Date(year, month, day);
+    const dayOfWeek = d.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Skip Saturday & Sunday
+
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const isToday = day === currentDay;
+
+    // A. Record for emp-01 (Triyanto Andi)
+    // Make day 5 late for realistic variety
+    const isLateDay = day === 5 || (currentDay < 5 && day === 2);
+    const inTime = isLateDay ? '08:22:15' : '07:52:30';
+    const lateMins = isLateDay ? 22 : 0;
+    const status = isLateDay ? 'late' : 'present';
+
+    records.push({
+      id: `att-emp01-${dateStr}`,
+      employee_id: 'emp-01',
+      attendance_date: dateStr,
+      shift_id: 'shift-norm',
+      clock_in_time: `${dateStr}T${inTime}Z`,
+      clock_in_lat: -6.21461,
+      clock_in_lng: 106.82153,
+      clock_in_accuracy: 12,
+      clock_in_distance_meters: 15,
+      clock_in_location_name: 'Jakarta Head Office',
+      clock_in_device: 'Chrome on macOS',
+      clock_in_status: status as any,
+      clock_in_selfie_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      clock_out_time: isToday ? undefined : `${dateStr}T17:15:00Z`,
+      clock_out_lat: isToday ? undefined : -6.21461,
+      clock_out_lng: isToday ? undefined : 106.82153,
+      clock_out_accuracy: isToday ? undefined : 15,
+      clock_out_distance_meters: isToday ? undefined : 20,
+      clock_out_location_name: isToday ? undefined : 'Jakarta Head Office',
+      clock_out_device: isToday ? undefined : 'Chrome on macOS',
+      late_minutes: lateMins,
+      early_checkout_minutes: 0,
+      work_duration_minutes: isToday ? 0 : 502,
+      overtime_minutes: 0,
+      is_outside_geofence: false,
+      approval_status: 'APPROVED',
+      employee_name: 'Triyanto Andi',
+      employee_code: 'EMP-001',
+      department_name: 'Human Resources & People',
+      branch_name: 'Jakarta Head Office',
+      shift_name: 'Normal Office Shift',
+    });
+
+    // B. Record for emp-02 (Siti Rahmawati)
+    records.push({
+      id: `att-emp02-${dateStr}`,
+      employee_id: 'emp-02',
+      attendance_date: dateStr,
+      shift_id: 'shift-norm',
+      clock_in_time: `${dateStr}T08:04:45Z`,
+      clock_in_lat: -6.21463,
+      clock_in_lng: 106.82156,
+      clock_in_accuracy: 14,
+      clock_in_distance_meters: 20,
+      clock_in_location_name: 'Jakarta Head Office',
+      clock_in_device: 'Safari on iOS Device',
+      clock_in_status: 'present',
+      clock_out_time: isToday ? undefined : `${dateStr}T17:05:00Z`,
+      late_minutes: 0,
+      early_checkout_minutes: 0,
+      work_duration_minutes: isToday ? 0 : 490,
+      overtime_minutes: 0,
+      is_outside_geofence: false,
+      approval_status: 'APPROVED',
+      employee_name: 'Siti Rahmawati',
+      employee_code: 'EMP-002',
+      department_name: 'Human Resources & People',
+      branch_name: 'Jakarta Head Office',
+      shift_name: 'Normal Office Shift',
+    });
+
+    // C. Record for emp-03 (Budi Santoso)
+    records.push({
+      id: `att-emp03-${dateStr}`,
+      employee_id: 'emp-03',
+      attendance_date: dateStr,
+      shift_id: 'shift-norm',
+      clock_in_time: `${dateStr}T08:08:10Z`,
+      clock_in_lat: -6.2146,
+      clock_in_lng: 106.82158,
+      clock_in_accuracy: 10,
+      clock_in_distance_meters: 25,
+      clock_in_location_name: 'Jakarta Head Office',
+      clock_in_device: 'Chrome on Windows',
+      clock_in_status: 'present',
+      clock_out_time: isToday ? undefined : `${dateStr}T17:20:00Z`,
+      late_minutes: 0,
+      early_checkout_minutes: 0,
+      work_duration_minutes: isToday ? 0 : 505,
+      overtime_minutes: 0,
+      is_outside_geofence: false,
+      approval_status: 'APPROVED',
+      employee_name: 'Budi Santoso',
+      employee_code: 'EMP-003',
+      department_name: 'Engineering & Technology',
+      branch_name: 'Jakarta Head Office',
+      shift_name: 'Normal Office Shift',
+    });
+  }
+
+  // 2. Also generate a full previous month records for historical comparison
+  const prevMonthDate = new Date(year, month - 1, 1);
+  const prevYear = prevMonthDate.getFullYear();
+  const prevMonth = prevMonthDate.getMonth();
+  const prevDaysInMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
+
+  for (let day = 1; day <= prevDaysInMonth; day++) {
+    const d = new Date(prevYear, prevMonth, day);
+    const dayOfWeek = d.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+    const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const isLateDay = day === 8 || day === 21;
+    const inTime = isLateDay ? '08:19:00' : '07:54:00';
+
+    records.push({
+      id: `att-prev-emp01-${dateStr}`,
+      employee_id: 'emp-01',
+      attendance_date: dateStr,
+      shift_id: 'shift-norm',
+      clock_in_time: `${dateStr}T${inTime}Z`,
+      clock_in_lat: -6.21461,
+      clock_in_lng: 106.82153,
+      clock_in_accuracy: 12,
+      clock_in_distance_meters: 15,
+      clock_in_location_name: 'Jakarta Head Office',
+      clock_in_device: 'Chrome on macOS',
+      clock_in_status: (isLateDay ? 'late' : 'present') as any,
+      clock_out_time: `${dateStr}T17:10:00Z`,
+      late_minutes: isLateDay ? 19 : 0,
+      early_checkout_minutes: 0,
+      work_duration_minutes: 495,
+      overtime_minutes: 0,
+      is_outside_geofence: false,
+      approval_status: 'APPROVED',
+      employee_name: 'Triyanto Andi',
+      employee_code: 'EMP-001',
+      department_name: 'Human Resources & People',
+      branch_name: 'Jakarta Head Office',
+      shift_name: 'Normal Office Shift',
+    });
+  }
+
+  return records;
+};
+
+export const DEMO_ATTENDANCE: AttendanceRecord[] = generateMonthlyAttendanceRecords();
 
 // ==========================================
 // PHASE 2 SEED DATA: LEAVE, PERMISSION, OVERTIME
@@ -874,6 +909,29 @@ export const DEMO_LEAVE_TYPES: LeaveType[] = [
 ];
 
 export const DEMO_LEAVE_BALANCES: LeaveBalance[] = [
+  // emp-01 (Triyanto Andi - HR Specialist)
+  {
+    id: 'bal-00',
+    employee_id: 'emp-01',
+    leave_type_id: 'lt-ann',
+    year: 2026,
+    entitlement: 12,
+    used: 4,
+    pending: 1,
+    remaining: 7,
+    leave_type_name: 'Annual Leave',
+  },
+  {
+    id: 'bal-00s',
+    employee_id: 'emp-01',
+    leave_type_id: 'lt-sick',
+    year: 2026,
+    entitlement: 14,
+    used: 1,
+    pending: 0,
+    remaining: 13,
+    leave_type_name: 'Sick Leave',
+  },
   // emp-06 (Dewi Lestari - Software Engineer)
   {
     id: 'bal-01',
@@ -2065,6 +2123,124 @@ export const DEMO_CONTRACT_TRACKERS: EmployeeContractTracker[] = [
     action_needed: 'Kontrak aktif berjalan',
   },
 ];
+
+export const DEMO_ROSTER_PATTERNS: ShiftRosterPattern[] = [
+  {
+    id: 'roster-3shift-4group',
+    name: 'Pola 4 Regu 3 Shift (24/7 Operasional Penuh)',
+    code: '4R3S',
+    cycle_days: 4,
+    description: 'Pola standar rotasi cepat industri 24 jam: Hari 1 Pagi, Hari 2 Siang, Hari 3 Malam, Hari 4 Libur.',
+    pattern_shifts: [
+      { day_number: 1, shift_id: 'shift-morn', shift_name: 'Shift Pagi (06:00 - 14:00)', is_off: false },
+      { day_number: 2, shift_id: 'shift-aft', shift_name: 'Shift Siang (14:00 - 22:00)', is_off: false },
+      { day_number: 3, shift_id: 'shift-night', shift_name: 'Shift Malam (22:00 - 06:00)', is_off: false },
+      { day_number: 4, shift_id: 'shift-off', shift_name: 'Libur Bergilir (Off)', is_off: true },
+    ],
+  },
+  {
+    id: 'roster-2shift-12h',
+    name: 'Pola 2 Shift 12 Jam (2 Masuk - 2 Libur)',
+    code: '2S12H',
+    cycle_days: 4,
+    description: 'Pola fasilitas & keamanan 24 jam: 2 hari kerja shift 12 jam disusul 2 hari libur.',
+    pattern_shifts: [
+      { day_number: 1, shift_id: 'shift-morn', shift_name: 'Shift Siang 12 Jam (07:00 - 19:00)', is_off: false },
+      { day_number: 2, shift_id: 'shift-night', shift_name: 'Shift Malam 12 Jam (19:00 - 07:00)', is_off: false },
+      { day_number: 3, shift_id: 'shift-off', shift_name: 'Libur Hari 1', is_off: true },
+      { day_number: 4, shift_id: 'shift-off', shift_name: 'Libur Hari 2', is_off: true },
+    ],
+  },
+  {
+    id: 'roster-weekly-rot',
+    name: 'Pola Rotasi Mingguan (Pagi / Siang Bergilir)',
+    code: 'ROT-WEEK',
+    cycle_days: 14,
+    description: 'Minggu 1 Shift Pagi (Sen-Jum, Sab-Min Libur), Minggu 2 Shift Siang (Sen-Jum, Sab-Min Libur).',
+    pattern_shifts: [
+      { day_number: 1, shift_id: 'shift-morn', shift_name: 'Shift Pagi', is_off: false },
+      { day_number: 2, shift_id: 'shift-morn', shift_name: 'Shift Pagi', is_off: false },
+      { day_number: 3, shift_id: 'shift-morn', shift_name: 'Shift Pagi', is_off: false },
+      { day_number: 4, shift_id: 'shift-morn', shift_name: 'Shift Pagi', is_off: false },
+      { day_number: 5, shift_id: 'shift-morn', shift_name: 'Shift Pagi', is_off: false },
+      { day_number: 6, shift_id: 'shift-off', shift_name: 'Libur Akhir Pekan', is_off: true },
+      { day_number: 7, shift_id: 'shift-off', shift_name: 'Libur Akhir Pekan', is_off: true },
+      { day_number: 8, shift_id: 'shift-aft', shift_name: 'Shift Siang', is_off: false },
+      { day_number: 9, shift_id: 'shift-aft', shift_name: 'Shift Siang', is_off: false },
+      { day_number: 10, shift_id: 'shift-aft', shift_name: 'Shift Siang', is_off: false },
+      { day_number: 11, shift_id: 'shift-aft', shift_name: 'Shift Siang', is_off: false },
+      { day_number: 12, shift_id: 'shift-aft', shift_name: 'Shift Siang', is_off: false },
+      { day_number: 13, shift_id: 'shift-off', shift_name: 'Libur Akhir Pekan', is_off: true },
+      { day_number: 14, shift_id: 'shift-off', shift_name: 'Libur Akhir Pekan', is_off: true },
+    ],
+  },
+];
+
+export const DEMO_SHIFT_SWAPS: ShiftSwapRequest[] = [
+  {
+    id: 'swap-01',
+    requester_id: 'emp-02',
+    requester_name: 'Siti Rahmawati',
+    requester_code: 'EMP-002',
+    requester_date: '2026-10-15',
+    requester_shift_id: 'shift-morn',
+    requester_shift_name: 'Pagi (06:00 - 14:00)',
+    target_employee_id: 'emp-06',
+    target_employee_name: 'Dewi Lestari',
+    target_employee_code: 'EMP-006',
+    target_date: '2026-10-15',
+    target_shift_id: 'shift-aft',
+    target_shift_name: 'Siang (14:00 - 22:00)',
+    reason: 'Ada keperluan mendesak mengantar orang tua kontrol dokter di pagi hari.',
+    status: 'PENDING_PEER',
+    created_at: '2026-10-12 09:30:00',
+  },
+  {
+    id: 'swap-02',
+    requester_id: 'emp-07',
+    requester_name: 'Ahmad Rizky',
+    requester_code: 'EMP-007',
+    requester_date: '2026-10-16',
+    requester_shift_id: 'shift-night',
+    requester_shift_name: 'Malam (22:00 - 06:00)',
+    target_employee_id: 'emp-08',
+    target_employee_name: 'Dimas Wicaksono',
+    target_employee_code: 'EMP-008',
+    target_date: '2026-10-17',
+    target_shift_id: 'shift-norm',
+    target_shift_name: 'Normal Office Shift',
+    reason: 'Tukar shift untuk persiapan pemeliharaan server database weekend.',
+    status: 'PENDING_MANAGER',
+    created_at: '2026-10-11 14:15:00',
+    peer_response_note: 'Setuju tukar shift, jadwal saya kosong di tanggal tersebut.',
+    peer_responded_at: '2026-10-11 16:00:00',
+  },
+  {
+    id: 'swap-03',
+    requester_id: 'emp-12',
+    requester_name: 'Faisal Anugerah',
+    requester_code: 'EMP-012',
+    requester_date: '2026-10-10',
+    requester_shift_id: 'shift-morn',
+    requester_shift_name: 'Pagi (06:00 - 14:00)',
+    target_employee_id: 'emp-13',
+    target_employee_name: 'Hendra Gunawan',
+    target_employee_code: 'EMP-013',
+    target_date: '2026-10-10',
+    target_shift_id: 'shift-aft',
+    target_shift_name: 'Siang (14:00 - 22:00)',
+    reason: 'Menghadiri wisuda adik di Surabaya.',
+    status: 'APPROVED',
+    created_at: '2026-10-08 10:00:00',
+    peer_response_note: 'Disetujui rekan kerja.',
+    peer_responded_at: '2026-10-08 11:20:00',
+    manager_id: 'emp-03',
+    manager_name: 'Budi Santoso',
+    manager_note: 'Disetujui. Pastikan serah terima pekerjaan dilakukan sebelum pergantian shift.',
+    manager_approved_at: '2026-10-08 14:00:00',
+  },
+];
+
 
 
 

@@ -72,30 +72,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const menuSections: MenuSection[] = [
     {
-      title: 'MAIN MENU',
+      title: 'MENU UTAMA',
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'clock-in', label: 'Clock In / Out', icon: Clock, badge: 'Live GPS' },
-        { id: 'attendance-history', label: 'Attendance', icon: Calendar },
+        { id: 'dashboard', label: 'Beranda', icon: LayoutDashboard },
+        { id: 'clock-in', label: 'Presensi (Absen)', icon: Clock, badge: 'Live GPS' },
+        { id: 'attendance-history', label: 'Riwayat Kehadiran', icon: Calendar },
         ...(isSuperOrHr || isManager
-          ? [{ id: 'attendance-monitoring', label: 'Live Monitoring', icon: MapPin }]
+          ? [{ id: 'attendance-monitoring', label: 'Pemantauan Kehadiran', icon: MapPin }]
           : []),
       ],
     },
     {
-      title: 'OPERATIONS',
+      title: 'OPERASIONAL & PENGAJUAN',
       items: [
-        { id: 'leave', label: 'Leave (Cuti)', icon: CalendarDays },
-        { id: 'permission', label: 'Permission (Izin)', icon: FileText },
-        { id: 'overtime', label: 'Overtime (Lembur)', icon: Timer },
-        { id: 'business-trip', label: 'Business Trip', icon: Plane },
-        { id: 'holiday', label: 'Holidays', icon: CalendarCheck },
-        { id: 'attendance-correction', label: 'Correction', icon: History },
+        { id: 'leave', label: 'Cuti Karyawan', icon: CalendarDays },
+        { id: 'permission', label: 'Izin & Sakit', icon: FileText },
+        { id: 'overtime', label: 'Lembur Kerja', icon: Timer },
+        { id: 'business-trip', label: 'Perjalanan Dinas (SPPD)', icon: Plane },
+        { id: 'holiday', label: 'Hari Libur Nasional', icon: CalendarCheck },
+        { id: 'attendance-correction', label: 'Koreksi Absensi', icon: History },
         ...(isSuperOrHr || isManager
           ? [
               {
                 id: 'approvals-hub',
-                label: 'Approvals Hub',
+                label: 'Pusat Persetujuan',
                 icon: CheckSquare,
                 badge: pendingApprovalsCount > 0 ? `${pendingApprovalsCount}` : undefined,
               },
@@ -104,45 +104,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
     {
-      title: 'FINANCE & PAYROLL',
+      title: 'PENGGAJIAN & KEUANGAN',
       items: [
         {
           id: 'payroll',
-          label: role === 'EMPLOYEE' ? 'My Payslips' : 'Payroll & Slips',
+          label: role === 'EMPLOYEE' ? 'Slip Gaji Saya' : 'Penggajian & Slip Gaji',
           icon: DollarSign,
         },
-        { id: 'reimbursements', label: 'Reimbursements', icon: Receipt },
+        { id: 'reimbursements', label: 'Klaim Biaya (Reimburse)', icon: Receipt },
       ],
     },
     {
-      title: 'TALENT & NOTICE',
+      title: 'KINERJA & PENGUMUMAN',
       items: [
-        { id: 'performance', label: 'Performance KPI', icon: Award },
-        { id: 'company-hub', label: 'Company Notice', icon: Megaphone },
+        { id: 'performance', label: 'Penilaian Kinerja (KPI)', icon: Award },
+        { id: 'company-hub', label: 'Pengumuman Perusahaan', icon: Megaphone },
       ],
     },
     {
-      title: 'ORGANIZATION',
+      title: 'ORGANISASI & JADWAL',
       items: [
-        { id: 'schedule', label: 'Work Schedule', icon: CalendarRange },
+        { id: 'schedule', label: 'Jadwal Roster Kerja', icon: CalendarRange },
         ...(isSuperOrHr || isManager
-          ? [{ id: 'employees', label: 'Employees', icon: Users }]
+          ? [{ id: 'employees', label: 'Data Karyawan', icon: Users }]
           : []),
         ...(isSuperOrHr
           ? [
-              { id: 'organization', label: 'Branch & Units', icon: Building2 },
-              { id: 'shifts', label: 'Shift Rules', icon: Layers },
+              { id: 'organization', label: 'Cabang & Struktur', icon: Building2 },
+              { id: 'shifts', label: 'Aturan Shift Kerja', icon: Layers },
             ]
           : []),
-        { id: 'reports', label: 'HR Reports', icon: FileSpreadsheet },
+        { id: 'reports', label: 'Laporan & Rekap HR', icon: FileSpreadsheet },
       ],
     },
     {
-      title: 'SYSTEM & HELP',
+      title: 'SISTEM & PANDUAN',
       items: [
-        { id: 'user-guide', label: 'User Guideline', icon: BookOpen, badge: 'SOP' },
-        ...(isSuperOrHr ? [{ id: 'audit-logs', label: 'Audit Trail', icon: ShieldCheck }] : []),
-        { id: 'database-setup', label: 'Cloud Firestore', icon: Database, isAction: true },
+        { id: 'user-guide', label: 'Buku Panduan Pengguna', icon: BookOpen, badge: 'SOP' },
+        ...(isSuperOrHr ? [{ id: 'audit-logs', label: 'Log Audit Keamanan', icon: ShieldCheck }] : []),
+        { id: 'database-setup', label: 'Status Database Cloud', icon: Database, isAction: true },
       ],
     },
   ];
@@ -161,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   if (item.id === 'database-setup') onOpenDbModal();
                   else setCurrentTab(item.id);
                 }}
-                className={`p-2.5 rounded-xl transition-all ${
+                className={`p-2.5 rounded-xl transition-all cursor-pointer ${
                   isActive
                     ? 'bg-[#1D63FF] text-white shadow-md shadow-blue-500/30'
                     : 'text-slate-400 hover:text-white hover:bg-white/10'
@@ -205,7 +205,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       key={item.id}
                       onClick={handleClick}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-all group ${
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-all group cursor-pointer ${
                         isActive
                           ? 'bg-[#1D63FF] text-white font-bold shadow-md shadow-blue-500/20'
                           : 'text-slate-300 hover:text-white hover:bg-white/10'
@@ -249,14 +249,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </div>
 
-      {/* Bottom Live Office Rate Widget (Matching "Live Gold Rate" in reference image) */}
+      {/* Bottom Live Office Rate Widget */}
       <div className="p-3 border-t border-slate-800 bg-[#070D18]">
         <div className="bg-[#0D1B2A] border border-slate-800 rounded-xl p-3 space-y-2.5 shadow-md">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
               <span className="text-sm">🪙</span>
-              <span>Live Office Radar</span>
+              <span>Radar Kantor Terkini</span>
             </div>
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           </div>
@@ -264,42 +264,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Metric 1: Rate */}
           <div className="space-y-0.5 border-b border-slate-800/80 pb-1.5">
             <div className="text-[10px] text-slate-400 flex items-center justify-between">
-              <span>Attendance Rate</span>
+              <span>Tingkat Kehadiran</span>
               <span className="text-[9px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-500/30 px-1 py-0.2 rounded font-mono">
                 ▲ 0.65%
               </span>
             </div>
             <div className="text-xs font-mono font-bold text-white tabular-nums">
-              95.4% Today
+              95.4% Hari Ini
             </div>
           </div>
 
           {/* Metric 2: Active On-Duty */}
           <div className="space-y-0.5">
             <div className="text-[10px] text-slate-400 flex items-center justify-between">
-              <span>Active On-Duty</span>
+              <span>Karyawan Bertugas</span>
               <span className="text-[9px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-500/30 px-1 py-0.2 rounded font-mono">
                 ▲ 0.60%
               </span>
             </div>
             <div className="text-xs font-mono font-bold text-white tabular-nums">
-              14 / 17 Staff
+              14 / 17 Staf
             </div>
           </div>
 
           {/* Timestamp Footer */}
           <div className="text-[9px] text-slate-500 font-mono pt-1 text-center border-t border-slate-800/60">
-            Last Updated : {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            Pembaruan Terakhir : {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
           </div>
         </div>
 
         {/* Quick Logout Button */}
         <button
           onClick={logout}
-          className="mt-2.5 w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-rose-400 hover:text-white hover:bg-rose-950/40 text-xs font-semibold transition-colors"
+          className="mt-2.5 w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-rose-400 hover:text-white hover:bg-rose-950/40 text-xs font-semibold transition-colors cursor-pointer"
         >
           <Power className="w-3.5 h-3.5 text-rose-500" />
-          <span>Logout</span>
+          <span>Keluar Akun (Logout)</span>
         </button>
       </div>
     </aside>

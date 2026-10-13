@@ -30,6 +30,8 @@ import { PerformanceView } from './features/performance/PerformanceView';
 import { CompanyHubView } from './features/companyHub/CompanyHubView';
 import { UserGuideView } from './features/guide/UserGuideView';
 import { OfflineIndicator } from './components/pwa/OfflineIndicator';
+import { ClockInReminderToast } from './components/common/ClockInReminderToast';
+import { useClockInReminder } from './hooks/useClockInReminder';
 
 function MainApp() {
   const { isLoggedIn, role } = useAuth();
@@ -37,6 +39,9 @@ function MainApp() {
   const [dbModalOpen, setDbModalOpen] = useState<boolean>(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
+
+  // Background Clock-in reminder monitor & Web Push scheduler
+  useClockInReminder(setCurrentTab);
 
   if (!isLoggedIn) {
     return <LoginView />;
@@ -51,7 +56,7 @@ function MainApp() {
           <HRDashboard onNavigateTab={setCurrentTab} />
         );
       case 'clock-in':
-        return <ClockInView />;
+        return <ClockInView onNavigateTab={setCurrentTab} />;
       case 'attendance-history':
         return <AttendanceHistory />;
       case 'attendance-correction':
@@ -143,6 +148,9 @@ function MainApp() {
 
       {/* PWA Offline Connectivity Indicator */}
       <OfflineIndicator />
+
+      {/* Floating In-App Push Notification Toast for Clock-In Reminder */}
+      <ClockInReminderToast onNavigateTab={setCurrentTab} />
 
       {/* Firebase Cloud Firestore Configuration Modal */}
       <FirebaseSetupModal isOpen={dbModalOpen} onClose={() => setDbModalOpen(false)} />

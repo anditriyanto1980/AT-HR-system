@@ -37,7 +37,7 @@ export const PermissionView: React.FC = () => {
   const handleOpenApprovalModal = (req: PermissionRequest, action: 'APPROVED' | 'REJECTED') => {
     setApprovingReq(req);
     setApprovalAction(action);
-    setApprovalComment(action === 'APPROVED' ? 'Approved by manager.' : 'Unable to approve.');
+    setApprovalComment(action === 'APPROVED' ? 'Disetujui oleh atasan.' : 'Belum dapat disetujui.');
   };
 
   const handleConfirmApproval = (e: React.FormEvent) => {
@@ -60,9 +60,9 @@ export const PermissionView: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Permission & Short Absence</h2>
+          <h2 className="text-base font-bold text-slate-900">Pengajuan Izin & Ketidakhadiran Singkat</h2>
           <p className="text-xs text-slate-500">
-            Submit and manage partial-day permissions for medical, family, or urgent personal matters
+            Ajukan dan kelola izin sementara / keluar kantor untuk urusan medis, keluarga, atau keperluan mendesak
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export const PermissionView: React.FC = () => {
           className="px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Request Permission</span>
+          <span>Ajukan Izin</span>
         </button>
       </div>
 
@@ -85,7 +85,7 @@ export const PermissionView: React.FC = () => {
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          My Submissions ({myPermissions.length})
+          Pengajuan Saya ({myPermissions.length})
         </button>
 
         {isManagerOrAdmin && (
@@ -97,7 +97,7 @@ export const PermissionView: React.FC = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <span>Team Queue</span>
+            <span>Antrean Tim</span>
             {pendingApprovals.filter((p) => p.status === 'PENDING').length > 0 && (
               <span className="ml-1 px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px] font-mono">
                 {pendingApprovals.filter((p) => p.status === 'PENDING').length}
@@ -111,27 +111,27 @@ export const PermissionView: React.FC = () => {
       {activeTab === 'my' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Your Permission History</h3>
-            <span className="text-xs text-slate-500 font-mono">{myPermissions.length} total entries</span>
+            <h3 className="text-sm font-bold text-slate-900">Riwayat Pengajuan Izin Saya</h3>
+            <span className="text-xs text-slate-500 font-mono">{myPermissions.length} total pengajuan</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Time Window</th>
-                  <th className="py-3 px-4">Reason & Notes</th>
+                  <th className="py-3 px-4">Tanggal</th>
+                  <th className="py-3 px-4">Kategori Izin</th>
+                  <th className="py-3 px-4">Rentang Waktu</th>
+                  <th className="py-3 px-4">Alasan & Catatan</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Approver Note</th>
+                  <th className="py-3 px-4">Catatan Penyetuju</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {myPermissions.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-slate-400">
-                      No permissions filed yet.
+                      Belum ada pengajuan izin.
                     </td>
                   </tr>
                 ) : (
@@ -141,7 +141,15 @@ export const PermissionView: React.FC = () => {
                         {formatDate(p.permission_date)}
                       </td>
                       <td className="py-3 px-4 font-semibold text-slate-800">
-                        {p.permission_type}
+                        {p.permission_type === 'Personal'
+                          ? 'Keperluan Pribadi'
+                          : p.permission_type === 'Medical'
+                          ? 'Medis / Rumah Sakit'
+                          : p.permission_type === 'Family'
+                          ? 'Urusan Keluarga'
+                          : p.permission_type === 'Emergency'
+                          ? 'Darurat'
+                          : 'Lainnya'}
                       </td>
                       <td className="py-3 px-4 font-mono tabular-nums text-slate-700">
                         {p.start_time} - {p.end_time}
@@ -160,17 +168,17 @@ export const PermissionView: React.FC = () => {
                               : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
-                          {p.status}
+                          {p.status === 'APPROVED' ? 'Disetujui' : p.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-600 text-[11px]">
                         {p.approver_name ? (
                           <div>
                             <span className="font-semibold text-slate-900">{p.approver_name}:</span>{' '}
-                            <span>{p.approver_comment || 'Approved'}</span>
+                            <span>{p.approver_comment || 'Disetujui'}</span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic">Pending review</span>
+                          <span className="text-slate-400 italic">Menunggu verifikasi atasan</span>
                         )}
                       </td>
                     </tr>
@@ -186,7 +194,7 @@ export const PermissionView: React.FC = () => {
       {activeTab === 'approvals' && isManagerOrAdmin && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Permission Approvals Inbox</h3>
+            <h3 className="text-sm font-bold text-slate-900">Kotak Masuk Persetujuan Izin Tim</h3>
             <span className="text-xs text-slate-500 font-mono">{pendingApprovals.length} total</span>
           </div>
 
@@ -194,20 +202,20 @@ export const PermissionView: React.FC = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="py-3 px-4">Applicant</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Hours</th>
-                  <th className="py-3 px-4">Reason</th>
+                  <th className="py-3 px-4">Pemohon</th>
+                  <th className="py-3 px-4">Tanggal</th>
+                  <th className="py-3 px-4">Kategori</th>
+                  <th className="py-3 px-4">Jam</th>
+                  <th className="py-3 px-4">Alasan</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-3 px-4 text-right">Tindakan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pendingApprovals.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400">
-                      No permissions pending approval.
+                      Tidak ada permohonan izin yang menunggu persetujuan.
                     </td>
                   </tr>
                 ) : (
@@ -220,7 +228,17 @@ export const PermissionView: React.FC = () => {
                       <td className="py-3 px-4 font-mono font-medium text-slate-900">
                         {formatDate(p.permission_date)}
                       </td>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{p.permission_type}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-800">
+                        {p.permission_type === 'Personal'
+                          ? 'Keperluan Pribadi'
+                          : p.permission_type === 'Medical'
+                          ? 'Medis / Rumah Sakit'
+                          : p.permission_type === 'Family'
+                          ? 'Urusan Keluarga'
+                          : p.permission_type === 'Emergency'
+                          ? 'Darurat'
+                          : 'Lainnya'}
+                      </td>
                       <td className="py-3 px-4 font-mono tabular-nums text-slate-700">
                         {p.start_time} - {p.end_time}
                       </td>
@@ -235,7 +253,7 @@ export const PermissionView: React.FC = () => {
                               : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
-                          {p.status}
+                          {p.status === 'APPROVED' ? 'Disetujui' : p.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -243,20 +261,20 @@ export const PermissionView: React.FC = () => {
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => handleOpenApprovalModal(p, 'APPROVED')}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs cursor-pointer"
                             >
-                              Approve
+                              Setujui
                             </button>
                             <button
                               onClick={() => handleOpenApprovalModal(p, 'REJECTED')}
-                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-2xs"
+                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-2xs cursor-pointer"
                             >
-                              Reject
+                              Tolak
                             </button>
                           </div>
                         ) : (
                           <span className="text-[11px] text-slate-500 italic">
-                            Decided ({p.approver_name || 'System'})
+                            Selesai ({p.approver_name || 'Sistem'})
                           </span>
                         )}
                       </td>
@@ -281,25 +299,25 @@ export const PermissionView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900">
-              Confirm {approvalAction === 'APPROVED' ? 'Approval' : 'Rejection'}
+              Konfirmasi {approvalAction === 'APPROVED' ? 'Persetujuan' : 'Penolakan'} Izin
             </h3>
             <p className="text-xs text-slate-600">
-              Permission request by <strong>{approvingReq.employee_name}</strong> for{' '}
+              Permohonan izin oleh <strong>{approvingReq.employee_name}</strong> untuk{' '}
               <strong>{formatDate(approvingReq.permission_date)}</strong> ({approvingReq.start_time} - {approvingReq.end_time}).
             </p>
 
             <form onSubmit={handleConfirmApproval} className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Approver Remarks *
+                  Catatan Penyetuju *
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={approvalComment}
                   onChange={(e) => setApprovalComment(e.target.value)}
-                  placeholder="Enter remarks..."
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                  placeholder="Tuliskan catatan persetujuan atau alasan penolakan..."
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
@@ -307,17 +325,17 @@ export const PermissionView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setApprovingReq(null)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className={`px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-xs ${
+                  className={`px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer ${
                     approvalAction === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
                   }`}
                 >
-                  Confirm {approvalAction}
+                  Konfirmasi {approvalAction === 'APPROVED' ? 'Setujui' : 'Tolak'}
                 </button>
               </div>
             </form>

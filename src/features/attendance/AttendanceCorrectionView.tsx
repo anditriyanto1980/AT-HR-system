@@ -70,7 +70,7 @@ export const AttendanceCorrectionView: React.FC = () => {
     setError(null);
 
     if (!reason.trim()) {
-      setError('Please provide the reason / justification for this attendance adjustment.');
+      setError('Harap sertakan alasan atau justifikasi koreksi presensi ini.');
       return;
     }
 
@@ -99,7 +99,7 @@ export const AttendanceCorrectionView: React.FC = () => {
   const handleOpenDecision = (item: AttendanceCorrection, action: 'APPROVED' | 'REJECTED') => {
     setApprovingItem(item);
     setDecisionAction(action);
-    setComment(action === 'APPROVED' ? 'Approved based on team calendar check.' : 'Cannot verify hours.');
+    setComment(action === 'APPROVED' ? 'Disetujui setelah verifikasi agenda kerja tim.' : 'Jam kerja tidak dapat diverifikasi.');
   };
 
   const handleConfirmDecision = (e: React.FormEvent) => {
@@ -129,9 +129,9 @@ export const AttendanceCorrectionView: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Attendance Adjustment & Correction</h2>
+          <h2 className="text-base font-bold text-slate-900">Pengajuan Koreksi & Penyesuaian Presensi</h2>
           <p className="text-xs text-slate-500">
-            Request retrospective adjustments for missed clock-outs without altering raw terminal records
+            Ajukan koreksi jam masuk atau pulang yang terlewat tanpa mengubah catatan terminal mentah
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export const AttendanceCorrectionView: React.FC = () => {
           className="px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Request Adjustment</span>
+          <span>Ajukan Koreksi</span>
         </button>
       </div>
 
@@ -154,7 +154,7 @@ export const AttendanceCorrectionView: React.FC = () => {
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          My Requests ({myCorrections.length})
+          Pengajuan Saya ({myCorrections.length})
         </button>
 
         {isManagerOrAdmin && (
@@ -166,7 +166,7 @@ export const AttendanceCorrectionView: React.FC = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <span>Team Review</span>
+            <span>Tinjauan Tim</span>
             {pendingApprovals.filter((c) => c.status === 'PENDING').length > 0 && (
               <span className="ml-1 px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px] font-mono">
                 {pendingApprovals.filter((c) => c.status === 'PENDING').length}
@@ -180,28 +180,28 @@ export const AttendanceCorrectionView: React.FC = () => {
       {activeTab === 'my' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Your Attendance Correction History</h3>
-            <span className="text-xs text-slate-500 font-mono">{myCorrections.length} logs</span>
+            <h3 className="text-sm font-bold text-slate-900">Riwayat Pengajuan Koreksi Absensi</h3>
+            <span className="text-xs text-slate-500 font-mono">{myCorrections.length} catatan</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="py-3 px-4">Work Date</th>
-                  <th className="py-3 px-4">Adjustment Reason</th>
-                  <th className="py-3 px-4">Original Logs</th>
-                  <th className="py-3 px-4">Requested Timings</th>
-                  <th className="py-3 px-4">Explanation</th>
+                  <th className="py-3 px-4">Tanggal Kerja</th>
+                  <th className="py-3 px-4">Jenis Koreksi</th>
+                  <th className="py-3 px-4">Log Awal</th>
+                  <th className="py-3 px-4">Jam Diajukan</th>
+                  <th className="py-3 px-4">Alasan & Catatan</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Approver Note</th>
+                  <th className="py-3 px-4">Catatan Peninjau</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {myCorrections.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400">
-                      No attendance corrections filed.
+                      Belum ada pengajuan koreksi presensi.
                     </td>
                   </tr>
                 ) : (
@@ -211,10 +211,18 @@ export const AttendanceCorrectionView: React.FC = () => {
                         {formatDate(c.attendance_date)}
                       </td>
                       <td className="py-3 px-4 font-medium text-slate-800">
-                        {c.correction_type.replace(/_/g, ' ')}
+                        {c.correction_type === 'FORGOT_CLOCK_OUT'
+                          ? 'Lupa Clock Out'
+                          : c.correction_type === 'FORGOT_CLOCK_IN'
+                          ? 'Lupa Clock In'
+                          : c.correction_type === 'INCORRECT_TIME'
+                          ? 'Salah Catat Jam'
+                          : c.correction_type === 'SYSTEM_GLITCH'
+                          ? 'Kendala Sistem/HP'
+                          : 'Alasan Lain'}
                       </td>
                       <td className="py-3 px-4 font-mono tabular-nums text-slate-500 text-[11px]">
-                        In: {formatTime(c.original_clock_in)} · Out: {formatTime(c.original_clock_out)}
+                        Masuk: {formatTime(c.original_clock_in)} · Pulang: {formatTime(c.original_clock_out)}
                       </td>
                       <td className="py-3 px-4 font-mono tabular-nums font-bold text-slate-900">
                         {c.requested_clock_in} — {c.requested_clock_out}
@@ -232,17 +240,17 @@ export const AttendanceCorrectionView: React.FC = () => {
                               : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
-                          {c.status}
+                          {c.status === 'APPROVED' ? 'Disetujui' : c.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-600 text-[11px]">
                         {c.approver_name ? (
                           <div>
                             <span className="font-semibold text-slate-900">{c.approver_name}:</span>{' '}
-                            <span>{c.approver_comment || 'Approved'}</span>
+                            <span>{c.approver_comment || 'Disetujui'}</span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic">Pending supervisor review</span>
+                          <span className="text-slate-400 italic">Menunggu verifikasi atasan</span>
                         )}
                       </td>
                     </tr>
@@ -258,7 +266,7 @@ export const AttendanceCorrectionView: React.FC = () => {
       {activeTab === 'approvals' && isManagerOrAdmin && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Subordinate Correction Review</h3>
+            <h3 className="text-sm font-bold text-slate-900">Tinjauan Koreksi Anggota Tim</h3>
             <span className="text-xs text-slate-500 font-mono">{pendingApprovals.length} total</span>
           </div>
 
@@ -266,20 +274,20 @@ export const AttendanceCorrectionView: React.FC = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="py-3 px-4">Employee</th>
-                  <th className="py-3 px-4">Work Date</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Requested Shift Window</th>
-                  <th className="py-3 px-4">Justification</th>
+                  <th className="py-3 px-4">Karyawan</th>
+                  <th className="py-3 px-4">Tanggal Kerja</th>
+                  <th className="py-3 px-4">Jenis Koreksi</th>
+                  <th className="py-3 px-4">Jam yang Diajukan</th>
+                  <th className="py-3 px-4">Justifikasi</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-3 px-4 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pendingApprovals.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400">
-                      No correction requests pending approval.
+                      Tidak ada permohonan koreksi yang perlu disetujui.
                     </td>
                   </tr>
                 ) : (
@@ -293,7 +301,15 @@ export const AttendanceCorrectionView: React.FC = () => {
                         {formatDate(c.attendance_date)}
                       </td>
                       <td className="py-3 px-4 font-medium text-slate-800">
-                        {c.correction_type.replace(/_/g, ' ')}
+                        {c.correction_type === 'FORGOT_CLOCK_OUT'
+                          ? 'Lupa Clock Out'
+                          : c.correction_type === 'FORGOT_CLOCK_IN'
+                          ? 'Lupa Clock In'
+                          : c.correction_type === 'INCORRECT_TIME'
+                          ? 'Salah Catat Jam'
+                          : c.correction_type === 'SYSTEM_GLITCH'
+                          ? 'Kendala Sistem/HP'
+                          : 'Alasan Lain'}
                       </td>
                       <td className="py-3 px-4 font-mono tabular-nums font-bold text-slate-900">
                         {c.requested_clock_in} — {c.requested_clock_out}
@@ -309,7 +325,7 @@ export const AttendanceCorrectionView: React.FC = () => {
                               : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
-                          {c.status}
+                          {c.status === 'APPROVED' ? 'Disetujui' : c.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -317,20 +333,20 @@ export const AttendanceCorrectionView: React.FC = () => {
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => handleOpenDecision(c, 'APPROVED')}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs cursor-pointer"
                             >
-                              Approve
+                              Setujui
                             </button>
                             <button
                               onClick={() => handleOpenDecision(c, 'REJECTED')}
-                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-2xs"
+                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-2xs cursor-pointer"
                             >
-                              Reject
+                              Tolak
                             </button>
                           </div>
                         ) : (
                           <span className="text-[11px] text-slate-500 italic">
-                            Decided ({c.approver_name || 'System'})
+                            Selesai ({c.approver_name || 'Sistem'})
                           </span>
                         )}
                       </td>
@@ -347,9 +363,9 @@ export const AttendanceCorrectionView: React.FC = () => {
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Request Attendance Adjustment</h3>
+            <h3 className="text-base font-bold text-slate-900">Form Pengajuan Koreksi Presensi</h3>
             <p className="text-xs text-slate-500">
-              Submit your correct work hours for manager approval
+              Kirimkan jam kerja yang sebenarnya untuk diverifikasi dan disetujui atasan
             </p>
 
             {error && (
@@ -361,7 +377,7 @@ export const AttendanceCorrectionView: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Work Date *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Kerja *</label>
                   <input
                     type="date"
                     required
@@ -371,17 +387,17 @@ export const AttendanceCorrectionView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Issue Category *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kategori Kendala *</label>
                   <select
                     value={correctionType}
                     onChange={(e) => setCorrectionType(e.target.value as any)}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium"
                   >
-                    <option value="FORGOT_CLOCK_OUT">Forgot Clock Out</option>
-                    <option value="FORGOT_CLOCK_IN">Forgot Clock In</option>
-                    <option value="INCORRECT_TIME">Incorrect Time Log</option>
-                    <option value="SYSTEM_GLITCH">Device / Network Glitch</option>
-                    <option value="OTHER">Other Reason</option>
+                    <option value="FORGOT_CLOCK_OUT">Lupa Clock Out Pulang</option>
+                    <option value="FORGOT_CLOCK_IN">Lupa Clock In Masuk</option>
+                    <option value="INCORRECT_TIME">Salah Waktu Absen</option>
+                    <option value="SYSTEM_GLITCH">Kendala Aplikasi / Jaringan</option>
+                    <option value="OTHER">Alasan Khusus Lainnya</option>
                   </select>
                 </div>
               </div>
@@ -389,7 +405,7 @@ export const AttendanceCorrectionView: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Requested Clock In (HH:mm) *
+                    Jam Masuk yang Diajukan (JJ:mm) *
                   </label>
                   <input
                     type="time"
@@ -401,7 +417,7 @@ export const AttendanceCorrectionView: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Requested Clock Out (HH:mm) *
+                    Jam Pulang yang Diajukan (JJ:mm) *
                   </label>
                   <input
                     type="time"
@@ -415,14 +431,14 @@ export const AttendanceCorrectionView: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Reason & Context *
+                  Alasan & Keterangan Lengkap *
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="e.g. Left office immediately for customer meeting and forgot to clock out at the terminal."
+                  placeholder="Contoh: Langsung bertolak ke pertemuan klien di luar kantor dan terlewat clock out di terminal."
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
                 />
               </div>
@@ -431,15 +447,15 @@ export const AttendanceCorrectionView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs"
+                  className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer hover:bg-slate-800"
                 >
-                  Submit Adjustment
+                  Kirim Pengajuan Koreksi
                 </button>
               </div>
             </form>
@@ -452,16 +468,16 @@ export const AttendanceCorrectionView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900">
-              Confirm Adjustment {decisionAction === 'APPROVED' ? 'Approval' : 'Rejection'}
+              Konfirmasi {decisionAction === 'APPROVED' ? 'Persetujuan' : 'Penolakan'} Koreksi
             </h3>
             <p className="text-xs text-slate-600">
-              Adjustment for <strong>{approvingItem.employee_name}</strong> on{' '}
+              Koreksi untuk <strong>{approvingItem.employee_name}</strong> pada tanggal{' '}
               <strong>{formatDate(approvingItem.attendance_date)}</strong> ({approvingItem.requested_clock_in} - {approvingItem.requested_clock_out}).
             </p>
 
             <form onSubmit={handleConfirmDecision} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Remarks *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Catatan Peninjau *</label>
                 <textarea
                   required
                   rows={3}
@@ -475,19 +491,19 @@ export const AttendanceCorrectionView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setApprovingItem(null)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className={`px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-xs ${
+                  className={`px-4 py-2 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer ${
                     decisionAction === 'APPROVED'
                       ? 'bg-emerald-600 hover:bg-emerald-700'
                       : 'bg-rose-600 hover:bg-rose-700'
                   }`}
                 >
-                  Confirm {decisionAction}
+                  Konfirmasi {decisionAction === 'APPROVED' ? 'Setujui' : 'Tolak'}
                 </button>
               </div>
             </form>

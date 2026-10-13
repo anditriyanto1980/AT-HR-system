@@ -48,7 +48,7 @@ export const LoginView: React.FC = () => {
     const res = await login(identifier, password);
     setLoading(false);
     if (!res.success) {
-      setError(res.error || 'Username atau password tidak valid.');
+      setError(res.error || 'Nama pengguna atau kata sandi tidak valid.');
     }
   };
 
@@ -58,10 +58,10 @@ export const LoginView: React.FC = () => {
     try {
       const res = await loginWithGoogle();
       if (!res.success) {
-        setError(res.error || 'Login Google gagal.');
+        setError(res.error || 'Masuk dengan Google gagal.');
       }
     } catch (err: any) {
-      setError(err.message || 'Gagal login dengan akun Google.');
+      setError(err.message || 'Gagal masuk dengan akun Google.');
     } finally {
       setGoogleLoading(false);
     }
@@ -84,14 +84,14 @@ export const LoginView: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center justify-center gap-2">
-              <span>{company.app_name || company.name || 'AT-HR Enterprise'}</span>
+              <span>{company.app_name || company.name || 'AT-HR Portal'}</span>
             </h1>
             <p className="text-xs font-semibold text-amber-600 tracking-wide mt-1">
-              {company.tagline || 'Smart Solutions for Smart Business'}
+              {company.tagline || 'Solusi Cerdas Manajemen Kehadiran & HRIS'}
             </p>
           </div>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            {company.name} — Platform HRIS, Presensi Pintar & Manajemen Karyawan
+            {company.name} — Platform Presensi Pintar & Manajemen Karyawan
           </p>
         </div>
 
@@ -107,7 +107,7 @@ export const LoginView: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Username atau Email Perusahaan
+                Nama Pengguna / NIK / Email Perusahaan
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -116,18 +116,18 @@ export const LoginView: React.FC = () => {
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Username (cth: triyanto.andi) atau Email"
+                  placeholder="Username (cth: dewi.lestari), NIK, atau Email"
                   className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-50/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1D63FF] focus:bg-white transition-all text-slate-800 placeholder-slate-400 font-medium"
                 />
               </div>
               <p className="text-[10px] text-slate-400 mt-1">
-                Dapat login menggunakan Username, NIK, atau Email resmi.
+                Dapat masuk menggunakan Nama Pengguna, NIK, atau Email resmi.
               </p>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Password Akun</span>
+                <span>Kata Sandi Akun</span>
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -142,7 +142,7 @@ export const LoginView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -154,7 +154,7 @@ export const LoginView: React.FC = () => {
               disabled={loading}
               className="w-full py-3 bg-[#1D63FF] hover:bg-blue-600 active:scale-[0.99] text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
             >
-              <span>{loading ? 'Memverifikasi Kredensial...' : 'Masuk ke Portal HRIS'}</span>
+              <span>{loading ? 'Memverifikasi Kredensial...' : 'Masuk ke Portal Presensi'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -208,7 +208,7 @@ export const LoginView: React.FC = () => {
           {/* Quick Demo Role Logins */}
           <div className="pt-4 border-t border-slate-100 space-y-3">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block text-center">
-              Quick 1-Click Role Login
+              Uji Coba Cepat Akun Demo (1-Klik)
             </span>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -230,7 +230,7 @@ export const LoginView: React.FC = () => {
                 }
                 className="p-2.5 text-left bg-emerald-50/50 hover:bg-emerald-50 rounded-xl border border-emerald-100 text-xs transition-colors group cursor-pointer"
               >
-                <div className="font-bold text-slate-900 group-hover:text-emerald-600">HR Admin</div>
+                <div className="font-bold text-slate-900 group-hover:text-emerald-600">Admin HR</div>
                 <div className="text-[10px] text-emerald-600 font-mono font-medium">@siti.rahmawati</div>
                 <div className="text-[9px] text-slate-400">Siti Rahmawati</div>
               </button>
@@ -242,7 +242,7 @@ export const LoginView: React.FC = () => {
                 }
                 className="p-2.5 text-left bg-purple-50/50 hover:bg-purple-50 rounded-xl border border-purple-100 text-xs transition-colors group cursor-pointer"
               >
-                <div className="font-bold text-slate-900 group-hover:text-purple-600">Team Manager</div>
+                <div className="font-bold text-slate-900 group-hover:text-purple-600">Manajer Tim</div>
                 <div className="text-[10px] text-purple-600 font-mono font-medium">@budi.santoso</div>
                 <div className="text-[9px] text-slate-400">Budi Santoso</div>
               </button>
@@ -255,22 +255,22 @@ export const LoginView: React.FC = () => {
                 className="p-2.5 text-left bg-gradient-to-br from-amber-50 to-amber-100/70 hover:from-amber-100 hover:to-amber-200/60 rounded-xl border-2 border-amber-300 text-xs transition-colors group cursor-pointer shadow-xs"
               >
                 <div className="flex items-center justify-between">
-                  <div className="font-bold text-amber-950 group-hover:text-amber-700">Karyawan (Mobile)</div>
-                  <span className="text-[8px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded-full">POPULER</span>
+                  <div className="font-bold text-amber-950 group-hover:text-amber-700">Karyawan (Ponsel)</div>
+                  <span className="text-[8px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded-full">UTAMA</span>
                 </div>
                 <div className="text-[10px] text-amber-700 font-mono font-bold">@dewi.lestari</div>
-                <div className="text-[9px] text-slate-500">Dewi Lestari (Staff)</div>
+                <div className="text-[9px] text-slate-500">Dewi Lestari (Staf)</div>
               </button>
             </div>
             <div className="text-center text-[10px] text-slate-400">
-              Default password semua akun demo: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-slate-700 font-semibold">password123</code>
+              Kata sandi bawaan semua akun demo: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-slate-700 font-semibold">password123</code>
             </div>
           </div>
         </div>
 
         {/* Security watermark footer */}
         <div className="text-center text-[11px] text-slate-400 font-medium">
-          Protected with SHA-256 Authentication & Enterprise RBAC
+          Dilindungi dengan Enkripsi SHA-256 & Kontrol Hak Akses Karyawan (RBAC)
         </div>
       </div>
     </div>

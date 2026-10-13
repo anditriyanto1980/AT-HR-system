@@ -189,7 +189,7 @@ export const AttendanceHistory: React.FC = () => {
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-slate-400" />
                         <span className="truncate max-w-[120px]">
-                          {rec.clock_in_location_name || rec.branch_name || 'Office'}
+                          {rec.clock_in_location_name || rec.branch_name || 'Kantor'}
                         </span>
                       </span>
                     </td>
@@ -197,7 +197,7 @@ export const AttendanceHistory: React.FC = () => {
                       <StatusBadge status={rec.clock_in_status} />
                       {rec.late_minutes > 0 && (
                         <span className="text-[10px] text-amber-700 font-semibold block font-mono">
-                          +{rec.late_minutes}m late
+                          +{rec.late_minutes} mnt terlambat
                         </span>
                       )}
                     </td>

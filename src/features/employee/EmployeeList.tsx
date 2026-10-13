@@ -133,7 +133,7 @@ export const EmployeeList: React.FC = () => {
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Workforce & User Accounts</h2>
+          <h2 className="text-base font-bold text-slate-900">Data Karyawan & Akun Pengguna</h2>
           <p className="text-xs text-slate-500">
             Total {employees.length} karyawan · {employees.filter((e) => e.login_access_enabled !== false).length} memiliki hak akses login aktif
           </p>
@@ -259,14 +259,14 @@ export const EmployeeList: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
               <tr>
-                <th className="py-3 px-4">Employee</th>
+                <th className="py-3 px-4">Karyawan</th>
                 <th className="py-3 px-4">NIK & ID</th>
                 <th className="py-3 px-4">Hak Akses Login</th>
-                <th className="py-3 px-4">Branch & Department</th>
-                <th className="py-3 px-4">Role / Title</th>
-                <th className="py-3 px-4">Direct Manager</th>
+                <th className="py-3 px-4">Cabang & Departemen</th>
+                <th className="py-3 px-4">Jabatan / Peran</th>
+                <th className="py-3 px-4">Atasan Langsung</th>
                 <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Join Date</th>
+                <th className="py-3 px-4">Tgl Bergabung</th>
                 {isSuperOrHr && <th className="py-3 px-4 text-right">Aksi</th>}
               </tr>
             </thead>
@@ -337,7 +337,7 @@ export const EmployeeList: React.FC = () => {
                       {emp.manager_name ? (
                         <span>{emp.manager_name}</span>
                       ) : (
-                        <span className="text-slate-400 italic">None (Board/Lead)</span>
+                        <span className="text-slate-400 italic">Tidak Ada (Direksi/Lead)</span>
                       )}
                     </td>
 

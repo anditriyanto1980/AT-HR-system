@@ -43,18 +43,18 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({ isOpen, onClose, onSaved
     setError(null);
 
     if (totalDays <= 0) {
-      setError('End date must be greater than or equal to start date.');
+      setError('Tanggal selesai harus sama dengan atau setelah tanggal mulai.');
       return;
     }
 
     if (!reason.trim()) {
-      setError('Please provide a specific reason for your leave request.');
+      setError('Harap berikan alasan yang jelas untuk pengajuan cuti Anda.');
       return;
     }
 
     // Check if annual leave exceeds remaining balance
-    if (activeBalance && activeBalance.leave_type_name === 'Annual Leave' && totalDays > activeBalance.remaining) {
-      setError(`Requested ${totalDays} days exceeds your remaining annual leave balance (${activeBalance.remaining} days available).`);
+    if (activeBalance && (activeBalance.leave_type_name === 'Annual Leave' || activeBalance.leave_type_name === 'Cuti Tahunan') && totalDays > activeBalance.remaining) {
+      setError(`Pengajuan ${totalDays} hari melebihi sisa kuota cuti tahunan Anda (tersisa ${activeBalance.remaining} hari).`);
       return;
     }
 
@@ -82,12 +82,12 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({ isOpen, onClose, onSaved
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Submit Leave Request</h2>
-            <p className="text-xs text-slate-500">Apply for annual, sick, or special leave</p>
+            <h2 className="text-base font-bold text-slate-900">Formulir Pengajuan Cuti</h2>
+            <p className="text-xs text-slate-500">Ajukan cuti tahunan, sakit, atau cuti khusus lainnya</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700"
+            className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -102,7 +102,7 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({ isOpen, onClose, onSaved
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Leave Category *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Kategori Cuti *</label>
             <select
               value={leaveTypeId}
               onChange={(e) => setLeaveTypeId(e.target.value)}
@@ -110,20 +110,20 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({ isOpen, onClose, onSaved
             >
               {leaveTypes.map((lt) => (
                 <option key={lt.id} value={lt.id}>
-                  {lt.name} ({lt.default_days} days default)
+                  {lt.name} ({lt.default_days} hari)
                 </option>
               ))}
             </select>
             {activeBalance && (
               <span className="text-[11px] text-slate-500 font-mono mt-1 block">
-                Your Balance: {activeBalance.remaining} remaining of {activeBalance.entitlement} entitlement
+                Sisa Kuota Anda: {activeBalance.remaining} hari dari {activeBalance.entitlement} hari hak cuti
               </span>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Start Date *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Mulai *</label>
               <input
                 type="date"
                 required
@@ -133,7 +133,7 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({ isOpen, onClose, onSaved
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">End Date *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Selesai *</label>
               <input
                 type="date"
                 required
@@ -146,18 +146,18 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({ isOpen, onClose, onSaved
 
           {/* Days summary pill */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs font-mono">
-            <span className="text-slate-600 font-sans">Total Requested Duration:</span>
-            <span className="font-bold text-slate-900 tabular-nums">{totalDays} Workday(s)</span>
+            <span className="text-slate-600 font-sans">Total Durasi Cuti:</span>
+            <span className="font-bold text-slate-900 tabular-nums">{totalDays} Hari Kerja</span>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Reason for Leave *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Alasan Cuti *</label>
             <textarea
               required
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Taking annual leave for family travel to Bali"
+              placeholder="Contoh: Mengambil cuti tahunan untuk acara keluarga di luar kota"
               className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
@@ -166,16 +166,16 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({ isOpen, onClose, onSaved
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
             >
-              Cancel
+              Batal
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5"
+              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Check className="w-4 h-4" />
-              <span>Submit Request</span>
+              <span>Kirim Permohonan Cuti</span>
             </button>
           </div>
         </form>

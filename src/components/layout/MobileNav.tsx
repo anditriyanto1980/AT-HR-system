@@ -38,7 +38,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         <span className="text-[10px] mt-1 font-medium">Cuti & Izin</span>
       </button>
 
-      {/* 3. Central Primary Button: Clock In (Elevated Floating Action) */}
+      {/* 3. Central Primary Button: Presensi Live */}
       <button
         onClick={() => setCurrentTab('clock-in')}
         className="flex flex-col items-center justify-center -mt-6 px-1 group focus:outline-none cursor-pointer"
@@ -52,7 +52,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
           <Camera className="w-6 h-6 animate-pulse" />
         </div>
         <span className="text-[10px] font-bold text-amber-400 mt-0.5 tracking-tight">
-          Clock In
+          Presensi
         </span>
       </button>
 

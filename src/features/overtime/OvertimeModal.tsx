@@ -42,17 +42,17 @@ export const OvertimeModal: React.FC<OvertimeModalProps> = ({
     setError(null);
 
     if (durationHours <= 0) {
-      setError('End time must be later than start time.');
+      setError('Jam selesai harus lebih akhir dari jam mulai.');
       return;
     }
 
     if (!projectName.trim()) {
-      setError('Project name / client task is required.');
+      setError('Nama proyek atau tugas wajib diisi.');
       return;
     }
 
     if (!reason.trim()) {
-      setError('Overtime reason and deliverables must be described.');
+      setError('Harap jelaskan alasan dan target capaian lembur.');
       return;
     }
 
@@ -80,10 +80,10 @@ export const OvertimeModal: React.FC<OvertimeModalProps> = ({
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg p-6 space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Submit Overtime Request</h2>
-            <p className="text-xs text-slate-500">Record after-hours project deliverables</p>
+            <h2 className="text-base font-bold text-slate-900">Formulir Pengajuan Lembur</h2>
+            <p className="text-xs text-slate-500">Catat pekerjaan tambahan di luar jam kerja untuk proyek</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -98,7 +98,7 @@ export const OvertimeModal: React.FC<OvertimeModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Overtime Date *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Lembur *</label>
               <input
                 type="date"
                 required
@@ -108,21 +108,21 @@ export const OvertimeModal: React.FC<OvertimeModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Project Name *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Proyek / Tugas *</label>
               <input
                 type="text"
                 required
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
-                placeholder="e.g. Core System Release v2.4"
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+                placeholder="Contoh: Rilis Sistem Inti v2.4"
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Start Time (HH:mm) *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Mulai (JJ:mm) *</label>
               <input
                 type="time"
                 required
@@ -132,7 +132,7 @@ export const OvertimeModal: React.FC<OvertimeModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">End Time (HH:mm) *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Selesai (JJ:mm) *</label>
               <input
                 type="time"
                 required
@@ -145,19 +145,19 @@ export const OvertimeModal: React.FC<OvertimeModalProps> = ({
 
           {/* Computed Duration Box */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs font-mono">
-            <span className="text-slate-600 font-sans">Calculated Overtime Hours:</span>
-            <span className="font-bold text-slate-900 tabular-nums">{durationHours} Hours</span>
+            <span className="text-slate-600 font-sans">Total Durasi Lembur:</span>
+            <span className="font-bold text-slate-900 tabular-nums">{durationHours} Jam</span>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Reason & Deliverables *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Target & Alasan Lembur *</label>
             <textarea
               required
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Completing critical hotfix deployment and security verification before production release"
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
+              placeholder="Contoh: Menyelesaikan deployment perbaikan darurat dan verifikasi keamanan sebelum rilis produksi"
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
 
@@ -165,16 +165,16 @@ export const OvertimeModal: React.FC<OvertimeModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
             >
-              Cancel
+              Batal
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5"
+              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Check className="w-4 h-4" />
-              <span>Submit Overtime</span>
+              <span>Kirim Pengajuan Lembur</span>
             </button>
           </div>
         </form>

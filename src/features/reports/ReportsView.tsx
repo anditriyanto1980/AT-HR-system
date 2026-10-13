@@ -72,19 +72,19 @@ export const ReportsView: React.FC = () => {
   const handleExportCsv = () => {
     if (reportType === 'PAYROLL') {
       const headers = [
-        'Employee ID',
-        'Employee Name',
-        'Department',
-        'Branch',
-        'Working Days',
-        'Present (On-Time)',
-        'Late Arrivals',
-        'Absent Days',
-        'Annual Leave',
-        'Sick Leave',
-        'Permission Count',
-        'Overtime Hours',
-        'Early Checkout Count',
+        'NIK',
+        'Nama Karyawan',
+        'Departemen',
+        'Cabang',
+        'Hari Kerja',
+        'Hadir Tepat Waktu',
+        'Keterlambatan',
+        'Alpha / Tidak Hadir',
+        'Cuti Tahunan',
+        'Sakit',
+        'Izin',
+        'Lembur (Jam)',
+        'Pulang Lebih Awal',
       ];
       const rows = payrollData.map((p) => [
         p.employee_code,
@@ -101,20 +101,20 @@ export const ReportsView: React.FC = () => {
         p.overtime_hours,
         p.early_checkout,
       ]);
-      dataService.exportToCsv(`payroll_attendance_${selectedYear}_${selectedMonth}`, headers, rows);
+      dataService.exportToCsv(`rekap_payroll_${selectedYear}_${selectedMonth}`, headers, rows);
     } else if (reportType === 'DAILY') {
       const headers = [
-        'Date',
-        'Employee ID',
-        'Employee Name',
-        'Department',
-        'Branch',
+        'Tanggal',
+        'NIK',
+        'Nama Karyawan',
+        'Departemen',
+        'Cabang',
         'Shift',
-        'Clock In',
-        'Clock Out',
+        'Jam Masuk',
+        'Jam Pulang',
         'Status',
-        'Late Minutes',
-        'Duration',
+        'Keterlambatan (Menit)',
+        'Durasi Kerja',
       ];
       const rows = dailyData.map((d) => [
         d.attendance_date,
@@ -129,17 +129,17 @@ export const ReportsView: React.FC = () => {
         d.late_minutes,
         formatMinutes(d.work_duration_minutes || 0),
       ]);
-      dataService.exportToCsv(`daily_attendance_${selectedDate}`, headers, rows);
+      dataService.exportToCsv(`presensi_harian_${selectedDate}`, headers, rows);
     } else if (reportType === 'LATE') {
       const headers = [
-        'Date',
-        'Employee ID',
-        'Employee Name',
-        'Department',
-        'Clock In Time',
-        'Minutes Late',
-        'Location / Office',
-        'Reason / Notes',
+        'Tanggal',
+        'NIK',
+        'Nama Karyawan',
+        'Departemen',
+        'Jam Masuk',
+        'Keterlambatan (Menit)',
+        'Lokasi / Kantor',
+        'Alasan / Catatan',
       ];
       const rows = lateData.map((l) => [
         l.attendance_date,
@@ -151,23 +151,23 @@ export const ReportsView: React.FC = () => {
         l.clock_in_location_name || l.branch_name || '-',
         l.notes || '-',
       ]);
-      dataService.exportToCsv(`late_arrivals_${selectedYear}_${selectedMonth}`, headers, rows);
+      dataService.exportToCsv(`rekap_terlambat_${selectedYear}_${selectedMonth}`, headers, rows);
     } else {
       const headers = [
-        'Date',
-        'Employee',
-        'Exception Type',
-        'Location Status',
-        'Details',
+        'Tanggal',
+        'Karyawan',
+        'Jenis Anomali',
+        'Status Lokasi',
+        'Keterangan',
       ];
       const rows = exceptionData.map((e) => [
         e.attendance_date,
         e.employee_name || '-',
-        e.is_outside_geofence ? 'Outside Geofence' : 'Early Checkout',
+        e.is_outside_geofence ? 'Di Luar Radius Kantor' : 'Pulang Lebih Awal',
         e.clock_in_location_name || '-',
         e.notes || '-',
       ]);
-      dataService.exportToCsv(`attendance_exceptions_${selectedYear}_${selectedMonth}`, headers, rows);
+      dataService.exportToCsv(`anomali_presensi_${selectedYear}_${selectedMonth}`, headers, rows);
     }
   };
 
@@ -176,8 +176,8 @@ export const ReportsView: React.FC = () => {
   };
 
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
 
   return (
@@ -185,9 +185,9 @@ export const ReportsView: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Attendance & Payroll-Ready Reports</h2>
+          <h2 className="text-base font-bold text-slate-900">Laporan Presensi & Rekapitulasi Payroll</h2>
           <p className="text-xs text-slate-500">
-            Generate audit spreadsheets, daily rosters, and payroll integration metrics
+            Ekspor spreadsheet audit, roster absensi harian, dan metrik integrasi penggajian.
           </p>
         </div>
 
@@ -197,14 +197,14 @@ export const ReportsView: React.FC = () => {
             className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors"
           >
             <Printer className="w-4 h-4 text-slate-500" />
-            <span className="hidden sm:inline">Print / PDF</span>
+            <span className="hidden sm:inline">Cetak / PDF</span>
           </button>
           <button
             onClick={handleExportCsv}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors cursor-pointer"
           >
             <Download className="w-4 h-4 text-emerald-400" />
-            <span>Export CSV (Excel)</span>
+            <span>Ekspor CSV (Excel)</span>
           </button>
         </div>
       </div>
@@ -215,43 +215,43 @@ export const ReportsView: React.FC = () => {
         <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
           <button
             onClick={() => setReportType('PAYROLL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
               reportType === 'PAYROLL'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Payroll Summary
+            Rekap Payroll
           </button>
           <button
             onClick={() => setReportType('DAILY')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
               reportType === 'DAILY'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Daily Attendance
+            Presensi Harian
           </button>
           <button
             onClick={() => setReportType('LATE')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
               reportType === 'LATE'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Late Arrivals
+            Keterlambatan
           </button>
           <button
             onClick={() => setReportType('EXCEPTIONS')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
               reportType === 'EXCEPTIONS'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Exceptions & Geofence
+            Pengecualian & Radius
           </button>
         </div>
 
@@ -259,7 +259,7 @@ export const ReportsView: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
           {reportType === 'DAILY' ? (
             <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Roster Date</label>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Tanggal Presensi</label>
               <input
                 type="date"
                 value={selectedDate}
@@ -270,7 +270,7 @@ export const ReportsView: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Month</label>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bulan</label>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -284,7 +284,7 @@ export const ReportsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Year</label>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Tahun</label>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -298,13 +298,13 @@ export const ReportsView: React.FC = () => {
           )}
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Branch Location</label>
+            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Lokasi Cabang</label>
             <select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
               className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium"
             >
-              <option value="all">All Branches</option>
+              <option value="all">Semua Cabang</option>
               {branches.map((b) => (
                 <option key={b.id} value={b.name}>
                   {b.name}
@@ -314,13 +314,13 @@ export const ReportsView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Department</label>
+            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Departemen</label>
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
               className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium"
             >
-              <option value="all">All Departments</option>
+              <option value="all">Semua Departemen</option>
               {departments.map((d) => (
                 <option key={d.id} value={d.name}>
                   {d.name}
@@ -330,14 +330,14 @@ export const ReportsView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Search Staff</label>
+            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Cari Karyawan</label>
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Filter by name..."
+                placeholder="Cari berdasarkan nama..."
                 className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg"
               />
             </div>
@@ -353,14 +353,14 @@ export const ReportsView: React.FC = () => {
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
-                  Payroll Attendance Summary ({monthNames[selectedMonth - 1]} {selectedYear})
+                  Ringkasan Presensi Payroll ({monthNames[selectedMonth - 1]} {selectedYear})
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Ready-to-integrate metrics: working days, present, late, leaves, and overtime hours
+                  Metrik siap proses: hari kerja, hadir, terlambat, alpha, cuti, sakit, izin, dan lembur
                 </p>
               </div>
               <span className="text-xs font-mono text-slate-500 font-semibold">
-                {payrollData.length} active employees
+                {payrollData.length} karyawan aktif
               </span>
             </div>
 
@@ -368,17 +368,17 @@ export const ReportsView: React.FC = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 font-mono text-[11px]">
                   <tr>
-                    <th className="py-3 px-3">Emp ID</th>
-                    <th className="py-3 px-4 font-sans">Full Name</th>
-                    <th className="py-3 px-3 font-sans">Department</th>
-                    <th className="py-3 px-2 text-center">Workdays</th>
-                    <th className="py-3 px-2 text-center text-emerald-700">Present</th>
-                    <th className="py-3 px-2 text-center text-amber-700">Late</th>
-                    <th className="py-3 px-2 text-center text-rose-700">Absent</th>
-                    <th className="py-3 px-2 text-center text-blue-700">Leave</th>
-                    <th className="py-3 px-2 text-center text-purple-700">Sick</th>
-                    <th className="py-3 px-2 text-center">Perm.</th>
-                    <th className="py-3 px-3 text-right text-teal-800">Overtime (Hrs)</th>
+                    <th className="py-3 px-3">NIK</th>
+                    <th className="py-3 px-4 font-sans">Nama Lengkap</th>
+                    <th className="py-3 px-3 font-sans">Departemen</th>
+                    <th className="py-3 px-2 text-center">Hari Kerja</th>
+                    <th className="py-3 px-2 text-center text-emerald-700">Hadir</th>
+                    <th className="py-3 px-2 text-center text-amber-700">Terlambat</th>
+                    <th className="py-3 px-2 text-center text-rose-700">Alpha</th>
+                    <th className="py-3 px-2 text-center text-blue-700">Cuti</th>
+                    <th className="py-3 px-2 text-center text-purple-700">Sakit</th>
+                    <th className="py-3 px-2 text-center">Izin</th>
+                    <th className="py-3 px-3 text-right text-teal-800">Lembur (Jam)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono text-xs tabular-nums">
@@ -410,21 +410,21 @@ export const ReportsView: React.FC = () => {
           <div>
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900">
-                Daily Attendance Roster ({formatDate(selectedDate)})
+                Roster Presensi Harian ({formatDate(selectedDate)})
               </h3>
-              <span className="text-xs font-mono text-slate-500">{dailyData.length} logs</span>
+              <span className="text-xs font-mono text-slate-500">{dailyData.length} data presensi</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-4">Employee</th>
-                    <th className="py-3 px-4">Branch & Dept</th>
+                    <th className="py-3 px-4">Karyawan</th>
+                    <th className="py-3 px-4">Cabang & Dept</th>
                     <th className="py-3 px-4">Shift</th>
-                    <th className="py-3 px-4">Clock In</th>
-                    <th className="py-3 px-4">Clock Out</th>
-                    <th className="py-3 px-4">Work Duration</th>
+                    <th className="py-3 px-4">Jam Masuk</th>
+                    <th className="py-3 px-4">Jam Pulang</th>
+                    <th className="py-3 px-4">Durasi Kerja</th>
                     <th className="py-3 px-4">Status</th>
                   </tr>
                 </thead>
@@ -432,7 +432,7 @@ export const ReportsView: React.FC = () => {
                   {dailyData.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-slate-400">
-                        No records logged for this date.
+                        Tidak ada data presensi pada tanggal ini.
                       </td>
                     </tr>
                   ) : (
@@ -463,7 +463,7 @@ export const ReportsView: React.FC = () => {
                                 : 'bg-amber-50 text-amber-700 border-amber-200'
                             }`}
                           >
-                            {d.clock_in_status} {d.late_minutes > 0 ? `(+${d.late_minutes}m)` : ''}
+                            {d.clock_in_status === 'present' ? 'Tepat Waktu' : 'Terlambat'} {d.late_minutes > 0 ? `(+${d.late_minutes}m)` : ''}
                           </span>
                         </td>
                       </tr>
@@ -480,28 +480,28 @@ export const ReportsView: React.FC = () => {
           <div>
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900">
-                Late Arrival Audit ({monthNames[selectedMonth - 1]} {selectedYear})
+                Audit Keterlambatan Masuk ({monthNames[selectedMonth - 1]} {selectedYear})
               </h3>
-              <span className="text-xs font-mono text-slate-500">{lateData.length} records</span>
+              <span className="text-xs font-mono text-slate-500">{lateData.length} data</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Employee</th>
-                    <th className="py-3 px-4">Clock In Time</th>
-                    <th className="py-3 px-4">Minutes Late</th>
-                    <th className="py-3 px-4">Branch / Location</th>
-                    <th className="py-3 px-4">Reason / Notes</th>
+                    <th className="py-3 px-4">Tanggal</th>
+                    <th className="py-3 px-4">Karyawan</th>
+                    <th className="py-3 px-4">Jam Masuk</th>
+                    <th className="py-3 px-4">Keterlambatan</th>
+                    <th className="py-3 px-4">Cabang / Lokasi</th>
+                    <th className="py-3 px-4">Alasan / Catatan</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {lateData.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-12 text-center text-slate-400">
-                        No late arrivals recorded for this month.
+                        Tidak ada keterlambatan tercatat untuk bulan ini.
                       </td>
                     </tr>
                   ) : (
@@ -518,13 +518,13 @@ export const ReportsView: React.FC = () => {
                           {formatTime(l.clock_in_time)}
                         </td>
                         <td className="py-3 px-4 font-mono font-bold text-amber-700 tabular-nums">
-                          +{l.late_minutes} mins
+                          +{l.late_minutes} mnt
                         </td>
                         <td className="py-3 px-4 text-slate-600">
                           {l.clock_in_location_name || l.branch_name}
                         </td>
                         <td className="py-3 px-4 text-slate-600 max-w-[240px] truncate">
-                          {l.notes || 'Traffic / commute'}
+                          {l.notes || 'Macet perjalanan'}
                         </td>
                       </tr>
                     ))
@@ -540,27 +540,27 @@ export const ReportsView: React.FC = () => {
           <div>
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900">
-                Attendance Exceptions & Geofence Violations
+                Pengecualian Presensi & Pelanggaran Radius (Geofence)
               </h3>
-              <span className="text-xs font-mono text-slate-500">{exceptionData.length} records</span>
+              <span className="text-xs font-mono text-slate-500">{exceptionData.length} data</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Employee</th>
-                    <th className="py-3 px-4">Exception Category</th>
-                    <th className="py-3 px-4">Location / Distance</th>
-                    <th className="py-3 px-4">Notes</th>
+                    <th className="py-3 px-4">Tanggal</th>
+                    <th className="py-3 px-4">Karyawan</th>
+                    <th className="py-3 px-4">Kategori Anomali</th>
+                    <th className="py-3 px-4">Lokasi / Jarak</th>
+                    <th className="py-3 px-4">Catatan</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {exceptionData.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-slate-400">
-                        No exceptions recorded.
+                        Tidak ada anomali atau pengecualian yang tercatat.
                       </td>
                     </tr>
                   ) : (
@@ -572,14 +572,14 @@ export const ReportsView: React.FC = () => {
                         <td className="py-3 px-4 font-bold text-slate-900">{e.employee_name}</td>
                         <td className="py-3 px-4">
                           <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                            {e.is_outside_geofence ? 'Outside Geofence Radius' : 'Early Checkout'}
+                            {e.is_outside_geofence ? 'Di Luar Radius Kantor' : 'Pulang Lebih Awal'}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
                           {e.clock_in_location_name} ({e.clock_in_distance_meters || 0}m)
                         </td>
                         <td className="py-3 px-4 text-slate-600 max-w-[240px] truncate">
-                          {e.notes || 'Pending supervisor clearance'}
+                          {e.notes || 'Menunggu verifikasi atasan'}
                         </td>
                       </tr>
                     ))

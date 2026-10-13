@@ -74,9 +74,9 @@ export const HolidayView: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Corporate & Public Holiday Calendar</h2>
+          <h2 className="text-base font-bold text-slate-900">Kalender Hari Libur Nasional & Cuti Bersama</h2>
           <p className="text-xs text-slate-500">
-            Official holidays, collective leaves, and company celebrations affecting attendance rosters
+            Jadwal hari libur nasional, cuti bersama pemerintah, dan libur perusahaan yang disinkronkan ke roster absensi
           </p>
         </div>
 
@@ -86,7 +86,7 @@ export const HolidayView: React.FC = () => {
             className="px-4 py-2.5 bg-[#1D63FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Holiday</span>
+            <span>Tambah Hari Libur</span>
           </button>
         )}
       </div>
@@ -95,10 +95,10 @@ export const HolidayView: React.FC = () => {
       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 flex items-start gap-3">
         <Info className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
         <div className="text-xs space-y-1">
-          <span className="font-bold">System Rule for Holidays & Collective Leave:</span>
+          <span className="font-bold">Ketentuan Sistem untuk Hari Libur & Cuti Bersama:</span>
           <p className="text-blue-800">
-            Any absence falling on a registered Public Holiday or Collective Leave date is
-            automatically waived and will NOT be counted as an absent workday or deduction.
+            Ketidakhadiran karyawan yang bertepatan dengan Hari Libur Nasional atau Cuti Bersama resmi
+            tidak akan dihitung sebagai alpa atau potongan kehadiran pada rekap payroll.
           </p>
         </div>
       </div>
@@ -125,7 +125,7 @@ export const HolidayView: React.FC = () => {
                         : 'bg-indigo-50 text-indigo-700 border-indigo-200'
                     }`}
                   >
-                    {h.holiday_type.replace('_', ' ')}
+                    {isNational ? 'Libur Nasional' : isCollective ? 'Cuti Bersama' : 'Libur Perusahaan'}
                   </span>
                   <span className="text-xs font-mono font-bold text-slate-900">
                     {formatDate(h.date)}
@@ -133,22 +133,22 @@ export const HolidayView: React.FC = () => {
                 </div>
 
                 <h3 className="text-sm font-bold text-slate-900">{h.name}</h3>
-                <p className="text-xs text-slate-500">{h.description || 'Official holiday'}</p>
+                <p className="text-xs text-slate-500">{h.description || 'Libur resmi'}</p>
               </div>
 
               {isSuperOrHr && (
                 <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-100">
                   <button
                     onClick={() => handleOpenEdit(h)}
-                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded"
-                    title="Edit Holiday"
+                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded cursor-pointer"
+                    title="Edit Hari Libur"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDelete(h.id, h.name)}
-                    className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded"
-                    title="Delete Holiday"
+                    className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
+                    title="Hapus Hari Libur"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -164,25 +164,25 @@ export const HolidayView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900">
-              {editingHoliday ? 'Edit Holiday' : 'Add Official Holiday'}
+              {editingHoliday ? 'Edit Hari Libur' : 'Tambah Hari Libur Resmi'}
             </h3>
 
             <form onSubmit={handleSave} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Holiday Name *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Hari Libur *</label>
                 <input
                   type="text"
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Idul Fitri 1447 H"
+                  placeholder="Contoh: Hari Raya Idul Fitri 1447 H"
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal *</label>
                   <input
                     type="date"
                     required
@@ -193,26 +193,26 @@ export const HolidayView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kategori Libur</label>
                   <select
                     value={form.holiday_type}
                     onChange={(e) => setForm({ ...form, holiday_type: e.target.value as any })}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-medium"
                   >
-                    <option value="National">National Holiday</option>
-                    <option value="Collective_Leave">Collective Leave</option>
-                    <option value="Company">Company Holiday</option>
+                    <option value="National">Libur Nasional</option>
+                    <option value="Collective_Leave">Cuti Bersama</option>
+                    <option value="Company">Libur Perusahaan</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Keterangan / Catatan</label>
                 <textarea
                   rows={2}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="e.g. Public government holiday"
+                  placeholder="Contoh: Libur nasional ketetapan SKB 3 Menteri"
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg"
                 />
               </div>
@@ -221,15 +221,15 @@ export const HolidayView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs"
+                  className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer hover:bg-slate-800"
                 >
-                  Save Holiday
+                  Simpan Hari Libur
                 </button>
               </div>
             </form>
