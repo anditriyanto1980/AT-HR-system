@@ -25,6 +25,7 @@ import {
 import { dataService } from '../../services/dataService';
 import { Branch, Department, LocationPolicy, Position, Company } from '../../types';
 import { BrandIcon } from '../../components/common/BrandIcon';
+import { GoogleMapsCoordinateInput } from '../../components/common/GoogleMapsCoordinateInput';
 
 export const OrganizationView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'branches' | 'departments' | 'company'>('branches');
@@ -910,30 +911,14 @@ export const OrganizationView: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Garis Lintang (Latitude) *</label>
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    value={branchForm.latitude}
-                    onChange={(e) => setBranchForm({ ...branchForm, latitude: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Garis Bujur (Longitude) *</label>
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    value={branchForm.longitude}
-                    onChange={(e) => setBranchForm({ ...branchForm, longitude: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg font-mono"
-                  />
-                </div>
-              </div>
+              {/* Google Maps Coordinate Input with copy-paste & clipboard support */}
+              <GoogleMapsCoordinateInput
+                latitude={branchForm.latitude}
+                longitude={branchForm.longitude}
+                onChange={(lat, lng) => setBranchForm({ ...branchForm, latitude: lat, longitude: lng })}
+                label="Titik Koordinat Kantor Cabang (Google Maps)"
+                helperText="Paste koordinat (-6.21462, 106.82155) atau link Google Maps langsung di sini"
+              />
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

@@ -44,6 +44,8 @@ import {
   formatTime,
 } from '../../utils/attendance';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { GoogleMapsCoordinateInput } from '../../components/common/GoogleMapsCoordinateInput';
+import { getGoogleMapsUrl } from '../../utils/coordinateParser';
 
 interface ClockInViewProps {
   onNavigateTab?: (tab: string) => void;
@@ -80,6 +82,22 @@ export const ClockInView: React.FC<ClockInViewProps> = ({ onNavigateTab }) => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [shutterFlash, setShutterFlash] = useState(false);
   const [showLocationSettings, setShowLocationSettings] = useState(false);
+
+  // Google Maps Coordinate Calibration State
+  const [showEditCoordsModal, setShowEditCoordsModal] = useState(false);
+  const [editBranchCoords, setEditBranchCoords] = useState<{
+    latitude: number;
+    longitude: number;
+    radius_meters: number;
+  }>({ latitude: -6.21462, longitude: 106.82155, radius_meters: 150 });
+  const [coordSuccessToast, setCoordSuccessToast] = useState<string | null>(null);
+
+  // Custom GPS Simulation from Google Maps State
+  const [showCustomGpsModal, setShowCustomGpsModal] = useState(false);
+  const [customGpsCoords, setCustomGpsCoords] = useState<{
+    latitude: number;
+    longitude: number;
+  }>({ latitude: -6.21462, longitude: 106.82155 });
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -124,20 +142,21 @@ export const ClockInView: React.FC<ClockInViewProps> = ({ onNavigateTab }) => {
   useEffect(() => {
     if (!successResult) return;
     setCountdown(2);
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          if (onNavigateTab) {
-            onNavigateTab('dashboard');
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
+
+    const countdownInterval = setInterval(() => {
+      setCountdown((prev) => (prev > 1 ? prev - 1 : 0));
     }, 1000);
 
-    return () => clearInterval(interval);
+    const redirectTimer = setTimeout(() => {
+      if (onNavigateTab) {
+        onNavigateTab('dashboard');
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(countdownInterval);
+      clearTimeout(redirectTimer);
+    };
   }, [successResult, onNavigateTab]);
 
   const loadData = () => {
@@ -259,6 +278,59 @@ export const ClockInView: React.FC<ClockInViewProps> = ({ onNavigateTab }) => {
     setDistanceMeters(null);
     setIsInsideGeofence(false);
     setGpsError('Lokasi GPS tidak terdeteksi (Simulasi Pengujian: GPS Tidak Aktif).');
+  };
+
+  const handleOpenEditBranchCoords = () => {
+    if (!selectedLocation) return;
+    setEditBranchCoords({
+      latitude: selectedLocation.latitude,
+      longitude: selectedLocation.longitude,
+      radius_meters: selectedLocation.radius_meters,
+    });
+    setShowEditCoordsModal(true);
+  };
+
+  const handleSaveBranchCoordinates = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLocation) return;
+
+    dataService.updateLocationCoordinates(
+      selectedLocation.id,
+      editBranchCoords.latitude,
+      editBranchCoords.longitude,
+      editBranchCoords.radius_meters
+    );
+
+    const updatedLocs = dataService.getLocations();
+    setLocations(updatedLocs);
+    const updated = updatedLocs.find((l) => l.id === selectedLocation.id);
+    if (updated) {
+      setSelectedLocation(updated);
+      if (userCoords) {
+        evaluateDistance(userCoords, updated);
+      }
+    }
+
+    setShowEditCoordsModal(false);
+    setCoordSuccessToast(`Titik lokasi "${selectedLocation.name}" berhasil diperbarui dari Google Maps!`);
+    setTimeout(() => setCoordSuccessToast(null), 5000);
+  };
+
+  const handleApplyCustomGps = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLocation) return;
+
+    const coords: Coordinates = {
+      latitude: customGpsCoords.latitude,
+      longitude: customGpsCoords.longitude,
+      accuracy: 10,
+    };
+    setUserCoords(coords);
+    setGpsError(null);
+    evaluateDistance(coords, selectedLocation);
+    setShowCustomGpsModal(false);
+    setCoordSuccessToast(`Simulasi GPS aktif: Lat ${coords.latitude.toFixed(6)}, Lng ${coords.longitude.toFixed(6)}`);
+    setTimeout(() => setCoordSuccessToast(null), 5000);
   };
 
   // =========================================================================
@@ -1042,7 +1114,16 @@ export const ClockInView: React.FC<ClockInViewProps> = ({ onNavigateTab }) => {
               <Info className="w-3.5 h-3.5 text-amber-700 shrink-0" />
               <span>Absensi tetap dapat disimpan dan otomatis masuk antrean <b>Approval Manajer</b>.</span>
             </div>
-            <div className="flex items-center gap-2 self-end sm:self-auto">
+            <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={handleOpenEditBranchCoords}
+                className="font-bold text-amber-900 bg-amber-200/90 hover:bg-amber-300 px-2.5 py-1 rounded-lg flex items-center gap-1 text-[11px] cursor-pointer transition-colors"
+                title="Bisa copy paste koordinat dari Google Maps jika titik kantor kurang akurat"
+              >
+                <MapPin className="w-3 h-3 text-amber-800" />
+                <span>Update Titik Kantor (Google Maps)</span>
+              </button>
               <button
                 type="button"
                 onClick={requestGeolocation}
@@ -1313,6 +1394,38 @@ export const ClockInView: React.FC<ClockInViewProps> = ({ onNavigateTab }) => {
                   </option>
                 ))}
               </select>
+
+              {/* Branch location coordinate preview & Google Maps update trigger */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mt-1.5 p-2 bg-slate-50 rounded-xl border border-slate-200 text-[11px]">
+                <div className="text-slate-600 font-mono flex items-center gap-1.5 min-w-0">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="truncate">
+                    {selectedLocation
+                      ? `${selectedLocation.latitude.toFixed(5)}, ${selectedLocation.longitude.toFixed(5)} (Radius: ${selectedLocation.radius_meters}m)`
+                      : 'Belum ada lokasi'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {selectedLocation && (
+                    <a
+                      href={getGoogleMapsUrl(selectedLocation.latitude, selectedLocation.longitude)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 font-semibold hover:underline flex items-center gap-0.5 text-[11px]"
+                    >
+                      <span>Lihat Peta</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleOpenEditBranchCoords}
+                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <MapPin className="w-3 h-3" />
+                    <span>Update dari Google Maps</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -1348,7 +1461,7 @@ export const ClockInView: React.FC<ClockInViewProps> = ({ onNavigateTab }) => {
                   <span>GPS Asli</span>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 <button
                   type="button"
                   onClick={() => simulateCoordinates(true)}
@@ -1369,6 +1482,22 @@ export const ClockInView: React.FC<ClockInViewProps> = ({ onNavigateTab }) => {
                   className="py-1.5 px-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold border border-rose-200 text-center cursor-pointer transition-colors"
                 >
                   ✕ GPS Mati
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedLocation) {
+                      setCustomGpsCoords({
+                        latitude: selectedLocation.latitude,
+                        longitude: selectedLocation.longitude,
+                      });
+                    }
+                    setShowCustomGpsModal(true);
+                  }}
+                  className="py-1.5 px-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold border border-indigo-200 text-center cursor-pointer transition-colors"
+                  title="Paste koordinat Google Maps untuk simulasi posisi GPS Anda"
+                >
+                  🎯 Paste GPS Kustom
                 </button>
               </div>
             </div>
@@ -1542,6 +1671,133 @@ export const ClockInView: React.FC<ClockInViewProps> = ({ onNavigateTab }) => {
                 <span>Tutup &amp; Segarkan GPS Sekarang</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL UPDATE TITIK KOORDINAT CABANG (GOOGLE MAPS)                         */}
+      {/* ========================================================================= */}
+      {showEditCoordsModal && selectedLocation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4.5 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">Update Titik Lokasi Kantor</h3>
+                  <p className="text-[10px] text-slate-400">{selectedLocation.name}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditCoordsModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBranchCoordinates} className="p-5 space-y-4">
+              <GoogleMapsCoordinateInput
+                latitude={editBranchCoords.latitude}
+                longitude={editBranchCoords.longitude}
+                onChange={(lat, lng) =>
+                  setEditBranchCoords((prev) => ({ ...prev, latitude: lat, longitude: lng }))
+                }
+                radiusMeters={editBranchCoords.radius_meters}
+                onChangeRadius={(r) =>
+                  setEditBranchCoords((prev) => ({ ...prev, radius_meters: r }))
+                }
+                showRadius={true}
+                label="Titik Koordinat Baru dari Google Maps"
+                helperText="Copy titik koordinat dari Google Maps (misal: -6.2087634, 106.845599) lalu paste di sini atau gunakan tombol Tempel dari Clipboard."
+              />
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowEditCoordsModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/20 cursor-pointer"
+                >
+                  Simpan &amp; Terapkan Titik Lokasi
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL SIMULASI TITIK GPS KUSTOM (GOOGLE MAPS)                              */}
+      {/* ========================================================================= */}
+      {showCustomGpsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4.5 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                  <Compass className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">Simulasi Posisi GPS (Google Maps)</h3>
+                  <p className="text-[10px] text-slate-400">Uji titik lokasi kustom terhadap radius kantor</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCustomGpsModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleApplyCustomGps} className="p-5 space-y-4">
+              <GoogleMapsCoordinateInput
+                latitude={customGpsCoords.latitude}
+                longitude={customGpsCoords.longitude}
+                onChange={(lat, lng) => setCustomGpsCoords({ latitude: lat, longitude: lng })}
+                showRadius={false}
+                label="Titik GPS Perangkat yang Ingin Diuji"
+                helperText="Paste koordinat dari Google Maps untuk mensimulasikan posisi GPS Anda dan mengecek apakah masuk radius kantor."
+              />
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomGpsModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/20 cursor-pointer"
+                >
+                  Terapkan Titik GPS Pengujian
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Success Notification Toast */}
+      {coordSuccessToast && (
+        <div className="fixed bottom-6 right-6 z-50 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 text-xs flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-200 max-w-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <div className="min-w-0">
+            <div className="font-bold">Koordinat Diperbarui</div>
+            <div className="text-[11px] text-slate-300 mt-0.5">{coordSuccessToast}</div>
           </div>
         </div>
       )}

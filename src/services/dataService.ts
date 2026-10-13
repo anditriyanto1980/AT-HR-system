@@ -423,6 +423,31 @@ class DataService {
     }
     localStorage.setItem(STORAGE_KEYS.BRANCHES, JSON.stringify(branches));
     this.syncDocToFirestore('branches', branch.id, branch);
+
+    // Keep Attendance Locations in sync so ClockInView immediately uses the new coordinates
+    const locations = this.getLocations();
+    const locIndex = locations.findIndex(
+      (l) => l.branch_id === branch.id || l.id === `loc-${branch.id}` || l.name === branch.name
+    );
+    const updatedLoc: AttendanceLocation = {
+      id: locIndex >= 0 ? locations[locIndex].id : `loc-${branch.id}`,
+      branch_id: branch.id,
+      name: branch.name,
+      address: branch.address,
+      latitude: Number(branch.latitude),
+      longitude: Number(branch.longitude),
+      radius_meters: Number(branch.radius_meters),
+      policy: branch.policy,
+      is_active: branch.is_active,
+    };
+    if (locIndex >= 0) {
+      locations[locIndex] = updatedLoc;
+    } else {
+      locations.push(updatedLoc);
+    }
+    localStorage.setItem(STORAGE_KEYS.LOCATIONS, JSON.stringify(locations));
+    this.syncDocToFirestore('locations', updatedLoc.id, updatedLoc);
+
     this.logAudit({
       user_name: 'Admin',
       action: index >= 0 ? 'UPDATE_BRANCH' : 'CREATE_BRANCH',
@@ -436,6 +461,12 @@ class DataService {
     const branches = this.getBranches().filter((b) => b.id !== id);
     localStorage.setItem(STORAGE_KEYS.BRANCHES, JSON.stringify(branches));
     this.deleteDocFromFirestore('branches', id);
+
+    // Also remove from locations
+    const locations = this.getLocations().filter((l) => l.branch_id !== id && l.id !== `loc-${id}`);
+    localStorage.setItem(STORAGE_KEYS.LOCATIONS, JSON.stringify(locations));
+    this.deleteDocFromFirestore('locations', id);
+
     this.logAudit({
       user_name: 'Admin',
       action: 'DELETE_BRANCH',
@@ -772,6 +803,40 @@ class DataService {
   // ATTENDANCE LOCATIONS
   public getLocations(): AttendanceLocation[] {
     return JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCATIONS) || '[]');
+  }
+
+  public updateLocationCoordinates(
+    locationId: string,
+    latitude: number,
+    longitude: number,
+    radiusMeters?: number
+  ): void {
+    const locations = this.getLocations();
+    const locIndex = locations.findIndex((l) => l.id === locationId);
+    if (locIndex >= 0) {
+      locations[locIndex].latitude = latitude;
+      locations[locIndex].longitude = longitude;
+      if (radiusMeters !== undefined) {
+        locations[locIndex].radius_meters = radiusMeters;
+      }
+      localStorage.setItem(STORAGE_KEYS.LOCATIONS, JSON.stringify(locations));
+      this.syncDocToFirestore('locations', locationId, locations[locIndex]);
+
+      // Also sync to matching branch
+      const branches = this.getBranches();
+      const bIndex = branches.findIndex(
+        (b) => b.id === locations[locIndex].branch_id || b.name === locations[locIndex].name
+      );
+      if (bIndex >= 0) {
+        branches[bIndex].latitude = latitude;
+        branches[bIndex].longitude = longitude;
+        if (radiusMeters !== undefined) {
+          branches[bIndex].radius_meters = radiusMeters;
+        }
+        localStorage.setItem(STORAGE_KEYS.BRANCHES, JSON.stringify(branches));
+        this.syncDocToFirestore('branches', branches[bIndex].id, branches[bIndex]);
+      }
+    }
   }
 
   // ATTENDANCE RECORDS
